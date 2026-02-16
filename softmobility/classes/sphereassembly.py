@@ -24,12 +24,15 @@ class SphereAssembly:
         """
         # Initialize empty lists, allowing incremental sphere addition
         self._Ndof = 0  # integer
-        self._Nparam = 0  # integer
+        self._Ndesign = 0  # integer
+        self._Ninput = 0  # integer
         self._Nspheres = 0  # integer
         self._dof_variables = []  # list of str
-        self._param_variables = []  # list of str
+        self._design_variables = []  # list of str
+        self._input_variables = []  # list of str
         self._dof_defaults = jnp.array([])
-        self._param_defaults = jnp.array([])
+        self._design_defaults = jnp.array([])
+        self._input_defaults = jnp.array([])
         self.spheres = []  # List of Sphere objects
 
         # Load parameters if a file is provided
@@ -40,12 +43,15 @@ class SphereAssembly:
         """Helper method to parse the parameter file and initialize attributes."""
         (
             self._Ndof,
-            self._Nparam,
+            self._Ndesign,
+            self._Ninput,
             self._Nspheres,
             self._dof_variables,
-            self._param_variables,
+            self._design_variables,
+            self._input_variables,
             self._dof_defaults,
-            self._param_defaults,
+            self._design_defaults,
+            self._input_defaults,
             self.spheres,
         ) = self._parse_parameter_file(parameters_source, verbose)
 
@@ -53,8 +59,10 @@ class SphereAssembly:
         sum_force = jnp.zeros((3,))
         sum_torque = jnp.zeros((3,))
         for sphere in self.spheres:
-            sum_force += sphere.force(self.dof_defaults, self.param_defaults)
-            sum_torque += sphere.torque(self.dof_defaults, self.param_defaults)
+            sum_force += sphere.force(self.dof_defaults, self.design_defaults, self.input_defaults)
+            sum_torque += sphere.torque(self.dof_defaults, self.design_defaults, self.input_defaults)
+
+            print("CHECK FORCES", sum_force, sum_torque)
 
         if not jnp.allclose(sum_force, jnp.zeros((3,))):
             raise ValueError("Forces do not sum to zero.")
@@ -72,16 +80,17 @@ class SphereAssembly:
         # Check that the sphere has the correct number of degrees of freedom and parameters
         try:
             test_dof = jnp.zeros(self.Ndof)
-            test_param = jnp.zeros(self.Nparam)
+            test_design = jnp.zeros(self.Ndesign)
+            test_inputs = jnp.zeros(self.Ninput)
 
-            sphere.radius(dofs=test_dof, params=test_param)
-            sphere.position(dofs=test_dof, params=test_param)
-            sphere.orientation(dofs=test_dof, params=test_param)
-            sphere.force(dofs=test_dof, params=test_param)
-            sphere.torque(dofs=test_dof, params=test_param)
+            sphere.radius(dofs=test_dof, design=test_design, inputs=test_inputs)
+            sphere.position(dofs=test_dof, design=test_design, inputs=test_inputs)
+            sphere.orientation(dofs=test_dof, design=test_design, inputs=test_inputs)
+            sphere.force(dofs=test_dof, design=test_design, inputs=test_inputs)
+            sphere.torque(dofs=test_dof, design=test_design, inputs=test_inputs)
 
         except ValueError as e:
-            raise ValueError(f"Sphere does not have the correct number of degrees of freedom or parameters: {e}")
+            raise ValueError(f"Sphere does not have the correct number of degrees of freedom or variables: {e}")
 
         self.spheres.append(sphere)
         self._Nspheres += 1  # Update sphere count
@@ -96,15 +105,25 @@ class SphereAssembly:
         self._dof_defaults = jnp.append(self._dof_defaults, default)
         print(f"NEW degrees of freedom\n {self.dof_variables} \nwith default values\n {self.dof_defaults}")
 
-    def add_param(self, name: str, default: float = 0.0):
-        """Add a new parameter."""
-        if name in self._param_variables:
-            raise ValueError(f"Parameter '{name}' already exists.")
+    def add_design(self, name: str, default: float = 0.0):
+        """Add a new design parameter."""
+        if name in self._design_variables:
+            raise ValueError(f"Design parameter '{name}' already exists.")
 
-        self._param_variables.append(name)
-        self._Nparam += 1
-        self._param_defaults = jnp.append(self._param_defaults, default)
-        print(f"NEW parameters\n {self.param_variables} \nwith default values\n {self.param_defaults}")
+        self._design_variables.append(name)
+        self._Ndesign += 1
+        self._design_defaults = jnp.append(self._design_defaults, default)
+        print(f"NEW design parameters\n {self.design_variables} \nwith default values\n {self.design_defaults}")
+
+    def add_input(self, name: str, default: float = 0.0):
+        """Add a new input parameter."""
+        if name in self._input_variables:
+            raise ValueError(f"input parameter '{name}' already exists.")
+
+        self._input_variables.append(name)
+        self._Ninput += 1
+        self._input_defaults = jnp.append(self._input_defaults, default)
+        print(f"NEW input parameters\n {self.input_variables} \nwith default values\n {self.input_defaults}")
 
     # Read-only properties for fundamental attributes
     @property
@@ -112,8 +131,12 @@ class SphereAssembly:
         return self._Ndof
 
     @property
-    def Nparam(self):
-        return self._Nparam
+    def Ndesign(self):
+        return self._Ndesign
+
+    @property
+    def Ninput(self):
+        return self._Ninput
 
     @property
     def Nspheres(self):
@@ -124,45 +147,56 @@ class SphereAssembly:
         return self._dof_variables
 
     @property
-    def param_variables(self):
-        return self._param_variables
+    def design_variables(self):
+        return self._design_variables
+
+    @property
+    def input_variables(self):
+        return self._input_variables
 
     @property
     def dof_defaults(self):
         return self._dof_defaults
 
     @property
-    def param_defaults(self):
-        return self._param_defaults
+    def design_defaults(self):
+        return self._design_defaults
 
-    def compute_stiffness_matrix(self, dofs=None, params=None):
-        dofs, params = self._setup_params(dofs, params)
+    @property
+    def input_defaults(self):
+        return self._input_defaults
+
+    def compute_stiffness_matrices(self, dofs=None, design=None, inputs=None):
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
         stiffness_matrix = jax.jacfwd(self.grand_forces_func, argnums=0)
-        K = stiffness_matrix(dofs, params)
+        moment_matrix = jax.jacfwd(self.grand_forces_func, argnums=2)
+        C_K = stiffness_matrix(dofs, design, inputs)
+        C_H = moment_matrix(dofs, design, inputs)
 
-        return K
+        return C_K, C_H
 
-    def compute_Jass(self, dofs=None, params=None):
+    def compute_Jass(self, dofs=None, design=None, inputs=None):
         """
         Computes Jass, which is defined by V = Jass . dotQ, with V the grand velocity in the body's frame and dotQ the time derivative of the dofs.
         We use: V = B . dotX = B . J_X . dotQ, suh that Jass = B . J_X
 
         Args:
-            dofs (np.array, optional): Degrees of freedom. Defaults to None.
-            params (np.array, optional): Parameters. Defaults to None.
+            dofs (jnp.ndarray, optional): Degrees of freedom. Defaults to None.
+            design (jnp.ndarray, optional): Design Parameters. Defaults to None.
+            inputs (jnp.ndarray, optional): Input Parameters. Defaults to None.
 
         Returns:
             jnp_array: Jass
         """
-        dofs, params = self._setup_params(dofs, params)
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
         # Compute the Jacobian of X with respect to dofs Q using JAX's automatic differentiation
         Jacobian_X = jax.jacfwd(self.grand_coordinates_func, argnums=0)
-        J_X = jnp.array(Jacobian_X(dofs, params))
+        J_X = jnp.array(Jacobian_X(dofs, design, inputs))
 
-        # Create the block-diagonal matrix N using a list
+        # Create the block-diagonal
         # Each block is computed by bortz_jacobian_for_sphere for each sphere
-        Bi_s = [sphere.bortz_jacobian(dofs, params) for sphere in self.spheres]
+        Bi_s = [sphere.bortz_jacobian(dofs, design, inputs) for sphere in self.spheres]
 
         # Construct N by stacking the blocks along the diagonal
         B = jnp.block(
@@ -172,34 +206,34 @@ class SphereAssembly:
             ]
         )
 
-        # The final velocity matrix V is the product of N and M
         Jass = B @ J_X
 
         return Jass
 
-    def compute_C_U(self, dofs=None, params=None):
+    def compute_C_U(self, dofs=None, design=None, inputs=None):
         """
         Computes C_U, such that v = V + C_U .v_0, with V and v the grand velocity in the body and lab frame, and v_0 the six-component velocity of the body reference in the lab frame
 
         Args:
-            dofs (np.array, optional): Degrees of freedom. Defaults to None.
-            params (np.array, optional): Parameters. Defaults to None.
+            dofs (jnp.ndarray, optional): Degrees of freedom. Defaults to None.
+            design (jnp.ndarray, optional): Design Parameters. Defaults to None.
+            inputs (jnp.ndarray, optional): Input Parameters. Defaults to None.
 
         Returns:
             jnp.array: C_U
         """
-        dofs, params = self._setup_params(dofs, params)
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
         # Construct T by assembling vertically the individual T's for each sphere
-        C_U = jnp.block([[sphere.composition_of_velocity(dofs, params)] for sphere in self.spheres])
+        C_U = jnp.block([[sphere.composition_of_velocity(dofs, design, inputs)] for sphere in self.spheres])
 
         return C_U
 
-    # def compute_composition_of_forces(self, dofs=None, params=None):
-    #     dofs, params = self._setup_params(dofs, params)
+    # def compute_composition_of_forces(self, dofs=None, design=None, inputs=None):
+    #     dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
     #     # Create blocks for individual spheres
-    #     blocks = [sphere.composition_of_force(dofs, params) for sphere in self.spheres]
+    #     blocks = [sphere.composition_of_force(dofs, design, inputs) for sphere in self.spheres]
 
     #     # Construct Tf by stacking blocks along the diagonal
     #     Tf = jnp.block(
@@ -208,21 +242,22 @@ class SphereAssembly:
 
     #     return Tf
 
-    def compute_Jacobian_matrix(self, dofs=None, params=None):
+    def compute_Jacobian_matrix(self, dofs=None, design=None, inputs=None):
         """
         Computes the Jacobian tensor J = partial v / partial p
 
         Args:
-            dofs (np.array, optional): Degrees of freedom. Defaults to None.
-            params (np.array, optional): Parameters. Defaults to None.
+            dofs (jnp.ndarray, optional): Degrees of freedom. Defaults to None.
+            design (jnp.ndarray, optional): Design Parameters. Defaults to None.
+            inputs (jnp.ndarray, optional): Input Parameters. Defaults to None.
 
         Returns:
             jnp.array: J
         """
-        dofs, params = self._setup_params(dofs, params)
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
-        Jass = self.compute_Jass(dofs, params)
-        C_U = self.compute_C_U(dofs, params)
+        Jass = self.compute_Jass(dofs, design, inputs)
+        C_U = self.compute_C_U(dofs, design, inputs)
         J = jnp.block([C_U, Jass])
 
         return J
@@ -259,94 +294,131 @@ class SphereAssembly:
         if verbose:
             print("NEW default dof values:", self.dof_variables, self.dof_defaults)
 
-    def set_param_defaults(self, new_params=None, new_dict=None, verbose=True):
+    def set_design_defaults(self, new_design=None, new_dict=None, verbose=True):
         if verbose:
-            print("OLD default param values:", self.param_variables, self.param_defaults)
-        if new_params is not None:
+            print("OLD default param values:", self.design_variables, self.design_defaults)
+        if new_design is not None:
             try:
-                new_params_array = jnp.array(new_params).flatten().astype(float)
+                new_design_array = jnp.array(new_design).flatten().astype(float)
             except TypeError as e:
-                raise ValueError("Cannot cast new_params into a jnp array") from e
+                raise ValueError("Cannot cast new_design into a jnp array") from e
 
-            if new_params_array.shape != (self.Nparam,):
-                raise ValueError(f"new_params array must have shape ({self.Nparam},)")
+            if new_design_array.shape != (self.Ndesign,):
+                raise ValueError(f"new_design array must have shape ({self.Ndesign},)")
 
-            self._param_defaults = new_params_array
+            self._design_defaults = new_design_array
 
         elif new_dict is not None:
             for key, value in new_dict.items():
-                # Handle case where key doesn't exist in param_variables
-                if key not in self.param_variables:
+                # Handle case where key doesn't exist in design_variables
+                if key not in self.design_variables:
                     raise ValueError(f"Invalid variable name: {key}")
 
                 # Ensure the value can be cast to float
                 try:
-                    idx = self.param_variables.index(key)
+                    idx = self.design_variables.index(key)
                     new_value = float(value)
                 except (ValueError, IndexError):
                     raise ValueError(f"Invalid value for variable '{key}': {value}")
 
-                # Update the corresponding index in param_defaults
-                self._param_defaults = self._param_defaults.at[idx].set(new_value)
+                # Update the corresponding index in design_defaults
+                self._design_defaults = self._design_defaults.at[idx].set(new_value)
         if verbose:
-            print("NEW default param values:", self.param_variables, self.param_defaults)
+            print("NEW default param values:", self.design_variables, self.design_defaults)
 
-    def grand_radius_func(self, dofs=None, params=None):
+    def set_input_defaults(self, new_inputs=None, new_dict=None, verbose=True):
+        if verbose:
+            print("OLD default param values:", self.input_variables, self.input_defaults)
+        if new_inputs is not None:
+            try:
+                new_inputs_array = jnp.array(new_inputs).flatten().astype(float)
+            except TypeError as e:
+                raise ValueError("Cannot cast new_inputs into a jnp array") from e
+
+            if new_inputs_array.shape != (self.Ninput,):
+                raise ValueError(f"new_inputs array must have shape ({self.Ninput},)")
+
+            self._input_defaults = new_inputs_array
+
+        elif new_dict is not None:
+            for key, value in new_dict.items():
+                # Handle case where key doesn't exist in input_variables
+                if key not in self.input_variables:
+                    raise ValueError(f"Invalid variable name: {key}")
+
+                # Ensure the value can be cast to float
+                try:
+                    idx = self.input_variables.index(key)
+                    new_value = float(value)
+                except (ValueError, IndexError):
+                    raise ValueError(f"Invalid value for variable '{key}': {value}")
+
+                # Update the corresponding index in input_defaults
+                self._input_defaults = self._input_defaults.at[idx].set(new_value)
+        if verbose:
+            print("NEW default param values:", self.input_variables, self.input_defaults)
+
+    def grand_radius_func(self, dofs=None, design=None, inputs=None):
         """Calculates the radius of each sphere based on input parameters."""
-        dofs, params = self._setup_params(dofs, params)
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
-        return jnp.concatenate([jnp.array([sphere.radius(dofs, params)]) for sphere in self.spheres])
+        return jnp.concatenate([jnp.array([sphere.radius(dofs, design, inputs)]) for sphere in self.spheres])
 
-    def grand_coordinates_func(self, dofs=None, params=None):
+    def grand_coordinates_func(self, dofs=None, design=None, inputs=None):
         """Computes X, the grand coordinate for all spheres simultaneously."""
-        dofs, params = self._setup_params(dofs, params)
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
         coords = [
-            jnp.concatenate([sphere.position(dofs, params), sphere.orientation(dofs, params)])
+            jnp.concatenate([sphere.position(dofs, design, inputs), sphere.orientation(dofs, design, inputs)])
             for sphere in self.spheres
         ]
         return jnp.concatenate(coords)
 
-    def grand_forces_func(self, dofs=None, params=None):
+    def grand_forces_func(self, dofs=None, design=None, inputs=None):
         """Computes f, the grand force for all spheres simultaneously."""
-        dofs, params = self._setup_params(dofs, params)
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
         coords = [
-            jnp.concatenate([sphere.force(dofs, params), sphere.torque(dofs, params)]) for sphere in self.spheres
+            jnp.concatenate([sphere.force(dofs, design, inputs), sphere.torque(dofs, design, inputs)])
+            for sphere in self.spheres
         ]
         return jnp.concatenate(coords)
 
     def __str__(self):
-        return f"Assembly with {self.Nspheres} spheres, {self.Ndof} degrees of freedom, and {self.Nparam} fixed parameters"
+        return f"Assembly with {self.Nspheres} spheres, {self.Ndof} degrees of freedom, and {self.Ndesign} fixed parameters"
 
     def __repr__(self):
         """Print default values and details of sphere assembly."""
         output = "SPHERE ASSEMBLY\n"
         output += f"  {self.Nspheres} spheres\n"
         output += f"  {self.Ndof} degrees of freedom\n"
-        output += f"  {self.Nparam} fixed parameters\n"
+        output += f"  {self.Ndesign} design parameters\n"
+        output += f"  {self.Ninput} input parameters\n"
 
         # Print default values
         output += "\nDefault values\n"
         output += f"  degrees of freedom dof: {self.dof_variables} = {self.dof_defaults}\n"
-        output += f"  fixed parameters param: {self.param_variables} = {self.param_defaults}\n"
+        output += f"  design parameters param: {self.design_variables} = {self.design_defaults}\n"
+        output += f"  input parameters param: {self.input_variables} = {self.input_defaults}\n"
 
         # Print example sphere assembly
         for i, sphere in enumerate(self.spheres):
             output += f"\nSPHERE {i}\n"
-            output += f"  radius: {sphere.radius(self.dof_defaults, self.param_defaults)}\n"
-            output += f"  position: {sphere.position(self.dof_defaults, self.param_defaults)}\n"
-            output += f"  orientation: {sphere.orientation(self.dof_defaults, self.param_defaults)}\n"
-            output += f"  force: {sphere.force(self.dof_defaults, self.param_defaults)}\n"
-            output += f"  torque: {sphere.torque(self.dof_defaults, self.param_defaults)}\n"
+            output += f"  radius: {sphere.radius(self.dof_defaults, self.design_defaults)}\n"
+            output += f"  position: {sphere.position(self.dof_defaults, self.design_defaults)}\n"
+            output += f"  orientation: {sphere.orientation(self.dof_defaults, self.design_defaults)}\n"
+            output += f"  force: {sphere.force(self.dof_defaults, self.design_defaults)}\n"
+            output += f"  torque: {sphere.torque(self.dof_defaults, self.design_defaults)}\n"
 
         return output
 
-    def _setup_params(self, dofs=None, params=None):
+    def _setup_params(self, dofs=None, design=None, inputs=None):
         """Private helper to setup default parameters"""
         if dofs is None:
             dofs = self.dof_defaults
-        if params is None:
-            params = self.param_defaults
-        return jnp.array(dofs).astype(float), jnp.array(params).astype(float)
+        if design is None:
+            design = self.design_defaults
+        if inputs is None:
+            inputs = self.input_defaults
+        return jnp.array(dofs).astype(float), jnp.array(design).astype(float), jnp.array(inputs).astype(float)
 
     def _parse_parameter_file(self, parameters_source: str, verbose: bool):
         """
@@ -363,18 +435,24 @@ class SphereAssembly:
         -------
         Ndof : int
             Number of degrees of freedom.
-        Nparam : int
-            Number of parameters.
+        Ndesign : int
+            Number of design parameters.
+        Ninput : int
+            Number of input parameters.
         Nspheres : int
             Number of spheres in the assembly.
         dof_variables : list[str]
             List of dof variable names.
-        param_variables : list[str]
-            List of parameter variable names.
+        design_variables : list[str]
+            List of design parameter variable names.
+        input_variables : list[str]
+            List of input parameter variable names.
         dof_defaults : jax.numpy.ndarray
             Default array of values for dof.
-        param_defaults : jax.numpy.ndarray
-            Default array of values for param.
+        design_defaults : jax.numpy.ndarray
+            Default array of values for design param.
+        input_defaults : jax.numpy.ndarray
+            Default array of values for input param.
         sphere : list[Sphere]
             List of Sphere objects representing each sphere in the assembly.
         """
@@ -400,21 +478,27 @@ class SphereAssembly:
         # Extract sphere data
         sphere_data = yaml_data["spheres"]
 
-        # Extract all possible prefixes from dof_names and param_names
+        # Extract all possible prefixes from dof_names and design_names
         dof_prefixes = set(["dof"])
-        param_prefixes = set(["param"])
+        design_prefixes = set(["design"])
+        input_prefixes = set(["input"])
 
         if "dof_names" in yaml_data:
             for name in yaml_data["dof_names"]:
                 dof_prefixes.add(name)
 
-        if "param_names" in yaml_data:
-            for name in yaml_data["param_names"]:
-                param_prefixes.add(name)
+        if "design_names" in yaml_data:
+            for name in yaml_data["design_names"]:
+                design_prefixes.add(name)
+
+        if "input_names" in yaml_data:
+            for name in yaml_data["input_names"]:
+                input_prefixes.add(name)
 
         # Extract variables from expressions
         dof_set = set()
-        param_set = set()
+        design_set = set()
+        input_set = set()
 
         # In the section where you process sphere_data:
         for data in sphere_data:
@@ -431,27 +515,32 @@ class SphereAssembly:
             for expr in sphere_exprs:
                 for dof_prefix in dof_prefixes:
                     dof_set.update(re.findall(r"(?:" + dof_prefix + ")(?:\d+)?", expr))
-                for param_prefix in param_prefixes:
-                    param_set.update(re.findall(r"(?:" + param_prefix + ")(?:\d+)?", expr))
+                for design_prefix in design_prefixes:
+                    design_set.update(re.findall(r"(?:" + design_prefix + ")(?:\d+)?", expr))
+                for input_prefix in input_prefixes:
+                    input_set.update(re.findall(r"(?:" + input_prefix + ")(?:\d+)?", expr))
 
         # Transform variable sets into lists and sort them alphabetically
         dof_variables = sorted(list(dof_set))
-        param_variables = sorted(list(param_set))
+        design_variables = sorted(list(design_set))
+        input_variables = sorted(list(input_set))
 
         # printing variables found
         if verbose:
             print(
-                f"  Found variables: {', '.join(dof_variables) + ', ' if dof_variables else ''}{', '.join(param_variables)}"
+                f"  Found variables: {', '.join(dof_variables) + ', ' if dof_variables else ''}{', '.join(design_variables) + ', ' if design_variables else ''}{', '.join(input_variables)}"
             )
 
-        # Determine Ndof, Nparam, and Nsphere
+        # Determine Ndof, Ndesign, and Nsphere
         Ndof = len(dof_variables)
-        Nparam = len(param_variables)
+        Ndesign = len(design_variables)
+        Ninput = len(input_variables)
         Nsphere = len(sphere_data)
 
         # Create default arrays with zeros
         dof_defaults = jnp.zeros(Ndof)
-        param_defaults = jnp.zeros(Nparam)
+        design_defaults = jnp.zeros(Ndesign)
+        input_defaults = jnp.zeros(Ninput)
 
         # Read default values from parameters.yaml
         if "defaults" in yaml_data:
@@ -461,8 +550,11 @@ class SphereAssembly:
             for i, var in enumerate(dof_variables):
                 dof_defaults = dof_defaults.at[i].set(defaults.get(var, 0.0))
 
-            for i, var in enumerate(param_variables):
-                param_defaults = param_defaults.at[i].set(defaults.get(var, 0.0))
+            for i, var in enumerate(design_variables):
+                design_defaults = design_defaults.at[i].set(defaults.get(var, 0.0))
+
+            for i, var in enumerate(input_variables):
+                input_defaults = input_defaults.at[i].set(defaults.get(var, 0.0))
 
         # Generate functions for generalized coordinates for each sphere
         spheres = []
@@ -476,11 +568,11 @@ class SphereAssembly:
             tor_exprs = [str(x) for x in data.get("torque", [0, 0, 0])]
 
             # Create a function for each sphere
-            rad_func = create_function(rad_exprs, dof_variables, param_variables)
-            pos_func = create_function(pos_exprs, dof_variables, param_variables)
-            ori_func = create_function(ori_exprs, dof_variables, param_variables)
-            for_func = create_function(for_exprs, dof_variables, param_variables)
-            tor_func = create_function(tor_exprs, dof_variables, param_variables)
+            rad_func = create_function(rad_exprs, dof_variables, design_variables, input_variables)
+            pos_func = create_function(pos_exprs, dof_variables, design_variables, input_variables)
+            ori_func = create_function(ori_exprs, dof_variables, design_variables, input_variables)
+            for_func = create_function(for_exprs, dof_variables, design_variables, input_variables)
+            tor_func = create_function(tor_exprs, dof_variables, design_variables, input_variables)
             spheres.append(Sphere(rad_func, pos_func, ori_func, for_func, tor_func))
 
             # Printing the characteristics of each sphere
@@ -494,12 +586,15 @@ class SphereAssembly:
 
         return (
             Ndof,
-            Nparam,
+            Ndesign,
+            Ninput,
             Nsphere,
             dof_variables,
-            param_variables,
+            design_variables,
+            input_variables,
             dof_defaults,
-            param_defaults,
+            design_defaults,
+            input_defaults,
             spheres,
         )
 
@@ -507,7 +602,7 @@ class SphereAssembly:
 # Useful functions ###########################################################
 
 
-def create_function(sp_exprs, dofs, params):
+def create_function(sp_exprs, dofs, design, inputs):
     """
     Create a function that takes dofs and yaml_data as input and returns the evaluated symbolic expressions sp_exprs.
 
@@ -526,7 +621,8 @@ def create_function(sp_exprs, dofs, params):
         A function that takes dofs and yaml_data as input and returns the evaluated expression.
     """
     dof_symbols = [sp.symbols(t) for t in dofs]
-    param_symbols = [sp.symbols(p) for p in params]
+    design_symbols = [sp.symbols(p) for p in design]
+    input_symbols = [sp.symbols(p) for p in inputs]
 
     if isinstance(sp_exprs, str):
         # Parse the expression using sympy
@@ -534,14 +630,14 @@ def create_function(sp_exprs, dofs, params):
 
         # Convert expression to a JAX function or raise ValueError
         try:
-            jax_expr = sp.lambdify([dof_symbols, param_symbols], sp_expr, "jax")
+            jax_expr = sp.lambdify([dof_symbols, design_symbols, input_symbols], sp_expr, "jax")
         except Exception as e:
             raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
         # Callable build out of the JAX function
-        def wrapper(dof_args, param_args):
-            result = jax_expr(dof_args, param_args)
-            if not isinstance(jax_expr(dof_args, param_args), (float)):
+        def wrapper(dof_args, design_args, input_args):
+            result = jax_expr(dof_args, design_args, input_args)
+            if not isinstance(jax_expr(dof_args, design_args, input_args), (float)):
                 result = jnp.array(result, float)
                 result = result[(0,) * result.ndim]
             return result
@@ -556,16 +652,16 @@ def create_function(sp_exprs, dofs, params):
         # Convert each expression to a JAX function and append it to the list of functions
         for sp_expr in sp_exprs:
             try:
-                jax_exprs.append(sp.lambdify([dof_symbols, param_symbols], sp_expr, "jax"))
+                jax_exprs.append(sp.lambdify([dof_symbols, design_symbols, input_symbols], sp_expr, "jax"))
             except Exception as e:
                 raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
-        def wrapper(dof_args, param_args):
+        def wrapper(dof_args, design_args, input_args):
             list_expr = [
                 (
-                    jax_expr(dof_args, param_args).item()
-                    if isinstance(jax_expr(dof_args, param_args), (list, np.ndarray))
-                    else jax_expr(dof_args, param_args)
+                    jax_expr(dof_args, design_args, input_args).item()
+                    if isinstance(jax_expr(dof_args, design_args, input_args), (list, np.ndarray))
+                    else jax_expr(dof_args, design_args, input_args)
                 )
                 for jax_expr in jax_exprs
             ]

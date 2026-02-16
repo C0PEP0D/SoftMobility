@@ -24,12 +24,13 @@
 # ----------------------------
 dof_names:        # DOF prefixes/names (extends default "dof")
     - x           # Recognized as a DOF prefix/name (e.g., "x0" in expressions)
-param_names:      # Parameter prefixes/names (extends default "param" and "k")
-    - myradius    # Recognized as a parameter prefix/name (e.g., `myradius` in expressions)
-    - distance    # Recognized as a parameter prefix/name (e.g., `distance` in expressions)
+design_names:     # Design arameter prefixes/names (extends default "design")
+    - myradius    # Recognized as a parameter prefix/name (e.g., "myradius0" in expressions)
+    - distance    # Recognized as a parameter prefix/name (e.g., "distance" in expressions)
     - spring_k
-    - mass
+input_names:      # Input parameter prefixes/names (extends default "input")
     - gravity
+    - mass
 
 # ----------------------------
 # Default Values (Optional)

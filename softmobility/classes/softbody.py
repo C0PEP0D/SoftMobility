@@ -8,16 +8,13 @@ from .sphereassembly import SphereAssembly
 
 class SoftBody(SphereAssembly):
 
-    MobilityResult = namedtuple("FullMobilityResult", ["M", "Mtilde", "G", "V", "P"])
-    # FastMobilityResult = namedtuple(
-    #     "FastMobilityResult", ["Mk", "Mkmean", "Mkm", "Gk", "Mdof", "Mdofm", "Gdof", "x_cr", "x_cm"]
-    # )
+    SoftMobilityTensors = namedtuple("SoftMobilityTensors", ["M", "M_K", "M_H", "C_E", "P"])
 
     def __init__(self, *args, **kwargs):
         # Call the __init__ method of the parent class (SphereAssembly)
         super().__init__(*args, **kwargs)
 
-    def compute_mobility_problem(self, dofs=None, params=None):
+    def compute_mobility_problem(self, dofs=None, design=None, inputs=None):
         """
         Compute the full mobility problem for a given system configuration.
 
@@ -33,7 +30,7 @@ class SoftBody(SphereAssembly):
 
         Returns
         -------
-        MobilityResult
+        SoftMobilityTensors
             A named tuple containing:
             - M (jax.numpy.ndarray): Mobility matrix for forces expressed in the coordinate of assembly.
             - G (jax.numpy.ndarray): Coupling matrix with strain.
@@ -57,149 +54,42 @@ class SoftBody(SphereAssembly):
         - This function leverages JAX for automatic differentiation and efficient computation.
         """
         # Handling dofs and params, passing default value if None are given
-        dofs, params = self._setup_params(dofs, params)
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
-        # Compute Jacobian matrix J mapping velocities to dofs and assembly velocities
-        J = self.compute_Jacobian_matrix(dofs, params)
+        J = self.compute_Jacobian_matrix(dofs, design, inputs)
+        Mgrand = self.compute_mobility_tensor(dofs, design, inputs)
+        Rgrand = self._compute_inverse_jitted(Mgrand)
+        C_S = self._compute_composition_of_strain(dofs, design, inputs)
+        R_S = self._compute_coupling_with_strain(dofs, design, inputs)
+        C_K, C_H = self.compute_stiffness_matrices(dofs, design, inputs)
 
-        # Compute the resistance tensor R linking forces to velocities
-        R = self.compute_resistance_tensor(dofs, params)
+        # Compute soft mobility tensors
+        Mred = self._compute_inverse_jitted(J.T @ Rgrand @ J)
+        M = Mred @ J.T
+        P = M @ Rgrand
+        C_E = P @ C_S + M @ R_S
+        M_K = M @ C_K
+        M_H = M @ C_H
 
-        # Compute coupling tensor Gfull linking strain rate to velocities
-        Gfull = self._compute_coupling_with_strain(dofs, params)
+        return self.SoftMobilityTensors(M, M_K, M_H, C_E, P)
 
-        # Compute velocity, force, and gravity composition operators from spheres to assembly
-        # Tu = self.compute_composition_of_velocity(dofs, params)
-        Tf = self.compute_composition_of_forces(dofs, params)
-        # Tm = self.compute_composition_of_gravity(dofs, params)
-
-        # Compute reduced mobility matrix Mred = (J R J^T)^-1
-        Mred = self._compute_Mred_jitted(jnp.einsum("ji, jk, kl->il", J, R, J))
-
-        # Projection matrix Proj = Mred J R
-        P = jnp.einsum("ij, kj, kl->il", Mred, J, R)
-
-        # Compute velocity projection matrix V
-        # Vverif = jnp.einsum("ij, jk->ik", Proj, Tu)
-        V = jnp.vstack([jnp.zeros((J.shape[1] - 6, 6)), jnp.eye(6)])
-
-        # Sanity check to ensure V is correct
-        # assert jnp.allclose(V, Vverif, atol=1e-5), "Matrix V is not correct!"
-
-        # Compute mobility matrices
-        M = jnp.einsum("ij, kj, kl->il", Mred, J, Tf)  # Mobility matrix for forces
-        Mtilde = jnp.einsum("ij, kj->ik", Mred, J)  # Mobility matrix in the frame of spheres
-        # Mm = jnp.einsum("ij, kj, kl->il", Mred, J, Tm)  # Reduced Mobility matrix for gravity
-        G = jnp.einsum("ij, jk->ik", P, Gfull)  # Coupling with strain
-
-        return self.MobilityResult(M, Mtilde, G, V, P)
-
-    # def compute_fast_mobility_problem(self, dofs=None, params=None):
-    #     """
-    #     Compute the fast mobility problem for a given system configuration.
-
-    #     This method derives an approximation of the mobility problem by leveraging the fast
-    #     dynamics of the degrees of freedom relative to the backgound flow unsteadiness. It
-    #     projects mobility quantities onto a lower-dimensional space to accelerate computations.
-
-    #     Parameters
-    #     ----------
-    #     dofs : list or array, optional
-    #         Degrees of freedom of the system.
-    #     params : list or array, optional
-    #         Parameters defining system properties.
-
-    #     Returns
-    #     -------
-    #     FastMobilityResult
-    #         A named tuple containing:
-    #         - Mk (jax.numpy.ndarray): Projected mobility matrix.
-    #         - Mkmean (jax.numpy.ndarray): Mean projected mobility matrix.
-    #         - Mkm (jax.numpy.ndarray): Projected mobility matrix for gravity-like forces.
-    #         - Gk (jax.numpy.ndarray): Projected coupling matrix with strain.
-    #         - Mdof (jax.numpy.ndarray): Mobility matrix projected onto degrees of freedom.
-    #         - Mdofm (jax.numpy.ndarray): Mobility matrix projected onto gravity-like forces.
-    #         - Gdof (jax.numpy.ndarray): Coupling matrix projected onto degrees of freedom.
-    #         - x_cr (jax.numpy.ndarray): Coordinate of the center of resistance.
-
-    #     Examples
-    #     --------
-    #     Unpacking using a tuple:
-
-    #     >>> Mk, _, Mkm, *_ = soft_plankton.compute_fast_mobility_problem(dofs=[0, 1])
-    #     >>> print(Mk, Mkm)
-
-    #     Unpacking using the named tuple (preferred method):
-
-    #     >>> matrices = soft_plankton.compute_fast_mobility_problem()
-    #     >>> print(matrices.Mk, matrices.Mkm)
-
-    #     Notes
-    #     -----
-    #     - This function builds upon `compute_mobility_problem` to derive an optimized mobility problem.
-    #     - Ensure that all input lists/arrays are compatible with JAX operations.
-    #     - The method assumes a resistance-mobility-stiffness formulation.
-    #     """
-    #     # Handling dofs and params, passing default value if None are given
-    #     dofs, params = self._setup_params(dofs, params)
-
-    #     # Compute full mobility matrices
-    #     M, _, Mm, G, V, *_ = self.compute_mobility_problem(dofs, params)
-
-    #     # Compute stiffness matrix
-    #     K = self.compute_stiffness_matrix(dofs, params)
-
-    #     # Projection matrices mapping to degrees of freedom (I1) and rigid-body motion (I2)
-    #     I1 = jnp.hstack([jnp.eye(self.Ndof), jnp.zeros((self.Ndof, 6))])
-    #     I2 = jnp.hstack([jnp.zeros((6, self.Ndof)), jnp.eye(6)])
-
-    #     # Compute inverse projected stiffness-weighted mobility matrix: Rk = (I1 M K)^-1
-    #     Rk = jnp.linalg.inv(jnp.einsum("ij, jk, kl->il", I1, M, K))
-
-    #     # Compute matrix D used for projection: D= M K Rk I1
-    #     D = jnp.einsum("ij, jk, kl, lm->im", M, K, Rk, I1)
-
-    #     # Projection operator P = I2 (I - D)
-    #     P = jnp.einsum("ij, jk->ik", I2, jnp.eye(self.Ndof + 6) - D)
-
-    #     # Compute projected velocity matrix Vk
-    #     Vk = jnp.einsum("ij, jk->ik", P, V)
-
-    #     # Sanity check: Vk should be an 6x6 identity matrix
-    #     assert jnp.allclose(Vk, jnp.eye(6), atol=1e-5), "Matrix Vk is not correct!"
-
-    #     # Compute projected mobility matrices
-    #     Mk = jnp.einsum("ij, jk->ik", P, M)  # Projected mobility matrix
-    #     Mkmean = self._compute_mean(Mk)  # Mean projected mobility matrix
-    #     # Mkm = jnp.einsum("ij, jk->ik", P, Mm)  # Projected gravity mobility matrix
-    #     Gk = jnp.einsum("ij, jk->ik", P, G)  # Projected coupling matrix
-
-    #     # Compute mobility matrices in degrees of freedom space
-    #     Mdof = jnp.einsum("ij, jk, kl->il", -Rk, I1, M)
-    #     # Mdofm = jnp.einsum("ij, jk, kl->il", -Rk, I1, Mm)
-    #     Gdof = jnp.einsum("ij, jk, kl->il", -Rk, I1, G)
-
-    #     x_cr, x_cm = self._compute_hydrodynamic_centers(Mkmean)
-
-    #     return self.FastMobilityResult(Mk, Mkmean, 0, Gk, Mdof, 0, Gdof, x_cr, x_cm)
-
-    def compute_mobility_tensor(self, dofs=None, params=None):
-        dofs, params = self._setup_params(dofs, params)
+    def compute_mobility_tensor(self, dofs=None, design=None, inputs=None):
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
         # Function to compute diagonal blocks (i == j)
         def compute_diag_block(i):
-            mu_tt = self._compute_mu_tt_ii(self.spheres[i], dofs, params)
-            mu_rr = self._compute_mu_rr_ii(self.spheres[i], dofs, params)
+            mu_tt = self._compute_mu_tt_ii(self.spheres[i], dofs, design, inputs)
+            mu_rr = self._compute_mu_rr_ii(self.spheres[i], dofs, design, inputs)
             mu_rt = jnp.zeros((3, 3))
             mu_tr = jnp.zeros((3, 3))
             return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
 
         # Function to compute off-diagonal blocks (i ≠ j)
         def compute_off_diag_block(i, j):
-            mu_tt = self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, params)
-            mu_rr = self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, params)
-            mu_rt = self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, params)
-            mu_tr = self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, params).T
+            mu_tt = self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, design, inputs)
+            mu_rr = self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, design, inputs)
+            mu_rt = self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, design, inputs)
+            mu_tr = self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, design, inputs).T
             return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
 
         # Function to select correct block using lax.cond
@@ -213,27 +103,18 @@ class SoftBody(SphereAssembly):
 
         return M
 
-    def compute_resistance_tensor(self, dofs, params):
-        M = self.compute_mobility_tensor(dofs, params)
-        return self._compute_resistance_tensor_jitted(M)
-
     @staticmethod
     @jax.jit
-    def _compute_resistance_tensor_jitted(M):
+    def _compute_inverse_jitted(M):
         return jnp.linalg.inv(M)
 
-    @staticmethod
-    @jax.jit
-    def _compute_Mred_jitted(M):
-        return jnp.linalg.inv(M)
-
-    def compute_mobility_tensor_alt(self, dofs=None, params=None):
-        dofs, params = self._setup_params(dofs, params)
+    def compute_mobility_tensor_alt(self, dofs=None, design=None, inputs=None):
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
         # Define the blocks functions
         mu_tt = jnp.block(
             [
                 [
-                    self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, params)
+                    self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, design, inputs)
                     for j in range(self.Nspheres)
                 ]
                 for i in range(self.Nspheres)
@@ -242,7 +123,7 @@ class SoftBody(SphereAssembly):
         mu_rr = jnp.block(
             [
                 [
-                    self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, params)
+                    self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, design, inputs)
                     for j in range(self.Nspheres)
                 ]
                 for i in range(self.Nspheres)
@@ -251,7 +132,7 @@ class SoftBody(SphereAssembly):
         mu_rt = jnp.block(
             [
                 [
-                    self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, params)
+                    self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, design, inputs)
                     for j in range(self.Nspheres)
                 ]
                 for i in range(self.Nspheres)
@@ -260,7 +141,7 @@ class SoftBody(SphereAssembly):
         mu_tr = jnp.block(
             [
                 [
-                    self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, params).T
+                    self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, design, inputs).T
                     for j in range(self.Nspheres)
                 ]
                 for i in range(self.Nspheres)
@@ -306,11 +187,11 @@ class SoftBody(SphereAssembly):
     #     return M_mean
 
     def _compute_composition_of_strain(self, *args):
-        T = jnp.block(
+        C_S = jnp.block(
             [[self._individual_composition_of_strain(self.spheres[i], *args)] for i in range(self.Nspheres)]
         )
 
-        return T
+        return C_S
 
     def _compute_coupling_with_strain(self, *args):
         Svecmat = jnp.array(
@@ -350,54 +231,23 @@ class SoftBody(SphereAssembly):
         GE = jnp.concatenate(tensor_blocks, axis=0)
 
         # Perform tensor contraction with Svecmat (if needed)
-        G = self._compute_composition_of_strain(*args) + jnp.einsum(
-            "ijk,jkl->il", GE, Svecmat
-        )  # Adjust contraction as needed
+        R_S = jnp.einsum("ijk,jkl->il", GE, Svecmat)  # Adjust contraction as needed
 
-        return G
-
-    # def _compute_hydrodynamic_centers(self, mobility_matrix: jnp.ndarray) -> jnp.ndarray:
-    #     if mobility_matrix.shape != (6, 6):
-    #         raise ValueError(f"Mobility matrix must have shape (6, 6), but got {mobility_matrix.shape}.")
-
-    #     # Tensors to compute the mobility center
-    #     b = mobility_matrix[3:, :3]
-    #     c = mobility_matrix[3:, 3:]
-
-    #     # Tensors to compute the resistance center
-    #     resistance_matrix = jnp.linalg.inv(mobility_matrix)
-    #     A = resistance_matrix[:3, :3]
-    #     B = resistance_matrix[3:, :3]
-
-    #     levicivita = jnp.array(
-    #         [
-    #             [[0.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]],
-    #             [[0.0, 0.0, -1.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
-    #             [[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
-    #         ]
-    #     )
-
-    #     # From Kim & Karila 5.2.2 and 5.3.2
-    #     traAmAinv = jnp.linalg.inv(jnp.trace(A) * jnp.eye(3) - A)
-    #     x_cr = 0.5 * jnp.einsum("ij,jkl,kl->i", traAmAinv, levicivita, B - B.transpose())
-    #     trcmcinv = jnp.linalg.inv(c - jnp.trace(c) * jnp.eye(3))
-    #     x_cm = 0.5 * jnp.einsum("ij,jkl,kl->i", trcmcinv, levicivita, b - b.transpose())
-
-    #     return x_cr, x_cm
+        return R_S
 
     # Functions to compute the GRPY tensors #######################################
-    def _1sphere_GRPY_quantities(self, sphere: Sphere, dofs=None, params=None):
-        dofs, params = self._setup_params(dofs, params)
+    def _1sphere_GRPY_quantities(self, sphere: Sphere, dofs=None, design=None, inputs=None):
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
-        return sphere.radius(dofs, params)
+        return sphere.radius(dofs, design, inputs)
 
-    def _2spheres_GRPY_quantities(self, sphere_i: Sphere, sphere_j: Sphere, dofs=None, params=None):
-        dofs, params = self._setup_params(dofs, params)
+    def _2spheres_GRPY_quantities(self, sphere_i: Sphere, sphere_j: Sphere, dofs=None, design=None, inputs=None):
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
-        position_i = sphere_i.position(dofs, params)
-        position_j = sphere_j.position(dofs, params)
-        radius_i = sphere_i.radius(dofs, params)
-        radius_j = sphere_j.radius(dofs, params)
+        position_i = sphere_i.position(dofs, design, inputs)
+        position_j = sphere_j.position(dofs, design, inputs)
+        radius_i = sphere_i.radius(dofs, design, inputs)
+        radius_j = sphere_j.radius(dofs, design, inputs)
         posi = jnp.array(position_i)
         posj = jnp.array(position_j)
         rvector = posi - posj
@@ -607,10 +457,10 @@ class SoftBody(SphereAssembly):
 
         return matrix
 
-    def _individual_composition_of_strain(self, sphere: Sphere, dofs=None, params=None):
-        dofs, params = self._setup_params(dofs, params)
+    def _individual_composition_of_strain(self, sphere: Sphere, dofs=None, design=None, inputs=None):
+        dofs, design, inputs = self._setup_params(dofs, design, inputs)
 
-        X, Y, Z = sphere.position(dofs, params)
+        X, Y, Z = sphere.position(dofs, design, inputs)
         T = jnp.array(
             [
                 [X, Y, Z, 0, 0],
