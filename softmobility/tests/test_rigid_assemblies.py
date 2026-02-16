@@ -1,5 +1,5 @@
 import numpy as np
-from splank import SoftPlankton, Sphere
+from softmobility import SoftBody, Sphere
 
 # Examples from PyGRPY package
 gmm_two = np.array(
@@ -663,7 +663,7 @@ cent_four = np.array([0, 0, -1.5])
 
 
 def test_two_spheres():
-    sp = SoftPlankton()
+    sp = SoftBody()
     sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 1], radius=1))
     mu = sp.compute_mobility_tensor_alt()
@@ -671,7 +671,7 @@ def test_two_spheres():
 
 
 def test_four_spheres():
-    sp = SoftPlankton()
+    sp = SoftBody()
     sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 1], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 2], radius=1))

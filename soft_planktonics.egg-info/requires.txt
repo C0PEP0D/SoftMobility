@@ -4,3 +4,4 @@ jax
 sympy
 pyyaml
 jupyterlab
+plotly

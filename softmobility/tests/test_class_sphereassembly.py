@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from splank import Sphere, SphereAssembly
+from softmobility import Sphere, SphereAssembly
 
 
 def test_init():

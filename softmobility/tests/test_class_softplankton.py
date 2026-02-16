@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from splank import SoftPlankton
+from softmobility import SoftPlankton
 
 
 def test_mobility_matrices():

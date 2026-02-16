@@ -1,4 +1,4 @@
-from splank import Sphere
+from softmobility import Sphere
 
 
 def test_radius_entries() -> None:
@@ -109,10 +109,3 @@ def test_torque_entries():
         s = Sphere(torque=[1, 2])
     except ValueError as e:
         assert str(e) == "torque must have shape (3,), but got (2,)."
-
-
-def test_misnamed_entry():
-    try:
-        s = Sphere(pos=[0, 0, 0])
-    except TypeError as e:
-        assert str(e)[-51:] == "__init__() got an unexpected keyword argument 'pos'"

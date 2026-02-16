@@ -2,24 +2,24 @@
 Soft Planktonics
 ================
 
-.. image:: https://github.com/celoy/SoftPlanktonics/actions/workflows/testing.yml/badge.svg
-   :target: https://github.com/celoy/SoftPlanktonics/actions/workflows/testing.yml
+.. image:: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml/badge.svg
+   :target: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml
 
 
-.. image:: https://img.shields.io/pypi/v/SoftPlanktonics.svg
-        :target: https://pypi.python.org/pypi/SoftPlanktonics
+.. image:: https://img.shields.io/pypi/v/SoftMobility.svg
+        :target: https://pypi.python.org/pypi/SoftMobility
 
 
 Python package to compute the mobility of soft plankton in Stokes flows.
 
 * Free software: 3-clause BSD license
-* Documentation: (COMING SOON!) https://celoy.github.io/SoftPlanktonics.
+* Documentation: (COMING SOON!) https://celoy.github.io/SoftMobility.
 
 Workflow
 --------
 Once the repository is cloned, it is advisable to run a virtualenv, with Python 3.8.18 or above.
 
-Then to install the package `splank` properly, run
+Then to install the package `softmobility` properly, run
 
 `pip install -e .`
 
