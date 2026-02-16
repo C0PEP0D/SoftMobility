@@ -79,8 +79,6 @@ class SphereAssembly:
             sphere.orientation(dofs=test_dof, params=test_param)
             sphere.force(dofs=test_dof, params=test_param)
             sphere.torque(dofs=test_dof, params=test_param)
-            sphere.slip_velocity(dofs=test_dof, params=test_param)
-            sphere.slip_omega(dofs=test_dof, params=test_param)
 
         except ValueError as e:
             raise ValueError(f"Sphere does not have the correct number of degrees of freedom or parameters: {e}")
@@ -225,7 +223,7 @@ class SphereAssembly:
 
         Jass = self.compute_Jass(dofs, params)
         C_U = self.compute_C_U(dofs, params)
-        J = jnp.block([Jass, C_U])
+        J = jnp.block([C_U, Jass])
 
         return J
 
@@ -426,11 +424,9 @@ class SphereAssembly:
             orientation = [str(x) for x in data.get("orientation", [0, 0, 0])]
             force = [str(x) for x in data.get("force", [0, 0, 0])]
             torque = [str(x) for x in data.get("torque", [0, 0, 0])]
-            slip_velocity = [str(x) for x in data.get("slip_velocity", [0, 0, 0])]
-            slip_omega = [str(x) for x in data.get("slip_omega", [0, 0, 0])]
 
             # Use these converted lists instead of raw data
-            sphere_exprs = radius + position + orientation + force + torque + slip_velocity + slip_omega
+            sphere_exprs = radius + position + orientation + force + torque
 
             for expr in sphere_exprs:
                 for dof_prefix in dof_prefixes:
@@ -478,8 +474,6 @@ class SphereAssembly:
             ori_exprs = [str(x) for x in data.get("orientation", [0, 0, 0])]
             for_exprs = [str(x) for x in data.get("force", [0, 0, 0])]
             tor_exprs = [str(x) for x in data.get("torque", [0, 0, 0])]
-            slv_exprs = [str(x) for x in data.get("force", [0, 0, 0])]
-            slo_exprs = [str(x) for x in data.get("torque", [0, 0, 0])]
 
             # Create a function for each sphere
             rad_func = create_function(rad_exprs, dof_variables, param_variables)
@@ -487,9 +481,7 @@ class SphereAssembly:
             ori_func = create_function(ori_exprs, dof_variables, param_variables)
             for_func = create_function(for_exprs, dof_variables, param_variables)
             tor_func = create_function(tor_exprs, dof_variables, param_variables)
-            slv_func = create_function(slv_exprs, dof_variables, param_variables)
-            slo_func = create_function(slo_exprs, dof_variables, param_variables)
-            spheres.append(Sphere(rad_func, pos_func, ori_func, for_func, tor_func, slv_func, slo_func))
+            spheres.append(Sphere(rad_func, pos_func, ori_func, for_func, tor_func))
 
             # Printing the characteristics of each sphere
             if verbose:
