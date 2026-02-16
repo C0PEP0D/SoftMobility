@@ -162,7 +162,6 @@ class SphereAssembly:
         # Compute the Jacobian of Q with respect to dof using JAX's automatic differentiation
         jacobian_Q = jax.jacfwd(self.grand_coordinates_func, argnums=0)
         M = jnp.array(jacobian_Q(dofs, params))
-        N = jnp.a
 
         # Create the block-diagonal matrix N using a list comprehension
         # Each block is computed by bortz_jacobian_for_sphere for each sphere

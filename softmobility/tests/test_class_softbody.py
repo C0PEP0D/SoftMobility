@@ -1,9 +1,9 @@
 import jax.numpy as jnp
-from softmobility import SoftPlankton
+from softmobility import SoftBody
 
 
 def test_mobility_matrices():
-    sp = SoftPlankton("./splank/tests/parameters.yaml")
+    sp = SoftBody("./softmobility/tests/parameters.yaml")
     M = sp.compute_mobility_tensor()
     Mexpected = jnp.array(
         [
@@ -45,7 +45,7 @@ def test_mobility_matrices():
 
 
 # def test_fast_mobility_problem():
-#     sp = SoftPlankton("./splank/tests/parameters.yaml")
+#     sp = SoftBody("./splank/tests/parameters.yaml")
 #     sp.set_dof_defaults(new_dict={"x0": 0, "x1": 0})
 #     Mk, Mmean, _, Gk, Mdof, _, Gdof, *_ = sp.compute_fast_mobility_problem()
 #     Mkexpected = jnp.array(

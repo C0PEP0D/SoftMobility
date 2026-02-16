@@ -2,13 +2,13 @@ import jax.numpy as jnp
 import jax
 from jax import lax
 
-from splank import SoftPlankton, Flow
+from softmobility import SoftBody, Flow
 
 
 class FlowBody:
     def __init__(
         self,
-        soft_plankton: SoftPlankton,
+        soft_body: SoftBody,
         flow: Flow,
         init_position=[0, 0, 0],
         init_orientation=[0, 0, 0],
@@ -19,14 +19,14 @@ class FlowBody:
         Solver for fluid-structure interaction.
 
         Parameters:
-        - soft_plankton: SoftPlankton object
+        - soft_plankton: SoftBody object
         - flow: A Flow object
         - init_position: a 3D list or array (default [0, 0, 0])
         - init_orientation: a 3D list or array (default [0, 0, 0])
         - dt: Time step for integration (default 0.01)
         - integrator: str, one of: "Euler", "RK2", or "RK4" (default "RK2")
         """
-        self.soft_plankton = soft_plankton
+        self.soft_plankton = soft_body
         self.flow = flow
         self.dof = self.soft_plankton.dof_defaults  # Degrees of freedom
         self.position = jnp.array(init_position)
