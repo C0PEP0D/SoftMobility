@@ -1,0 +1,6 @@
+numpy
+jaxlib
+jax
+sympy
+pyyaml
+jupyterlab

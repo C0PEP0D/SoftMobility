@@ -1,0 +1,55 @@
+Metadata-Version: 2.1
+Name: soft-planktonics
+Version: 0.post7.dev0+gf09d58c
+Summary: Python package to compute the mobility of soft plankton in Stokes flows.
+Home-page: https://github.com/celoy/SoftPlanktonics
+Author: Christophe Eloy
+Author-email: christopheloy@gmail.com
+License: BSD (3-clause)
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.8
+License-File: LICENSE
+License-File: AUTHORS.rst
+Requires-Dist: numpy
+Requires-Dist: jaxlib
+Requires-Dist: jax
+Requires-Dist: sympy
+Requires-Dist: pyyaml
+Requires-Dist: jupyterlab
+
+================
+Soft Planktonics
+================
+
+.. image:: https://github.com/celoy/SoftPlanktonics/actions/workflows/testing.yml/badge.svg
+   :target: https://github.com/celoy/SoftPlanktonics/actions/workflows/testing.yml
+
+
+.. image:: https://img.shields.io/pypi/v/SoftPlanktonics.svg
+        :target: https://pypi.python.org/pypi/SoftPlanktonics
+
+
+Python package to compute the mobility of soft plankton in Stokes flows.
+
+* Free software: 3-clause BSD license
+* Documentation: (COMING SOON!) https://celoy.github.io/SoftPlanktonics.
+
+Workflow
+--------
+Once the repository is cloned, it is advisable to run a virtualenv, with Python 3.8.18 or above.
+
+Then to install the package `splank` properly, run
+
+`pip install -e .`
+
+To install the packages required for development, the command is
+
+`pip install --upgrade -r requirements-dev.txt`
+
+Features
+--------
+
+- TODO. Graphic interface showing degrees of freedom with sliders
+- TODO. test surf in the limit of Vswim<<1 with Lagrangian trajectories of passive particles
