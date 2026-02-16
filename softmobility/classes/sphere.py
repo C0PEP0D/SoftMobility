@@ -18,20 +18,20 @@ class Sphere:
         self._force_func = _convert_to_vector_callable(force, "force")
         self._torque_func = _convert_to_vector_callable(torque, "torque")
 
-    def radius(self, dofs: jnp.ndarray, params: jnp.ndarray) -> float:
-        return self._radius_func(dofs, params)
+    def radius(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> float:
+        return self._radius_func(dofs, design, inputs)
 
-    def position(self, dofs: jnp.ndarray, params: jnp.ndarray) -> jnp.ndarray:
-        return self._position_func(dofs, params)
+    def position(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> jnp.ndarray:
+        return self._position_func(dofs, design, inputs)
 
-    def orientation(self, dofs: jnp.ndarray, params: jnp.ndarray) -> jnp.ndarray:
-        return self._orientation_func(dofs, params)
+    def orientation(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> jnp.ndarray:
+        return self._orientation_func(dofs, design, inputs)
 
-    def force(self, dofs: jnp.ndarray, params: jnp.ndarray) -> jnp.ndarray:
-        return self._force_func(dofs, params)
+    def force(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> jnp.ndarray:
+        return self._force_func(dofs, design, inputs)
 
-    def torque(self, dofs: jnp.ndarray, params: jnp.ndarray) -> jnp.ndarray:
-        return self._torque_func(dofs, params)
+    def torque(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> jnp.ndarray:
+        return self._torque_func(dofs, design, inputs)
 
     def __str__(self):
         return f"sphere object"
@@ -126,17 +126,17 @@ def _validate_callable(func, name):
     """Ensure the function is callable and takes exactly two arguments."""
     if not callable(func):
         raise TypeError(f"{name} must be a callable function.")
-    if func.__code__.co_argcount != 2:
-        raise ValueError(f"{name} must accept exactly two arguments: 'dofs' and 'params'.")
+    if func.__code__.co_argcount != 3:
+        raise ValueError(f"{name} must accept exactly three arguments: 'dofs', 'design', and 'inputs'.")
 
 
 def _convert_to_scalar_callable(value, name, default=1.0):
     """Convert a scalar value or callable to a callable function returning a constant float."""
     if value is None:
-        return lambda dofs, params: default
+        return lambda dofs, design, inputs: default
     try:
         float_value = float(value)
-        return lambda dofs, params: float_value
+        return lambda dofs, design, inputs: float_value
     except (TypeError, ValueError):
         pass
 
@@ -150,12 +150,12 @@ def _convert_to_scalar_callable(value, name, default=1.0):
 def _convert_to_vector_callable(value, name, default=jnp.array([0, 0, 0])):
     """Convert scalars, lists, or arrays to a callable function returning a constant value."""
     if value is None:
-        return lambda dofs, params: default
+        return lambda dofs, design, inputs: default
     try:
         vector_value = jnp.array(value)
         if vector_value.shape != (3,):
             raise ValueError(f"{name} must have shape (3,), but got {vector_value.shape}.")
-        return lambda dofs, params: vector_value
+        return lambda dofs, design, inputs: vector_value
     except TypeError:
         pass
 

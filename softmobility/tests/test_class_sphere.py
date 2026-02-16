@@ -9,14 +9,14 @@ def test_radius_entries() -> None:
 
     s = Sphere(radius=1)
 
-    radius_func = lambda _, __: 2.0
+    radius_func = lambda _, __, ___: 2.0
     s = Sphere(radius=radius_func)
 
     try:
         radius_func = lambda _: 1
         s = Sphere(radius=radius_func)
     except ValueError as e:
-        assert str(e) == "radius must accept exactly two arguments: 'dofs' and 'params'."
+        assert str(e) == "radius must accept exactly three arguments: 'dofs', 'design', and 'inputs'."
 
 
 def test_position_entries():
@@ -27,14 +27,14 @@ def test_position_entries():
 
     s = Sphere(position=[1, 0, 0])
 
-    position_func = lambda _, __: [2.0, 0.0, 0.0]
+    position_func = lambda _, __, ___: [2.0, 0.0, 0.0]
     s = Sphere(position=position_func)
 
     try:
         position_func = lambda _: 1
         s = Sphere(position=position_func)
     except ValueError as e:
-        assert str(e) == "position must accept exactly two arguments: 'dofs' and 'params'."
+        assert str(e) == "position must accept exactly three arguments: 'dofs', 'design', and 'inputs'."
 
     try:
         s = Sphere(position=[1, 2])
@@ -50,14 +50,14 @@ def test_orientation_entries():
 
     s = Sphere(orientation=[1, 0, 0])
 
-    orientation_func = lambda _, __: [2.0, 0.0, 0.0]
+    orientation_func = lambda _, __, ___: [2.0, 0.0, 0.0]
     s = Sphere(orientation=orientation_func)
 
     try:
         orientation_func = lambda _: [2.0, 0.0, 0.0]
         s = Sphere(orientation=orientation_func)
     except ValueError as e:
-        assert str(e) == "orientation must accept exactly two arguments: 'dofs' and 'params'."
+        assert str(e) == "orientation must accept exactly three arguments: 'dofs', 'design', and 'inputs'."
 
     try:
         s = Sphere(orientation=[1, 2, 3, 4])
@@ -73,14 +73,14 @@ def test_force_entries():
 
     s = Sphere(force=[1, 0, 0])
 
-    force_func = lambda _, __: [2.0, 0.0, 0.0]
+    force_func = lambda _, __, ___: [2.0, 0.0, 0.0]
     s = Sphere(force=force_func)
 
     try:
         force_func = lambda _: 1
         s = Sphere(force=force_func)
     except ValueError as e:
-        assert str(e) == "force must accept exactly two arguments: 'dofs' and 'params'."
+        assert str(e) == "force must accept exactly three arguments: 'dofs', 'design', and 'inputs'."
 
     try:
         s = Sphere(force=[1, 2])
@@ -96,14 +96,14 @@ def test_torque_entries():
 
     s = Sphere(torque=[1, 0, 0])
 
-    torque_func = lambda _, __: [2.0, 0.0, 0.0]
+    torque_func = lambda _, __, ___: [2.0, 0.0, 0.0]
     s = Sphere(torque=torque_func)
 
     try:
         torque_func = lambda _: 1
         s = Sphere(torque=torque_func)
     except ValueError as e:
-        assert str(e) == "torque must accept exactly two arguments: 'dofs' and 'params'."
+        assert str(e) == "torque must accept exactly three arguments: 'dofs', 'design', and 'inputs'."
 
     try:
         s = Sphere(torque=[1, 2])
