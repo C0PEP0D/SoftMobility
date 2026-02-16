@@ -14,7 +14,7 @@ min_version = (
 )
 if sys.version_info < min_version:
     error = """
-soft-planktonics does not support Python {0}.{1}.
+soft-mobility does not support Python {0}.{1}.
 Python {2}.{3} and above is required. Check your Python version like so:
 
 python3 --version
@@ -39,14 +39,14 @@ with open(path.join(here, "requirements.txt")) as requirements_file:
 
 
 setup(
-    name="soft-planktonics",
+    name="soft-mobility",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    description="Python package to compute the mobility of soft plankton in Stokes flows.",
+    description="Python package to compute the mobility of a soft body in Stokes flows.",
     long_description=readme,
     author="Christophe Eloy",
     author_email="christopheloy@gmail.com",
-    url="https://github.com/celoy/SoftPlanktonics",
+    url="https://github.com/celoy/SoftMobility",
     python_requires=">={}".format(".".join(str(n) for n in min_version)),
     packages=find_packages(exclude=["docs", "tests"]),
     entry_points={
@@ -56,7 +56,7 @@ setup(
     },
     include_package_data=True,
     package_data={
-        "splank": [
+        "softmobility": [
             # When adding files here, remember to update MANIFEST.in as well,
             # or else they will not be included in the distribution on PyPI!
             # 'path/to/data_file',

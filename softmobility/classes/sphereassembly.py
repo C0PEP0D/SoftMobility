@@ -144,78 +144,88 @@ class SphereAssembly:
 
         return K
 
-    def compute_velocity_matrix(self, dofs=None, params=None):
+    def compute_Jass(self, dofs=None, params=None):
         """
-        Compute the velocity matrix V such that U = V * dot(dofs), where:
-        - U is the grand velocity vector of all spheres (linear + angular),
-        - dofs is the vector of degrees of freedom,
-        - dot(dofs) is the time derivative of the degrees of freedom.
+        Computes Jass, which is defined by V = Jass . dotQ, with V the grand velocity in the body's frame and dotQ the time derivative of the dofs.
+        We use: V = B . dotX = B . J_X . dotQ, suh that Jass = B . J_X
 
         Args:
-            dof (jnp.ndarray): Current degrees of freedom (positions and rotations for all spheres).
+            dofs (np.array, optional): Degrees of freedom. Defaults to None.
+            params (np.array, optional): Parameters. Defaults to None.
 
         Returns:
-            jnp.ndarray: The matrix V that relates the velocities to the time derivatives of the degrees of freedom.
+            jnp_array: Jass
         """
         dofs, params = self._setup_params(dofs, params)
 
-        # Compute the Jacobian of Q with respect to dof using JAX's automatic differentiation
-        jacobian_Q = jax.jacfwd(self.grand_coordinates_func, argnums=0)
-        M = jnp.array(jacobian_Q(dofs, params))
+        # Compute the Jacobian of X with respect to dofs Q using JAX's automatic differentiation
+        Jacobian_X = jax.jacfwd(self.grand_coordinates_func, argnums=0)
+        J_X = jnp.array(Jacobian_X(dofs, params))
 
-        # Create the block-diagonal matrix N using a list comprehension
+        # Create the block-diagonal matrix N using a list
         # Each block is computed by bortz_jacobian_for_sphere for each sphere
-        N_blocks = [sphere.bortz_jacobian(dofs, params) for sphere in self.spheres]
+        Bi_s = [sphere.bortz_jacobian(dofs, params) for sphere in self.spheres]
 
         # Construct N by stacking the blocks along the diagonal
-        N = jnp.block(
+        B = jnp.block(
             [
-                [block if i == j else jnp.zeros_like(block) for j, block in enumerate(N_blocks)]
+                [block if i == j else jnp.zeros_like(block) for j, block in enumerate(Bi_s)]
                 for i in range(self.Nspheres)
             ]
         )
 
         # The final velocity matrix V is the product of N and M
-        V = jnp.dot(N, M)
+        Jass = B @ J_X
 
-        return V
+        return Jass
 
-    def compute_composition_of_velocity(self, dofs=None, params=None):
+    def compute_C_U(self, dofs=None, params=None):
+        """
+        Computes C_U, such that v = V + C_U .v_0, with V and v the grand velocity in the body and lab frame, and v_0 the six-component velocity of the body reference in the lab frame
+
+        Args:
+            dofs (np.array, optional): Degrees of freedom. Defaults to None.
+            params (np.array, optional): Parameters. Defaults to None.
+
+        Returns:
+            jnp.array: C_U
+        """
         dofs, params = self._setup_params(dofs, params)
 
         # Construct T by assembling vertically the individual T's for each sphere
-        T = jnp.block([[sphere.composition_of_velocity(dofs, params)] for sphere in self.spheres])
+        C_U = jnp.block([[sphere.composition_of_velocity(dofs, params)] for sphere in self.spheres])
 
-        return T
+        return C_U
 
-    def compute_composition_of_forces(self, dofs=None, params=None):
-        dofs, params = self._setup_params(dofs, params)
-
-        # Create blocks for individual spheres
-        blocks = [sphere.composition_of_force(dofs, params) for sphere in self.spheres]
-
-        # Construct Tf by stacking blocks along the diagonal
-        Tf = jnp.block(
-            [[b if i == j else jnp.zeros_like(b) for j, b in enumerate(blocks)] for i in range(self.Nspheres)]
-        )
-
-        return Tf
-
-    # def compute_composition_of_gravity(self, dofs=None, params=None):
+    # def compute_composition_of_forces(self, dofs=None, params=None):
     #     dofs, params = self._setup_params(dofs, params)
 
-    #     Tf = jnp.vstack(
-    #         [jnp.vstack([sphere.mass(dofs, params) * jnp.eye(3), jnp.zeros((3, 3))]) for sphere in self.spheres]
+    #     # Create blocks for individual spheres
+    #     blocks = [sphere.composition_of_force(dofs, params) for sphere in self.spheres]
+
+    #     # Construct Tf by stacking blocks along the diagonal
+    #     Tf = jnp.block(
+    #         [[b if i == j else jnp.zeros_like(b) for j, b in enumerate(blocks)] for i in range(self.Nspheres)]
     #     )
 
     #     return Tf
 
     def compute_Jacobian_matrix(self, dofs=None, params=None):
+        """
+        Computes the Jacobian tensor J = partial v / partial p
+
+        Args:
+            dofs (np.array, optional): Degrees of freedom. Defaults to None.
+            params (np.array, optional): Parameters. Defaults to None.
+
+        Returns:
+            jnp.array: J
+        """
         dofs, params = self._setup_params(dofs, params)
 
-        V = self.compute_velocity_matrix(dofs, params)
-        T = self.compute_composition_of_velocity(dofs, params)
-        J = jnp.block([V, T])
+        Jass = self.compute_Jass(dofs, params)
+        C_U = self.compute_C_U(dofs, params)
+        J = jnp.block([Jass, C_U])
 
         return J
 
@@ -289,14 +299,8 @@ class SphereAssembly:
 
         return jnp.concatenate([jnp.array([sphere.radius(dofs, params)]) for sphere in self.spheres])
 
-    # def grand_mass_func(self, dofs=None, params=None):
-    #     """Calculates the mass of each sphere based on input parameters."""
-    #     dofs, params = self._setup_params(dofs, params)
-
-    #     return jnp.concatenate([jnp.array([sphere.mass(dofs, params)]) for sphere in self.spheres])
-
     def grand_coordinates_func(self, dofs=None, params=None):
-        """Computes generalized coordinates for all spheres simultaneously."""
+        """Computes X, the grand coordinate for all spheres simultaneously."""
         dofs, params = self._setup_params(dofs, params)
         coords = [
             jnp.concatenate([sphere.position(dofs, params), sphere.orientation(dofs, params)])
@@ -305,7 +309,7 @@ class SphereAssembly:
         return jnp.concatenate(coords)
 
     def grand_forces_func(self, dofs=None, params=None):
-        """Computes generalized coordinates for all spheres simultaneously."""
+        """Computes f, the grand force for all spheres simultaneously."""
         dofs, params = self._setup_params(dofs, params)
         coords = [
             jnp.concatenate([sphere.force(dofs, params), sphere.torque(dofs, params)]) for sphere in self.spheres

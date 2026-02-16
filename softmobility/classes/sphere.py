@@ -10,8 +10,6 @@ class Sphere:
         orientation=None,
         force=None,
         torque=None,
-        slip_velocity=None,
-        slip_omega=None,
     ):
         """Initialize a new Sphere instance with flexible input handling."""
         self._radius_func = _convert_to_scalar_callable(radius, "radius", 1.0)
@@ -19,8 +17,6 @@ class Sphere:
         self._orientation_func = _convert_to_vector_callable(orientation, "orientation")
         self._force_func = _convert_to_vector_callable(force, "force")
         self._torque_func = _convert_to_vector_callable(torque, "torque")
-        self._slip_velocity_func = _convert_to_vector_callable(slip_velocity, "slip_velocity")
-        self._slip_omega_func = _convert_to_vector_callable(slip_omega, "slip_omega")
 
     def radius(self, dofs: jnp.ndarray, params: jnp.ndarray) -> float:
         return self._radius_func(dofs, params)
@@ -36,12 +32,6 @@ class Sphere:
 
     def torque(self, dofs: jnp.ndarray, params: jnp.ndarray) -> jnp.ndarray:
         return self._torque_func(dofs, params)
-
-    def slip_velocity(self, dofs: jnp.ndarray, params: jnp.ndarray) -> jnp.ndarray:
-        return self._slip_velocity_func(dofs, params)
-
-    def slip_omega(self, dofs: jnp.ndarray, params: jnp.ndarray) -> jnp.ndarray:
-        return self._slip_omega_func(dofs, params)
 
     def __str__(self):
         return f"sphere object"

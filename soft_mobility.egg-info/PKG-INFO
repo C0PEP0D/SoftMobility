@@ -1,8 +1,8 @@
 Metadata-Version: 2.4
-Name: soft-planktonics
-Version: 0.post1.dev0+g14e384a
-Summary: Python package to compute the mobility of soft plankton in Stokes flows.
-Home-page: https://github.com/celoy/SoftPlanktonics
+Name: soft-mobility
+Version: 0.post3.dev0+gc84a084
+Summary: Python package to compute the mobility of a soft body in Stokes flows.
+Home-page: https://github.com/celoy/SoftMobility
 Author: Christophe Eloy
 Author-email: christopheloy@gmail.com
 License: BSD (3-clause)
