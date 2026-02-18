@@ -62,8 +62,6 @@ class SphereAssembly:
             sum_force += sphere.force(self.dof_defaults, self.design_defaults, self.input_defaults)
             sum_torque += sphere.torque(self.dof_defaults, self.design_defaults, self.input_defaults)
 
-            print("CHECK FORCES", sum_force, sum_torque)
-
         if not jnp.allclose(sum_force, jnp.zeros((3,))):
             raise ValueError("Forces do not sum to zero.")
 
@@ -501,6 +499,7 @@ class SphereAssembly:
         input_set = set()
 
         # In the section where you process sphere_data:
+        all_detected_symbols = set()
         for data in sphere_data:
             # Convert all components to strings and give default values if absent
             radius = [str(data.get("radius", 1))]
@@ -519,6 +518,10 @@ class SphereAssembly:
                     design_set.update(re.findall(r"(?:" + design_prefix + ")(?:\d+)?", expr))
                 for input_prefix in input_prefixes:
                     input_set.update(re.findall(r"(?:" + input_prefix + ")(?:\d+)?", expr))
+
+            for expr in sphere_exprs:
+                expr_symbols = {str(s) for s in sp.sympify(expr).free_symbols}
+                all_detected_symbols.update(expr_symbols)
 
         # Transform variable sets into lists and sort them alphabetically
         dof_variables = sorted(list(dof_set))
@@ -542,9 +545,16 @@ class SphereAssembly:
         design_defaults = jnp.zeros(Ndesign)
         input_defaults = jnp.zeros(Ninput)
 
+        # Extract constants = defaults that are not dof/design/input
+        constants = {}
+
         # Read default values from parameters.yaml
         if "defaults" in yaml_data:
             defaults = yaml_data.get("defaults", {})
+
+            for key, value in defaults.items():
+                if key not in dof_variables and key not in design_variables and key not in input_variables:
+                    constants[key] = value
 
             # Replace default values in arrays
             for i, var in enumerate(dof_variables):
@@ -556,23 +566,36 @@ class SphereAssembly:
             for i, var in enumerate(input_variables):
                 input_defaults = input_defaults.at[i].set(defaults.get(var, 0.0))
 
+        # Detect differences between declared symbols are used ones
+        known_symbols = set(dof_variables) | set(design_variables) | set(input_variables) | set(constants.keys())
+
+        undefined_symbols = all_detected_symbols - known_symbols
+
+        if undefined_symbols:
+            raise ValueError("Undefined symbols in expressions: " + ", ".join(sorted(undefined_symbols)))
+
+        if verbose:
+            unused_defaults = known_symbols - all_detected_symbols
+
+            if unused_defaults:
+                print("  Warning: defaults declared but not used: " + ", ".join(sorted(unused_defaults)))
+
         # Generate functions for generalized coordinates for each sphere
         spheres = []
 
+        # Create a function for each sphere
         for i, data in enumerate(sphere_data):
-            # Handle missing entries and str all
             rad_exprs = str(data.get("radius", 1))
             pos_exprs = [str(x) for x in data.get("position", [0, 0, 0])]
             ori_exprs = [str(x) for x in data.get("orientation", [0, 0, 0])]
             for_exprs = [str(x) for x in data.get("force", [0, 0, 0])]
             tor_exprs = [str(x) for x in data.get("torque", [0, 0, 0])]
 
-            # Create a function for each sphere
-            rad_func = create_function(rad_exprs, dof_variables, design_variables, input_variables)
-            pos_func = create_function(pos_exprs, dof_variables, design_variables, input_variables)
-            ori_func = create_function(ori_exprs, dof_variables, design_variables, input_variables)
-            for_func = create_function(for_exprs, dof_variables, design_variables, input_variables)
-            tor_func = create_function(tor_exprs, dof_variables, design_variables, input_variables)
+            rad_func = create_function(rad_exprs, dof_variables, design_variables, input_variables, constants)
+            pos_func = create_function(pos_exprs, dof_variables, design_variables, input_variables, constants)
+            ori_func = create_function(ori_exprs, dof_variables, design_variables, input_variables, constants)
+            for_func = create_function(for_exprs, dof_variables, design_variables, input_variables, constants)
+            tor_func = create_function(tor_exprs, dof_variables, design_variables, input_variables, constants)
             spheres.append(Sphere(rad_func, pos_func, ori_func, for_func, tor_func))
 
             # Printing the characteristics of each sphere
@@ -602,7 +625,7 @@ class SphereAssembly:
 # Useful functions ###########################################################
 
 
-def create_function(sp_exprs, dofs, design, inputs):
+def create_function(sp_exprs, dofs, design, inputs, constants):
     """
     Create a function that takes dofs and yaml_data as input and returns the evaluated symbolic expressions sp_exprs.
 
@@ -623,10 +646,12 @@ def create_function(sp_exprs, dofs, design, inputs):
     dof_symbols = [sp.symbols(t) for t in dofs]
     design_symbols = [sp.symbols(p) for p in design]
     input_symbols = [sp.symbols(p) for p in inputs]
+    constant_symbols = {k: sp.symbols(k) for k in constants}
 
     if isinstance(sp_exprs, str):
         # Parse the expression using sympy
         sp_expr = sp.sympify(sp_exprs)
+        sp_expr = sp_expr.subs(constants)
 
         # Convert expression to a JAX function or raise ValueError
         try:
@@ -646,7 +671,7 @@ def create_function(sp_exprs, dofs, design, inputs):
         return wrapper
     else:
         # Parse the expressions using sympy
-        sp_exprs = [sp.sympify(expr) for expr in sp_exprs]
+        sp_exprs = [sp.sympify(expr).subs(constants) for expr in sp_exprs]
         jax_exprs = []
 
         # Convert each expression to a JAX function and append it to the list of functions
