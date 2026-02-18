@@ -55,5 +55,4 @@ jobs:
       - name: Test with pytest
         run: |
           set -vxeuo pipefail
-          coverage run -m pytest -vv -s
-          coverage report -m
+          pytest --cov=${{ env.REPOSITORY_NAME }} --cov-report=term-missing -vv -s
