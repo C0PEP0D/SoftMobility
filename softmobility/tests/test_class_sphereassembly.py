@@ -6,7 +6,7 @@ def test_init():
     sa = SphereAssembly()
     assert True
     assert sa.Ndof == 0
-    assert sa.Nparam == 0
+    assert sa.Ndesign == 0
     assert sa.Nspheres == 0
     assert isinstance(sa.spheres, list)
     assert len(sa.spheres) == sa.Nspheres
@@ -23,7 +23,7 @@ def test_init_from_file():
     sa = SphereAssembly("./softmobility/tests/parameters.yaml")
     assert str(sa) == "Assembly with 2 spheres, 2 degrees of freedom, and 8 fixed parameters"
     assert sa.dof_variables == ["x0", "x1"]
-    assert sa.param_variables == [
+    assert sa.design_variables == [
         "distance",
         "gravity0",
         "gravity1",
@@ -35,7 +35,7 @@ def test_init_from_file():
     ]
 
     assert jnp.allclose(sa.dof_defaults, jnp.array([1, 0])).item()
-    assert jnp.allclose(sa.param_defaults, jnp.array([1, 0, 0, 0, 1, 0, 0, 0.25])).item()
+    assert jnp.allclose(sa.design_defaults, jnp.array([1, 0, 0, 0, 1, 0, 0, 0.25])).item()
 
 
 def test_set_dof_defaults():
@@ -56,18 +56,18 @@ def test_set_dof_defaults():
 
 def test_set_param_defaults():
     sa = SphereAssembly("./softmobility/tests/parameters.yaml")
-    sa.set_param_defaults(new_dict={"distance": 3})
-    assert jnp.allclose(sa.param_defaults, jnp.array([3, 0, 0, 0, 1, 0, 0, 0.25])).item()
-    sa.set_param_defaults(new_params=[1, 1, 0.5, 0, 0, 0, 1, -1.2])
-    assert jnp.allclose(sa.param_defaults, jnp.array([1, 1, 0.5, 0, 0, 0, 1, -1.2])).item()
+    sa.set_design_defaults(new_dict={"distance": 3})
+    assert jnp.allclose(sa.design_defaults, jnp.array([3, 0, 0, 0, 1, 0, 0, 0.25])).item()
+    sa.set_design_defaults(new_design=[1, 1, 0.5, 0, 0, 0, 1, -1.2])
+    assert jnp.allclose(sa.design_defaults, jnp.array([1, 1, 0.5, 0, 0, 0, 1, -1.2])).item()
     try:
-        sa.set_param_defaults(new_dict={"x2": 3})
+        sa.set_design_defaults(new_dict={"x2": 3})
     except ValueError as e:
         assert str(e) == "Invalid variable name: x2"
     try:
-        sa.set_param_defaults(new_params=[1, 0])
+        sa.set_design_defaults(new_design=[1, 0])
     except ValueError as e:
-        assert str(e) == "new_params array must have shape (8,)"
+        assert str(e) == "new_design array must have shape (8,)"
 
 
 def test_kinematic_tensors():
@@ -121,9 +121,9 @@ def test_kinematic_tensors():
             [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.84147096][0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.45969772][
-                1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0
-            ],
+            [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.84147096],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.45969772],
+            [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.33333334, 0.0],
@@ -133,7 +133,7 @@ def test_kinematic_tensors():
     )
     assert jnp.allclose(M3, M3test)
 
-    M4 = sa.compute_stiffness_matrix()
+    M4, _ = sa.compute_stiffness_matrices()
     M4test = jnp.array(
         [
             [0.0, 0.0],
@@ -170,24 +170,3 @@ def test_kinematic_tensors():
         ]
     )
     assert jnp.allclose(M5, M5test)
-
-    M6 = sa.compute_composition_of_forces()
-    M6test = jnp.array(
-        [
-            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0, 0.0, 0.0, 1.0],
-        ]
-    )
-
-
-test_kinematic_tensors()
