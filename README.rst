@@ -6,10 +6,6 @@ Soft Planktonics
    :target: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml
 
 
-.. image:: https://img.shields.io/pypi/v/SoftMobility.svg
-        :target: https://pypi.python.org/pypi/SoftMobility
-
-
 Python package to compute the mobility of soft plankton in Stokes flows.
 
 * Free software: 3-clause BSD license
