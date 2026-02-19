@@ -400,11 +400,13 @@ class SphereAssembly:
         # Print example sphere assembly
         for i, sphere in enumerate(self.spheres):
             output += f"\nSPHERE {i}\n"
-            output += f"  radius: {sphere.radius(self.dof_defaults, self.design_defaults)}\n"
-            output += f"  position: {sphere.position(self.dof_defaults, self.design_defaults)}\n"
-            output += f"  orientation: {sphere.orientation(self.dof_defaults, self.design_defaults)}\n"
-            output += f"  force: {sphere.force(self.dof_defaults, self.design_defaults)}\n"
-            output += f"  torque: {sphere.torque(self.dof_defaults, self.design_defaults)}\n"
+            output += f"  radius: {sphere.radius(self.dof_defaults, self.design_defaults, self.input_defaults)}\n"
+            output += (
+                f"  position: {sphere.position(self.dof_defaults, self.design_defaults, self.input_defaults)}\n"
+            )
+            output += f"  orientation: {sphere.orientation(self.dof_defaults, self.design_defaults, self.input_defaults)}\n"
+            output += f"  force: {sphere.force(self.dof_defaults, self.design_defaults, self.input_defaults)}\n"
+            output += f"  torque: {sphere.torque(self.dof_defaults, self.design_defaults, self.input_defaults)}\n"
 
         return output
 

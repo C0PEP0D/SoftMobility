@@ -24,6 +24,7 @@ soft_mobility.egg-info/top_level.txt
 softmobility/__init__.py
 softmobility/_version.py
 softmobility/classes/__init__.py
+softmobility/classes/field.py
 softmobility/classes/flow.py
 softmobility/classes/flowbody.py
 softmobility/classes/softbody.py

@@ -55,7 +55,7 @@ class Flow:
         grad_u = self.gradient(pos)  # Compute velocity gradient tensor
 
         # Compute the trace (divergence of velocity)
-        trace = jnp.trace(grad_u)  # tr(∇u) = ∂ux/∂x + ∂uy/∂y + ∂uz/∂z
+        # trace = jnp.trace(grad_u)  # tr(∇u) = ∂ux/∂x + ∂uy/∂y + ∂uz/∂z
 
         # Check incompressibility
         # if jnp.abs(trace) > tol:
@@ -68,13 +68,13 @@ class Flow:
         A = 0.5 * (grad_u - grad_u.T)
         Omega = jnp.array([A[2, 1], A[0, 2], A[1, 0]])  # Extract angular velocity components
 
-        # Symmetric part S
-        S = 0.5 * (grad_u + grad_u.T)  # Full symmetric strain rate tensor
+        # Symmetric part E
+        rate_of_strain = 0.5 * (grad_u + grad_u.T)  # Full symmetric strain rate tensor
 
         # # Store all 6 independent components: Sxx, Sxy, Sxz, Syy, Syz
         # S_vector = jnp.array([S[0, 0], S[0, 1], S[0, 2], S[1, 1], S[1, 2]])
 
-        return Omega, S
+        return Omega, rate_of_strain
 
     def _velocity(self, pos):
         """Abstract method for velocity implementation (must be overridden)."""

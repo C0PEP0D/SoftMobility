@@ -1,7 +1,8 @@
 __all__ = [
     "sphere",
     "sphereassembly",
-    "softplankton",
+    "softbody",
     "flow",
-    "fluidplankton",
+    "field",
+    "flowbody",
 ]
