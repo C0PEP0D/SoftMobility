@@ -71,7 +71,7 @@ class Sphere:
             return (
                 (sin_norm_r / norm_r) * jnp.eye(3)
                 + (1 - sin_norm_r / norm_r) * jnp.outer(unit_r, unit_r)
-                + ((1 - cos_norm_r) / norm_r) * skew_unit_r
+                + (1 - cos_norm_r) / norm_r * skew_unit_r
             )
 
         # Use JAX's lax.cond to switch between cases without breaking JIT
