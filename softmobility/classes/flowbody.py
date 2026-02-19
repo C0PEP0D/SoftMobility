@@ -62,14 +62,14 @@ class FlowBody:
 
         # Compute the flow at body position (in the lab framework)
         u_lab = self.flow.velocity(position)
-        omega_lab, s_lab = self.flow.omega_s(position)
+        omega_lab, E_lab = self.flow.omega_s(position)
 
         # Commpute the field value at body position (in the lab framework)
         field_lab = self.field.vector(position, time)
 
-        return self.compute_grand_velocity(orientation, dofs, inputs, u_lab, omega_lab, s_lab, field_lab)
+        return self.compute_grand_velocity(orientation, dofs, inputs, u_lab, omega_lab, E_lab, field_lab)
 
-    def _compute_grand_velocity(self, orientation, dofs, inputs, u_lab, omega_lab, s_lab, field_lab):
+    def _compute_grand_velocity(self, orientation, dofs, inputs, u_lab, omega_lab, E_lab, field_lab):
         # Compute rotation matrices
         R, sixc_R = rotation_matrix_from_Rodrigues(orientation, Ndof=self.soft_body.Ndof)
 
@@ -78,15 +78,15 @@ class FlowBody:
         field = R.T @ field_lab
 
         # Compute rate-of-strain in the particle framework
-        s_part = R.T @ s_lab @ R
-        s_inf = jnp.array([s_part[0, 0], s_part[0, 1], s_part[0, 2], s_part[1, 1], s_part[1, 2]])
+        E_body = R.T @ E_lab @ R
+        E_inf = jnp.array([E_body[0, 0], E_body[0, 1], E_body[0, 2], E_body[1, 1], E_body[1, 2]])
 
         tensors = self.compute_fast_mobility(jnp.block([dofs, inputs]))
         M_H = tensors.M_H
         M_K = tensors.M_K
         C_E = tensors.C_E
 
-        sixc_velocity = M_H @ field + M_K @ dofs + C_E @ s_inf
+        sixc_velocity = M_H @ field + M_K @ dofs + C_E @ E_inf
 
         # Compute velocities in lab framework
         sixc_velocity_lab = sixc_R @ sixc_velocity + p_lab
@@ -96,12 +96,13 @@ class FlowBody:
     def integrate_euler(self):
         """Euler first-order integration."""
 
-        Qdot = self.grand_velocity()
+        p = self.grand_velocity()
+        bortz = compute_Bortz_operator(self.orientation)
 
-        self.position += self.dt * Qdot[:3]
-        self.orientation += self.dt * dot_orientation(self.orientation, Qdot[3:6])
+        self.position += self.dt * p[:3]
+        self.orientation += self.dt * bortz @ p[3:6]
         self.orientation = rescale_orientation(self.orientation)
-        self.dofs += self.dt * Qdot[6:]
+        self.dofs += self.dt * p[6:]
 
         self.time += self.dt
         self.trajectory.append([self.position, self.orientation, self.dofs])
@@ -113,6 +114,7 @@ class FlowBody:
         current_dof = self.dofs.copy()
         current_position = self.position.copy()
         current_orientation = self.orientation.copy()
+        bortz = compute_Bortz_operator(self.orientation)
 
         # First step (calculate k1)
         Qdot = self.grand_velocity()  # Compute the velocity
@@ -123,7 +125,7 @@ class FlowBody:
 
         # Second step (calculate k2), calculate the mid-point velocity (using the current values)
         self.position = current_position + self.dt * k1_position / 2
-        self.orientation = current_orientation + self.dt * k1_orientation / 2
+        self.orientation = current_orientation + self.dt * bortz @ k1_orientation / 2
         self.dofs = current_dof + self.dt * k1_dof / 2
 
         # Compute Qdot at the midpoint
@@ -134,7 +136,7 @@ class FlowBody:
 
         # Update the state with weighted sum of k1 and k2
         self.position = current_position + self.dt * (k1_position + k2_position) / 2
-        self.orientation = current_orientation + self.dt * (k1_orientation + k2_orientation) / 2
+        self.orientation = current_orientation + self.dt * bortz @ (k1_orientation + k2_orientation) / 2
         self.orientation = rescale_orientation(self.orientation)  # Ensure orientation is valid
         self.dofs = current_dof + self.dt * (k1_dof + k2_dof) / 2
 
@@ -231,27 +233,28 @@ def rescale_orientation(rvec):
 
 
 @jax.jit
-def dot_orientation(rvec, omega):
+def compute_Bortz_operator(rvec):
     """
     Compute the time derivative of the orientation vector using the Bortz formula.
     """
     rvec = jnp.array(rvec)
-    r = jnp.linalg.norm(rvec)
+    theta = jnp.linalg.norm(rvec)
 
     def small_r_case(_):
         """Return omega directly if r is small."""
-        return omega
+        return jnp.eye(3)
 
     def normal_case(_):
         """Compute Bortz derivative normally."""
-        runit = rvec / r
-        term1 = omega
-        term2 = 0.5 * jnp.cross(runit, omega)
-        correction_factor = (1 / r**2) * (1 - (r / 2) / jnp.tan(r / 2))
-        term3 = correction_factor * jnp.cross(runit, jnp.cross(runit, omega))
+        runit = rvec / theta
+        kx, ky, kz = runit
+        runitcross = jnp.array([[0, -kz, ky], [kz, 0, -kx], [-ky, kx, 0]])
+        term1 = -0.5 * theta * runitcross
+        term2 = (theta / 2) / jnp.tan(theta / 2) * jnp.eye(3)
+        term3 = (1 - (theta / 2) / jnp.tan(theta / 2)) * jnp.outer(runit, runit)
         return term1 + term2 + term3
 
-    return lax.cond(r < 1e-6, small_r_case, normal_case, None)
+    return lax.cond(theta < 1e-6, small_r_case, normal_case, None)
 
 
 rotation_matrix_from_Rodrigues = jax.jit(
@@ -269,15 +272,15 @@ def _rotation_matrix_from_Rodrigues_impl(rvec, Ndof):
     def no_rotation(_):
         """Return identity matrix when theta is very small."""
         R = jnp.eye(3)
-        grand_R = jnp.eye(Ndof + 6)
-        return R, grand_R
+        sixc_R = jnp.eye(Ndof + 6)
+        return R, sixc_R
 
     def compute_rotation(_):
         """Compute Rodrigues' rotation matrix."""
-        k = rvec / theta
-        kx, ky, kz = k
-        K = jnp.array([[0, -kz, ky], [kz, 0, -kx], [-ky, kx, 0]])
-        R = jnp.eye(3) + jnp.sin(theta) * K + (1 - jnp.cos(theta)) * jnp.dot(K, K)
+        runit = rvec / theta
+        kx, ky, kz = runit
+        runitcross = jnp.array([[0, -kz, ky], [kz, 0, -kx], [-ky, kx, 0]])
+        R = jnp.eye(3) + jnp.sin(theta) * runitcross + (1 - jnp.cos(theta)) * jnp.dot(runitcross, runitcross)
 
         sixc_R = jnp.block(
             [
