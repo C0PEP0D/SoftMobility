@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: soft-mobility
-Version: 0.post3.dev0+gc84a084
+Version: 0.post15.dev0+gda0c87d
 Summary: Python package to compute the mobility of a soft body in Stokes flows.
 Home-page: https://github.com/celoy/SoftMobility
 Author: Christophe Eloy
@@ -36,10 +36,6 @@ Soft Planktonics
 
 .. image:: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml/badge.svg
    :target: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml
-
-
-.. image:: https://img.shields.io/pypi/v/SoftMobility.svg
-        :target: https://pypi.python.org/pypi/SoftMobility
 
 
 Python package to compute the mobility of soft plankton in Stokes flows.
