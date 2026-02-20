@@ -109,16 +109,16 @@ class FlowBodySolver:
         return self._compute_sixc_velocity(self.orientation, self.dofs, input_vec, u_lab, omega_lab, E_lab)
 
     def _compute_sixc_velocity(self, orientation, dofs, input_vec, u_lab, omega_lab, E_lab):
-        R, sixc_R = rotation_matrix_from_Rodrigues(orientation, Ndof=self.soft_body.Ndof)
+        rot_matrix, sixc_rot_matrix = rotation_matrix_from_Rodrigues(orientation, Ndof=self.soft_body.Ndof)
 
-        E_body = R.T @ E_lab @ R
+        E_body = rot_matrix.T @ E_lab @ rot_matrix
         E_inf = jnp.array([E_body[0, 0], E_body[0, 1], E_body[0, 2], E_body[1, 1], E_body[1, 2]])
 
         tensors = self.compute_fast_mobility(dofs)
         sixc_velocity = tensors.M_H @ input_vec + tensors.M_K @ dofs + tensors.C_E @ E_inf
 
         p_lab = jnp.block([u_lab, omega_lab, jnp.zeros(self.soft_body.Ndof)])
-        return sixc_R @ sixc_velocity + p_lab
+        return sixc_rot_matrix @ sixc_velocity + p_lab
 
     def integrate_euler(self):
         """Euler first-order integration."""
