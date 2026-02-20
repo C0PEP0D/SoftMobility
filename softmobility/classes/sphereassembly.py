@@ -635,54 +635,47 @@ def create_function(sp_exprs, dofs, design, constants):
 
 
 def create_coupling_functions(sp_exprs, dof_variables, design_variables, input_variables, constants):
-    """
-    Extract field and stiffness coupling matrices from force/torque expressions.
-
-    Decomposes expressions as:
-        [F, T] = C_field(dofs, design) @ inputs + C_stiff(dofs, design) @ dofs
-
-    Validates that expressions are linear in inputs (but arbitrary in dofs).
-
-    Parameters
-    ----------
-    sp_exprs : list[str]
-        List of 6 expressions [fx, fy, fz, tx, ty, tz].
-    dof_variables : list[str]
-    design_variables : list[str]
-    input_variables : list[str]
-    constants : dict
-
-    Returns
-    -------
-    C_field_func : callable
-        (dof_args, design_args) -> jnp.ndarray of shape (6, Ninput)
-    C_stiff_func : callable
-        (dof_args, design_args) -> jnp.ndarray of shape (6, Ndof)
-    """
     dof_symbols = [sp.Symbol(v) for v in dof_variables]
     design_symbols = [sp.Symbol(v) for v in design_variables]
     input_symbols = [sp.Symbol(v) for v in input_variables]
 
     exprs = [sp.sympify(e).subs(constants) for e in sp_exprs]
 
-    # --- Validate linearity in inputs only ---
+    # --- Validate linearity in inputs ---
     for i, expr in enumerate(exprs):
         for sym in input_symbols:
             if not sp.simplify(sp.diff(expr, sym, 2)).is_zero:
                 raise ValueError(f"Expression {i} '{expr}' is nonlinear in input '{sym}'.")
 
-    # --- C_field[i, j] = diff(expr_i, input_j) — function of (dofs, design) ---
+    # --- C_field[i, j] = d(expr_i) / d(input_j) ---
     C_field_sym = [[sp.diff(expr, inp) for inp in input_symbols] for expr in exprs]
+
+    # --- Subtract field contribution: new_expr = expr - C_field @ inputs ---
+    residual_sym = [
+        sp.simplify(expr - sum(c * inp for c, inp in zip(row, input_symbols)))
+        for expr, row in zip(exprs, C_field_sym)
+    ]
+
+    # --- Validate that residual has no remaining input dependence ---
+    for i, res in enumerate(residual_sym):
+        for sym in input_symbols:
+            if not sp.simplify(sp.diff(res, sym)).is_zero:
+                raise ValueError(
+                    f"Expression {i}: residual '{res}' still depends on input '{sym}' "
+                    f"after subtracting C_field @ inputs. Check linearity."
+                )
+
+    # --- C_stiff[i, j] = d(residual_i) / d(dof_j) ---
+    C_stiff_sym = [[sp.diff(res, dof) for dof in dof_symbols] for res in residual_sym]
+
+    # --- Lambdify ---
     C_field_funcs = [[sp.lambdify([dof_symbols, design_symbols], c, "jax") for c in row] for row in C_field_sym]
+    C_stiff_funcs = [[sp.lambdify([dof_symbols, design_symbols], c, "jax") for c in row] for row in C_stiff_sym]
 
     def C_field_func(dof_args, design_args):
         return jnp.array(
             [[c(dof_args, design_args) for c in row] for row in C_field_funcs], dtype=float
         )  # shape (6, Ninput)
-
-    # --- C_stiff[i, j] = diff(expr_i, dof_j) — function of (dofs, design) ---
-    C_stiff_sym = [[sp.diff(expr, dof) for dof in dof_symbols] for expr in exprs]
-    C_stiff_funcs = [[sp.lambdify([dof_symbols, design_symbols], c, "jax") for c in row] for row in C_stiff_sym]
 
     def C_stiff_func(dof_args, design_args):
         return jnp.array(
@@ -693,6 +686,7 @@ def create_coupling_functions(sp_exprs, dof_variables, design_variables, input_v
     C_stiff_func.expression = [[str(c) for c in row] for row in C_stiff_sym]
 
     return C_field_func, C_stiff_func
+    # d/d(dof)
 
 
 def _classify_input_variables(input_variables: list[str]) -> tuple[list[str], list[str]]:

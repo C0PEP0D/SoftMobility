@@ -6,3 +6,4 @@ sympy
 pyyaml
 jupyterlab
 plotly
+ipywidgets
