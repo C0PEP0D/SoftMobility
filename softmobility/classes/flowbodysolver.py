@@ -14,6 +14,7 @@ class FlowBodySolver:
     Parameters:
     - soft_plankton: SoftBody object
     - flow: A Flow object
+    - input_map: A dict mapping input variable names to Field or Scalar objects
     - init_position: a 3D list or array (default [0, 0, 0])
     - init_orientation: a 3D list or array (default [0, 0, 0])
     - dt: Time step for integration (default 0.01)
@@ -24,7 +25,7 @@ class FlowBodySolver:
         self,
         soft_body: SoftBody,
         flow: Flow,
-        input_map: dict[str, Field | Scalar] | None = None,  # maps input_variable_base_name → Field or Scalar
+        input_map: dict[str, Field | Scalar] | None = None,
         init_position=[0, 0, 0],
         init_orientation=[0, 0, 0],
         dt=0.01,
@@ -33,7 +34,6 @@ class FlowBodySolver:
         self.soft_body = soft_body
         self.flow = flow
         self._validate_inputs(input_map)
-        # self.input_map = input_map  # {"gravity": Field(...), "active_torque": Scalar(...)}
         self.dofs = self.soft_body.dof_defaults  # Degrees of freedom
         self.position = jnp.array(init_position)
         self.orientation = jnp.array(init_orientation)
@@ -104,8 +104,8 @@ class FlowBodySolver:
         """Compute six-component velocity of the body."""
         rot_matrix, _ = rotation_matrix_from_Rodrigues(self.orientation, Ndof=self.soft_body.Ndof)
         input_vec = self._build_input_vector(self.position, self.time, rot_matrix)
-        u_lab = self.flow.velocity(self.position)
-        omega_lab, E_lab = self.flow.omega_s(self.position)
+        u_lab = self.flow.velocity(self.position, self.time)
+        omega_lab, E_lab = self.flow.omega_rate_of_strain(self.position, self.time)
         return self._compute_sixc_velocity(self.orientation, self.dofs, input_vec, u_lab, omega_lab, E_lab)
 
     def _compute_sixc_velocity(self, orientation, dofs, input_vec, u_lab, omega_lab, E_lab):
@@ -119,30 +119,6 @@ class FlowBodySolver:
 
         p_lab = jnp.block([u_lab, omega_lab, jnp.zeros(self.soft_body.Ndof)])
         return sixc_R @ sixc_velocity + p_lab
-
-    # def _compute_sixc_velocity(self, orientation, dofs, inputs, u_lab, omega_lab, E_lab, field_lab):
-    #     # Compute rotation matrices
-    #     R, sixc_R = rotation_matrix_from_Rodrigues(orientation, Ndof=self.soft_body.Ndof)
-
-    #     # Compute flow velocities and field value in the body's framework
-    #     p_lab = jnp.block([u_lab, omega_lab, jnp.zeros(self.soft_body.Ndof)])
-    #     field = R.T @ field_lab
-
-    #     # Compute rate-of-strain in the particle framework
-    #     E_body = R.T @ E_lab @ R
-    #     E_inf = jnp.array([E_body[0, 0], E_body[0, 1], E_body[0, 2], E_body[1, 1], E_body[1, 2]])
-
-    #     tensors = self.compute_fast_mobility(jnp.block([dofs, inputs]))
-    #     M_H = tensors.M_H
-    #     M_K = tensors.M_K
-    #     C_E = tensors.C_E
-
-    #     sixc_velocity = M_H @ field + M_K @ dofs + C_E @ E_inf
-
-    #     # Compute velocities in lab framework
-    #     sixc_velocity_lab = sixc_R @ sixc_velocity + p_lab
-
-    #     return sixc_velocity_lab
 
     def integrate_euler(self):
         """Euler first-order integration."""
@@ -252,12 +228,12 @@ class FlowBodySolver:
         self.time += self.dt
         self.trajectory.append([self.position, self.orientation, self.dofs])
 
-    def simulate(self, T):
+    def simulate(self, final_time):
         """Run the simulation for time T."""
-        num_steps = int(T / self.dt)
+        num_steps = int(final_time / self.dt)
         for t in range(num_steps):
             if t % 100 == 0:
-                print(f"Time: {self.time:.3f} / {T:.3f}  Integrator {self.integrator}")
+                print(f"Time: {self.time:.3f} / {final_time:.3f}  Integrator {self.integrator}")
             if self.integrator == "Euler":
                 self.integrate_euler()
             elif self.integrator == "RK2":
