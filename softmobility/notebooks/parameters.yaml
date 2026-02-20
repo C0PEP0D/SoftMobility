@@ -4,7 +4,8 @@
 #
 # Structure:
 # - `dof_names`: Additional prefixes/names for degrees of freedom (DOFs).
-# - `param_names`: Additional prefixes/names for parameters.
+# - `design_names`: Additional prefixes/names for design parameters.
+# - `input_names`: Additional prefixes/names for input parameters (e.g., fields).
 # - `defaults`: Initial values for DOFs and parameters.
 # - `spheres`: List of spheres with geometry and forces.
 #
@@ -30,7 +31,6 @@ design_names:     # Design arameter prefixes/names (extends default "design")
     - spring_k
 input_names:      # Input parameter prefixes/names (extends default "input")
     - gravity
-    - mass
 
 # ----------------------------
 # Default Values (Optional)
@@ -39,9 +39,9 @@ input_names:      # Input parameter prefixes/names (extends default "input")
 # - DOFs: Use names like `dof0`, `x1` (based on `dof_names`).
 # - Parameters: Use names from `param_names` or defaults like `k`.
 defaults:
-  myradius: 0.25  # Parameter: Listed in `param_names`
-  spring_k: 1     # Parameter: Auto-detected (default prefix "k")
-  mass0: 1
+  myradius: 0.25  # Parameter: Listed in `design_names`
+  spring_k: 1     
+  mass0: 1        # Constant: Auto-detected 
   mass1: -1
 
 # ----------------------------
@@ -53,8 +53,7 @@ defaults:
 # - `orientation`: [rx, ry, rz] (optional, default = [0, 0, 0])
 # - `force`:    [fx, fy, fz] (optional, default = [0, 0, 0])
 # - `torque`:   [tx, ty, tz] (optional, default = [0, 0, 0])
-# - `slip_velocity`: [ux, uy, uz] (optional, default = [0, 0, 0])
-# - `slip_omega`: [omegax, omegay, omegaz] (optional, default = [0, 0, 0])
+
 
 spheres:
   - # Sphere 0 #################

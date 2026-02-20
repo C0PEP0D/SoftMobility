@@ -8,33 +8,35 @@ class Sphere:
         radius=None,
         position=None,
         orientation=None,
-        force=None,
-        torque=None,
+        c_field=None,
+        c_stiff=None,
     ):
         """Initialize a new Sphere instance with flexible input handling."""
         self._radius_func = _convert_to_scalar_callable(radius, "radius", 1.0)
         self._position_func = _convert_to_vector_callable(position, "position")
         self._orientation_func = _convert_to_vector_callable(orientation, "orientation")
-        self._force_func = _convert_to_vector_callable(force, "force")
-        self._torque_func = _convert_to_vector_callable(torque, "torque")
+        self._c_field_func = _convert_to_array_callable(c_field, "c_field")
+        self._c_stiff_func = _convert_to_array_callable(c_stiff, "c_stiff")
 
-    def radius(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> float:
-        return self._radius_func(dofs, design, inputs)
+    def radius(self, dofs: jnp.ndarray, design: jnp.ndarray) -> float:
+        """radius of the sphere"""
+        return self._radius_func(dofs, design)
 
-    def position(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> jnp.ndarray:
-        return self._position_func(dofs, design, inputs)
+    def position(self, dofs: jnp.ndarray, design: jnp.ndarray) -> jnp.ndarray:
+        """position relative to the reference point"""
+        return self._position_func(dofs, design)
 
-    def orientation(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> jnp.ndarray:
-        return self._orientation_func(dofs, design, inputs)
+    def orientation(self, dofs: jnp.ndarray, design: jnp.ndarray) -> jnp.ndarray:
+        """orientation vector"""
+        return self._orientation_func(dofs, design)
 
-    def force(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> jnp.ndarray:
-        return self._force_func(dofs, design, inputs)
+    def c_field(self, dofs: jnp.ndarray, design: jnp.ndarray) -> jnp.ndarray:
+        """forces applied to the center"""
+        return self._c_field_func(dofs, design)
 
-    def torque(self, dofs: jnp.ndarray, design: jnp.ndarray, inputs: jnp.ndarray) -> jnp.ndarray:
-        return self._torque_func(dofs, design, inputs)
-
-    def __str__(self):
-        return f"sphere object"
+    def c_stiff(self, dofs: jnp.ndarray, design: jnp.ndarray) -> jnp.ndarray:
+        """forces applied to the center"""
+        return self._c_stiff_func(dofs, design)
 
     def _bortz_equation(self, *args):
         """
@@ -78,7 +80,6 @@ class Sphere:
         return lax.cond(norm_r < 1e-6, zero_case, nonzero_case, norm_r)
 
     def bortz_jacobian(self, *args):
-
         # Compute the Bortz Jacobian for the rotation vector
         B = self._bortz_equation(*args)
 
@@ -126,17 +127,17 @@ def _validate_callable(func, name):
     """Ensure the function is callable and takes exactly two arguments."""
     if not callable(func):
         raise TypeError(f"{name} must be a callable function.")
-    if func.__code__.co_argcount != 3:
-        raise ValueError(f"{name} must accept exactly three arguments: 'dofs', 'design', and 'inputs'.")
+    if func.__code__.co_argcount != 2:
+        raise ValueError(f"{name} must accept exactly two arguments: 'dofs', 'design'.")
 
 
 def _convert_to_scalar_callable(value, name, default=1.0):
     """Convert a scalar value or callable to a callable function returning a constant float."""
     if value is None:
-        return lambda dofs, design, inputs: default
+        return lambda dofs, design: default
     try:
         float_value = float(value)
-        return lambda dofs, design, inputs: float_value
+        return lambda dofs, design: float_value
     except (TypeError, ValueError):
         pass
 
@@ -150,12 +151,12 @@ def _convert_to_scalar_callable(value, name, default=1.0):
 def _convert_to_vector_callable(value, name, default=jnp.array([0, 0, 0])):
     """Convert scalars, lists, or arrays to a callable function returning a constant value."""
     if value is None:
-        return lambda dofs, design, inputs: default
+        return lambda dofs, design: default
     try:
         vector_value = jnp.array(value)
         if vector_value.shape != (3,):
             raise ValueError(f"{name} must have shape (3,), but got {vector_value.shape}.")
-        return lambda dofs, design, inputs: vector_value
+        return lambda dofs, design: vector_value
     except TypeError:
         pass
 
@@ -164,3 +165,26 @@ def _convert_to_vector_callable(value, name, default=jnp.array([0, 0, 0])):
         return value
 
     raise TypeError(f"{name} must be a callable, an array, or a list.")
+
+
+def _convert_to_array_callable(value, name, default=jnp.zeros((6, 0))):
+    """Validate that value is a callable returning a (6, Ninput) array."""
+    if value is None:
+        return lambda dofs, design: default
+    try:
+        array_value = jnp.array(value)
+        if array_value.shape[0] != 6:
+            raise ValueError(f"{name} must have shape (6,*), but got {array_value.shape}.")
+        return lambda dofs, design: array_value
+
+        dummy_dofs = jnp.zeros(1)
+        dummy_design = jnp.zeros(1)
+        result = value(dummy_dofs, dummy_design)
+    except TypeError:
+        pass
+
+    if callable(value):
+        _validate_callable(value, name)
+        return value
+
+    raise TypeError(f"{name} must be a callable or an array.")
