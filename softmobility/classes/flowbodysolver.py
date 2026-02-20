@@ -4,10 +4,10 @@ import jax.numpy as jnp
 import jax
 from jax import lax
 
-from softmobility import SoftBody, Flow, Field
+from softmobility import SoftBody, Flow, Field, Scalar
 
 
-class FlowBody:
+class FlowBodySolver:
     """
     Solver for fluid-structure interaction.
 
@@ -24,7 +24,7 @@ class FlowBody:
         self,
         soft_body: SoftBody,
         flow: Flow,
-        field: Field,
+        input_map: dict[str, Field | Scalar] | None = None,  # maps input_variable_base_name → Field or Scalar
         init_position=[0, 0, 0],
         init_orientation=[0, 0, 0],
         dt=0.01,
@@ -32,9 +32,9 @@ class FlowBody:
     ):
         self.soft_body = soft_body
         self.flow = flow
-        self.field = field
+        self._validate_inputs(input_map)
+        # self.input_map = input_map  # {"gravity": Field(...), "active_torque": Scalar(...)}
         self.dofs = self.soft_body.dof_defaults  # Degrees of freedom
-        self.inputs = self.soft_body.input_defaults
         self.position = jnp.array(init_position)
         self.orientation = jnp.array(init_orientation)
         self.dt = dt
@@ -42,61 +42,112 @@ class FlowBody:
         self.trajectory = [[self.position, self.orientation, self.dofs]]
         self.time = 0.0
         self.compute_fast_mobility = jax.jit(self._compute_fast_mobility)
-        self.compute_grand_velocity = jax.jit(self._compute_grand_velocity)
+        self.compute_grand_velocity = jax.jit(self._compute_sixc_velocity)
 
-    def _compute_fast_mobility(self, dofs_inputs):
+    def _validate_inputs(self, input_dict: dict):
+        """
+        Validate and store inputs as ordered lists matching input_variables layout.
+        Populates self.fields (list[Field]) and self.scalars (list[Scalar]).
+        """
+        input_dict = input_dict or {}
+        fields, scalars = [], []
+        seen_field_bases = set()
+
+        for var in self.soft_body.input_variables:
+            if var[-1].isdigit():
+                base = var[:-1]
+                if base not in seen_field_bases:
+                    if base not in input_dict:
+                        raise ValueError(f"Missing Field input '{base}'")
+                    if not isinstance(input_dict[base], Field):
+                        raise TypeError(f"Input '{base}' expected a Field, got {type(input_dict[base]).__name__}")
+                    fields.append(input_dict[base])
+                    seen_field_bases.add(base)
+            else:
+                if var not in input_dict:
+                    raise ValueError(f"Missing Scalar input '{var}'")
+                if not isinstance(input_dict[var], Scalar):
+                    raise TypeError(f"Input '{var}' expected a Scalar, got {type(input_dict[var]).__name__}")
+                scalars.append(input_dict[var])
+
+        unexpected = (
+            set(input_dict.keys())
+            - seen_field_bases
+            - {v for v in self.soft_body.input_variables if not v[-1].isdigit()}
+        )
+        if unexpected:
+            raise ValueError(f"Unexpected input keys: {sorted(unexpected)}")
+
+        self.fields = fields
+        self.scalars = scalars
+
+    def _build_input_vector(self, position, time, rot_matrix):
+        """
+        Assemble the input vector in canonical order: field components first, scalars last.
+        """
+        parts = []
+        for field in self.fields:
+            field_lab = field.vector(position, time)
+            parts.append(rot_matrix.T @ field_lab)  # rotated (3,) array
+
+        for scalar in self.scalars:
+            parts.append(jnp.array([scalar.value(position, time)]))
+
+        return jnp.concatenate(parts) if parts else jnp.zeros(0)
+
+    def _compute_fast_mobility(self, dofs):
         """JIT-compiled function for computing mobility."""
-        dofs = dofs_inputs[: self.soft_body.Ndof]
         design = self.soft_body.design_defaults
-        inputs = dofs_inputs[self.soft_body.Ndof :]
-        return self.soft_body.compute_mobility_problem(dofs, design, inputs)
+        return self.soft_body.compute_mobility_problem(dofs, design)
 
-    def grand_velocity(self):
-        """Compute grand velocity of the body."""
-        # Extract state variables
-        position = self.position
-        orientation = self.orientation
-        dofs = self.dofs
-        inputs = self.inputs
-        time = self.time
+    def sixc_velocity(self):
+        """Compute six-component velocity of the body."""
+        rot_matrix, _ = rotation_matrix_from_Rodrigues(self.orientation, Ndof=self.soft_body.Ndof)
+        input_vec = self._build_input_vector(self.position, self.time, rot_matrix)
+        u_lab = self.flow.velocity(self.position)
+        omega_lab, E_lab = self.flow.omega_s(self.position)
+        return self._compute_sixc_velocity(self.orientation, self.dofs, input_vec, u_lab, omega_lab, E_lab)
 
-        # Compute the flow at body position (in the lab framework)
-        u_lab = self.flow.velocity(position)
-        omega_lab, E_lab = self.flow.omega_s(position)
-
-        # Commpute the field value at body position (in the lab framework)
-        field_lab = self.field.vector(position, time)
-
-        return self.compute_grand_velocity(orientation, dofs, inputs, u_lab, omega_lab, E_lab, field_lab)
-
-    def _compute_grand_velocity(self, orientation, dofs, inputs, u_lab, omega_lab, E_lab, field_lab):
-        # Compute rotation matrices
+    def _compute_sixc_velocity(self, orientation, dofs, input_vec, u_lab, omega_lab, E_lab):
         R, sixc_R = rotation_matrix_from_Rodrigues(orientation, Ndof=self.soft_body.Ndof)
 
-        # Compute flow velocities and field value in the body's framework
-        p_lab = jnp.block([u_lab, omega_lab, jnp.zeros(self.soft_body.Ndof)])
-        field = R.T @ field_lab
-
-        # Compute rate-of-strain in the particle framework
         E_body = R.T @ E_lab @ R
         E_inf = jnp.array([E_body[0, 0], E_body[0, 1], E_body[0, 2], E_body[1, 1], E_body[1, 2]])
 
-        tensors = self.compute_fast_mobility(jnp.block([dofs, inputs]))
-        M_H = tensors.M_H
-        M_K = tensors.M_K
-        C_E = tensors.C_E
+        tensors = self.compute_fast_mobility(dofs)
+        sixc_velocity = tensors.M_H @ input_vec + tensors.M_K @ dofs + tensors.C_E @ E_inf
 
-        sixc_velocity = M_H @ field + M_K @ dofs + C_E @ E_inf
+        p_lab = jnp.block([u_lab, omega_lab, jnp.zeros(self.soft_body.Ndof)])
+        return sixc_R @ sixc_velocity + p_lab
 
-        # Compute velocities in lab framework
-        sixc_velocity_lab = sixc_R @ sixc_velocity + p_lab
+    # def _compute_sixc_velocity(self, orientation, dofs, inputs, u_lab, omega_lab, E_lab, field_lab):
+    #     # Compute rotation matrices
+    #     R, sixc_R = rotation_matrix_from_Rodrigues(orientation, Ndof=self.soft_body.Ndof)
 
-        return sixc_velocity_lab
+    #     # Compute flow velocities and field value in the body's framework
+    #     p_lab = jnp.block([u_lab, omega_lab, jnp.zeros(self.soft_body.Ndof)])
+    #     field = R.T @ field_lab
+
+    #     # Compute rate-of-strain in the particle framework
+    #     E_body = R.T @ E_lab @ R
+    #     E_inf = jnp.array([E_body[0, 0], E_body[0, 1], E_body[0, 2], E_body[1, 1], E_body[1, 2]])
+
+    #     tensors = self.compute_fast_mobility(jnp.block([dofs, inputs]))
+    #     M_H = tensors.M_H
+    #     M_K = tensors.M_K
+    #     C_E = tensors.C_E
+
+    #     sixc_velocity = M_H @ field + M_K @ dofs + C_E @ E_inf
+
+    #     # Compute velocities in lab framework
+    #     sixc_velocity_lab = sixc_R @ sixc_velocity + p_lab
+
+    #     return sixc_velocity_lab
 
     def integrate_euler(self):
         """Euler first-order integration."""
 
-        p = self.grand_velocity()
+        p = self.sixc_velocity()
         bortz = compute_Bortz_operator(self.orientation)
 
         self.position += self.dt * p[:3]
@@ -117,7 +168,7 @@ class FlowBody:
         bortz = compute_Bortz_operator(self.orientation)
 
         # First step (calculate k1)
-        Qdot = self.grand_velocity()  # Compute the velocity
+        Qdot = self.sixc_velocity()  # Compute the velocity
 
         k1_position = Qdot[:3]
         k1_orientation = Qdot[3:6]
@@ -129,7 +180,7 @@ class FlowBody:
         self.dofs = current_dof + self.dt * k1_dof / 2
 
         # Compute Qdot at the midpoint
-        Qdot_mid = self.grand_velocity()  # Compute midpoint velocity
+        Qdot_mid = self.sixc_velocity()  # Compute midpoint velocity
         k2_position = Qdot_mid[:3]
         k2_orientation = Qdot_mid[3:6]
         k2_dof = Qdot_mid[6:]
@@ -153,7 +204,7 @@ class FlowBody:
         current_orientation = self.orientation.copy()
 
         # First step (calculate k1)
-        Qdot = self.grand_velocity()  # Compute the velocity
+        Qdot = self.sixc_velocity()  # Compute the velocity
 
         k1_position = Qdot[:3]
         k1_orientation = Qdot[3:6]
@@ -163,7 +214,7 @@ class FlowBody:
         self.dofs = current_dof + self.dt * k1_dof / 2
         self.position = current_position + self.dt * k1_position / 2
         self.orientation = current_orientation + self.dt * k1_orientation / 2
-        Qdot_k2 = self.grand_velocity()
+        Qdot_k2 = self.sixc_velocity()
         k2_position = Qdot_k2[:3]
         k2_orientation = Qdot_k2[3:6]
         k2_dof = Qdot_k2[6:]
@@ -172,7 +223,7 @@ class FlowBody:
         self.dofs = current_dof + self.dt * k2_dof / 2
         self.position = current_position + self.dt * k2_position / 2
         self.orientation = current_orientation + self.dt * k2_orientation / 2
-        Qdot_k3 = self.grand_velocity()
+        Qdot_k3 = self.sixc_velocity()
         k3_position = Qdot_k3[:3]
         k3_orientation = Qdot_k3[3:6]
         k3_dof = Qdot_k3[6:]
@@ -181,7 +232,7 @@ class FlowBody:
         self.dofs = current_dof + self.dt * k3_dof
         self.position = current_position + self.dt * k3_position
         self.orientation = current_orientation + self.dt * k3_orientation
-        Qdot_k4 = self.grand_velocity()
+        Qdot_k4 = self.sixc_velocity()
         k4_position = Qdot_k4[:3]
         k4_orientation = Qdot_k4[3:6]
         k4_dof = Qdot_k4[6:]
@@ -249,7 +300,7 @@ def compute_Bortz_operator(rvec):
         runit = rvec / theta
         kx, ky, kz = runit
         runitcross = jnp.array([[0, -kz, ky], [kz, 0, -kx], [-ky, kx, 0]])
-        term1 = -0.5 * theta * runitcross
+        term1 = -(theta / 2) * runitcross
         term2 = (theta / 2) / jnp.tan(theta / 2) * jnp.eye(3)
         term3 = (1 - (theta / 2) / jnp.tan(theta / 2)) * jnp.outer(runit, runit)
         return term1 + term2 + term3

@@ -133,7 +133,7 @@ def test_kinematic_tensors():
     )
     assert jnp.allclose(M3, M3test)
 
-    M4, _ = sa.compute_stiffness_matrices()
+    M4 = sa.grand_c_stiff()
     M4test = jnp.array(
         [
             [0.0, 0.0],

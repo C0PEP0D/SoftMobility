@@ -26,7 +26,8 @@ softmobility/_version.py
 softmobility/classes/__init__.py
 softmobility/classes/field.py
 softmobility/classes/flow.py
-softmobility/classes/flowbody.py
+softmobility/classes/flowbodysolver.py
+softmobility/classes/scalar.py
 softmobility/classes/softbody.py
 softmobility/classes/sphere.py
 softmobility/classes/sphereassembly.py

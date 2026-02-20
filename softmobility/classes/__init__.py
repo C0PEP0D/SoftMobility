@@ -4,5 +4,6 @@ __all__ = [
     "softbody",
     "flow",
     "field",
+    "scalar",
     "flowbody",
 ]
