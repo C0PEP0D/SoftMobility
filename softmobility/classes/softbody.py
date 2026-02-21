@@ -13,6 +13,7 @@ class SoftBody(SphereAssembly):
     def __init__(self, *args, **kwargs):
         # Call the __init__ method of the parent class (SphereAssembly)
         super().__init__(*args, **kwargs)
+        self.compute_fast_mobility = jax.jit(self.compute_mobility_problem)
 
     def compute_mobility_problem(self, dofs=None, design=None):
         """
@@ -58,14 +59,14 @@ class SoftBody(SphereAssembly):
 
         J = self.compute_Jacobian_matrix(dofs, design)
         Mgrand = self.compute_mobility_tensor(dofs, design)
-        Rgrand = self._compute_inverse_jitted(Mgrand)
+        Rgrand = jnp.linalg.inv(Mgrand)
         C_S = self._compute_composition_of_strain(dofs, design)
         R_S = self._compute_coupling_with_strain(dofs, design)
         C_H = self.grand_c_field(dofs, design)
         C_K = self.grand_c_stiff(dofs, design)
 
         # Compute soft mobility tensors
-        Mred = self._compute_inverse_jitted(J.T @ Rgrand @ J)
+        Mred = jnp.linalg.inv(J.T @ Rgrand @ J)
         M = Mred @ J.T
         P = M @ Rgrand
         C_E = P @ C_S + M @ R_S
@@ -74,7 +75,7 @@ class SoftBody(SphereAssembly):
 
         return self.SoftMobilityTensors(M, M_K, M_H, C_E, P)
 
-    def compute_mobility_tensor(self, dofs=None, design=None, inputs=None):
+    def compute_mobility_tensor(self, dofs=None, design=None):
         dofs, design = self._setup_params(dofs, design)
 
         # Function to compute diagonal blocks (i == j)
@@ -103,11 +104,6 @@ class SoftBody(SphereAssembly):
         M = jnp.block([[compute_block(i, j) for j in range(self.Nspheres)] for i in range(self.Nspheres)])
 
         return M
-
-    @staticmethod
-    @jax.jit
-    def _compute_inverse_jitted(M):
-        return jnp.linalg.inv(M)
 
     def compute_mobility_tensor_alt(self, dofs=None, design=None, inputs=None):
         dofs, design = self._setup_params(dofs, design)
