@@ -145,7 +145,7 @@ def rotating_magnetic_field(amp_x=1, amp_y=1, omega=1):
 
 def oscillating_magnetic_field(amp_x=1, amp_y=1, omega=1):
     """Constant component along x, oscillating along y."""
-    return Field(lambda pos, t: jnp.array([amp_x, amp_y * jnp.cos(omega * t), 0.0]))
+    return Field(lambda pos, t: jnp.array([amp_x, amp_y * jnp.sin(omega * t), 0.0]))
 
 
 # ---------------------------------------------------------------------------

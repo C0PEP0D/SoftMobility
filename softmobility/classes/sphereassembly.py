@@ -564,6 +564,23 @@ class SphereAssembly:
 
 # Useful functions ###########################################################
 
+JAX_MODULES = {
+    "jax": jnp,
+    "array": jnp.array,
+    "sin": jnp.sin,
+    "cos": jnp.cos,
+    "tan": jnp.tan,
+    "exp": jnp.exp,
+    "log": jnp.log,
+    "sqrt": jnp.sqrt,
+    "abs": jnp.abs,
+    "pi": jnp.pi,
+    "arcsin": jnp.arcsin,
+    "arccos": jnp.arccos,
+    "arctan": jnp.arctan,
+    "arctan2": jnp.arctan2,
+}
+
 
 def create_function(sp_exprs, dofs, design, constants):
     """
@@ -593,17 +610,14 @@ def create_function(sp_exprs, dofs, design, constants):
 
         # Convert expression to a JAX function or raise ValueError
         try:
-            jax_expr = sp.lambdify([dof_symbols, design_symbols], sp_expr, "jax")
+            jax_expr = sp.lambdify([dof_symbols, design_symbols], sp_expr, JAX_MODULES)
         except Exception as e:
             raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
         # Callable build out of the JAX function
         def wrapper(dof_args, design_args):
             result = jax_expr(dof_args, design_args)
-            if not isinstance(jax_expr(dof_args, design_args), (float)):
-                result = jnp.array(result, float)
-                result = result[(0,) * result.ndim]
-            return result
+            return jnp.asarray(result, dtype=float).reshape(())
 
         wrapper.expression = str(sp_expr)  # str(jax_expr(*dofs, *yaml_data))
         return wrapper
@@ -615,20 +629,14 @@ def create_function(sp_exprs, dofs, design, constants):
         # Convert each expression to a JAX function and append it to the list of functions
         for sp_expr in sp_exprs:
             try:
-                jax_exprs.append(sp.lambdify([dof_symbols, design_symbols], sp_expr, "jax"))
+                jax_exprs.append(sp.lambdify([dof_symbols, design_symbols], sp_expr, JAX_MODULES))
             except Exception as e:
                 raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
         def wrapper(dof_args, design_args):
-            list_expr = [
-                (
-                    jax_expr(dof_args, design_args).item()
-                    if isinstance(jax_expr(dof_args, design_args), (list, np.ndarray))
-                    else jax_expr(dof_args, design_args)
-                )
-                for jax_expr in jax_exprs
-            ]
-            return jnp.array(list_expr, dtype=float)
+            return jnp.stack(
+                [jnp.asarray(jax_expr(dof_args, design_args), dtype=float).reshape(()) for jax_expr in jax_exprs]
+            )
 
         wrapper.expression = [str(sp_expr) for sp_expr in sp_exprs]
         return wrapper
@@ -669,18 +677,28 @@ def create_coupling_functions(sp_exprs, dof_variables, design_variables, input_v
     C_stiff_sym = [[sp.diff(res, dof) for dof in dof_symbols] for res in residual_sym]
 
     # --- Lambdify ---
-    C_field_funcs = [[sp.lambdify([dof_symbols, design_symbols], c, "jax") for c in row] for row in C_field_sym]
-    C_stiff_funcs = [[sp.lambdify([dof_symbols, design_symbols], c, "jax") for c in row] for row in C_stiff_sym]
+    C_field_funcs = [
+        [sp.lambdify([dof_symbols, design_symbols], c, JAX_MODULES) for c in row] for row in C_field_sym
+    ]
+    C_stiff_funcs = [
+        [sp.lambdify([dof_symbols, design_symbols], c, JAX_MODULES) for c in row] for row in C_stiff_sym
+    ]
 
     def C_field_func(dof_args, design_args):
-        return jnp.array(
-            [[c(dof_args, design_args) for c in row] for row in C_field_funcs], dtype=float
-        )  # shape (6, Ninput)
+        return jnp.stack(
+            [
+                jnp.stack([jnp.asarray(c(dof_args, design_args), dtype=float).reshape(()) for c in row])
+                for row in C_field_funcs
+            ]
+        )
 
     def C_stiff_func(dof_args, design_args):
-        return jnp.array(
-            [[c(dof_args, design_args) for c in row] for row in C_stiff_funcs], dtype=float
-        )  # shape (6, Ndof)
+        return jnp.stack(
+            [
+                jnp.stack([jnp.asarray(c(dof_args, design_args), dtype=float).reshape(()) for c in row])
+                for row in C_stiff_funcs
+            ]
+        )
 
     C_field_func.expression = [[str(c) for c in row] for row in C_field_sym]
     C_stiff_func.expression = [[str(c) for c in row] for row in C_stiff_sym]
