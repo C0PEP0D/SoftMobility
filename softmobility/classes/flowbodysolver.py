@@ -42,7 +42,7 @@ class FlowBodySolver:
         self.trajectory = [[self.position, self.orientation, self.dofs]]
         self.time = 0.0
         self.compute_fast_mobility = jax.jit(self._compute_fast_mobility)
-        self.compute_grand_velocity = jax.jit(self._compute_sixc_velocity)
+        self.compute_sixc_velocity = jax.jit(self._compute_sixc_velocity)
 
     def _validate_inputs(self, input_dict: dict):
         """
