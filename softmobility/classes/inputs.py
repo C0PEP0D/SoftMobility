@@ -189,4 +189,9 @@ def extensional_flow(rate=1.0):
 
 
 def Taylor_Green_flow(omega=1.0):
-    """Taylor-Green vortex flow u = omega * (sin(x)cos(y), -cos(x)sin(y), 0)."""
+    """Taylor-Green vortex flow u = 0.5 * omega * (sin(x)cos(y), -cos(x)sin(y), 0)."""
+    return Flow(
+        lambda pos, t: 0.5
+        * omega
+        * jnp.array([jnp.sin(pos[0]) * jnp.cos(pos[1]), -jnp.cos(pos[0]) * jnp.sin(pos[1])])
+    )
