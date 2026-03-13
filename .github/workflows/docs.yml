@@ -50,6 +50,9 @@ jobs:
           pip install -r requirements-dev.txt
           pip list
 
+      - name: Clean build directory
+        run: make -C docs/ clean
+
       - name: Build Docs
         run: make -C docs/ html
 
