@@ -205,10 +205,12 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
+extensions = ['sphinx.ext.intersphinx']
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
-    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
-    "matplotlib": ("https://matplotlib.org/stable", None),
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "jax": ("https://jax.readthedocs.io/en/latest/", None),
+    "sympy": ("https://docs.sympy.org/latest/", None),
+    "plotly": ("https://plotly.com/python-api-reference/", None),
+    "ipywidgets": ("https://ipywidgets.readthedocs.io/en/latest/", None),
 }

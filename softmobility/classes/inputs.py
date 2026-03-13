@@ -186,3 +186,7 @@ def rotating_flow(omega=1.0):
 def extensional_flow(rate=1.0):
     """Uniaxial extensional flow u = (rate*x, -rate/2*y, -rate/2*z)."""
     return Flow(lambda pos, t: jnp.array([rate * pos[0], -rate / 2 * pos[1], -rate / 2 * pos[2]]))
+
+
+def Taylor_Green_flow(omega=1.0):
+    """Taylor-Green vortex flow u = omega * (sin(x)cos(y), -cos(x)sin(y), 0)."""

@@ -4,4 +4,4 @@ Installation
 
 At the command line::
 
-    $ pip install splank
+    $ pip install softmobility
