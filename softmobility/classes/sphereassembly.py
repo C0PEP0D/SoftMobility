@@ -693,6 +693,12 @@ def create_coupling_functions(sp_exprs, dof_variables, design_variables, input_v
         )
 
     def C_stiff_func(dof_args, design_args):
+        n_rows = len(C_stiff_funcs)
+        n_cols = len(C_stiff_funcs[0]) if n_rows > 0 else 0
+
+        if n_rows == 0 or n_cols == 0:
+            return jnp.empty((n_rows, n_cols))
+
         return jnp.stack(
             [
                 jnp.stack([jnp.asarray(c(dof_args, design_args), dtype=float).reshape(()) for c in row])
@@ -704,7 +710,6 @@ def create_coupling_functions(sp_exprs, dof_variables, design_variables, input_v
     C_stiff_func.expression = [[str(c) for c in row] for row in C_stiff_sym]
 
     return C_field_func, C_stiff_func
-    # d/d(dof)
 
 
 def _classify_input_variables(input_variables: list[str]) -> tuple[list[str], list[str]]:

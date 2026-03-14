@@ -193,5 +193,5 @@ def Taylor_Green_flow(omega=1.0):
     return Flow(
         lambda pos, t: 0.5
         * omega
-        * jnp.array([jnp.sin(pos[0]) * jnp.cos(pos[1]), -jnp.cos(pos[0]) * jnp.sin(pos[1])])
+        * jnp.array([0.0, jnp.sin(pos[1]) * jnp.cos(pos[2]), -jnp.cos(pos[1]) * jnp.sin(pos[2])])
     )
