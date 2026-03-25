@@ -153,7 +153,7 @@ def oscillating_magnetic_field(amp_x=1, amp_y=1, omega=1):
 # ---------------------------------------------------------------------------
 
 
-def constant_scalar(value):
+def constant_scalar(value=1):
     """Constant scalar input."""
     return Scalar(lambda pos, t: value)
 
@@ -170,7 +170,7 @@ def oscillating_scalar(amplitude=1, omega=1, phase=0.0):
 
 def no_flow():
     """Quiet fluid."""
-    return Flow(lambda pos, t: jnp.zeros_like(3))
+    return Flow(lambda pos, t: jnp.zeros(3))
 
 
 def shear_flow(shear_rate=1.0):

@@ -1,3 +1,4 @@
+import warnings
 import jax.numpy as jnp
 import jax
 from jax import lax
@@ -13,6 +14,7 @@ class SoftBody(SphereAssembly):
     def __init__(self, *args, **kwargs):
         # Call the __init__ method of the parent class (SphereAssembly)
         super().__init__(*args, **kwargs)
+        self._validate_default_geometry()
         self.compute_fast_mobility = jax.jit(self.compute_mobility_problem)
 
     def compute_mobility_problem(self, dofs=None, design=None):
@@ -148,40 +150,6 @@ class SoftBody(SphereAssembly):
         M = jnp.block(jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]]))
 
         return M
-
-    # def _compute_mean(self, M: jnp.ndarray) -> jnp.ndarray:
-    #     """
-    #     Compute the mean of Nspheres blocks extracted from the input array M.
-
-    #     Args:
-    #         M (jnp.ndarray): A 2D Jax numpy array representing concatenated data for multiple spheres. Each sphere's data is a 6x6 matrix, so M has shape (36 * Nspheres,).
-
-    #     Returns:
-    #         jnp.ndarray: A 2D Jax numpy array of shape (6, 6) which is the element-wise mean of all blocks.
-
-    #     Note:
-    #         - The function reshapes M into a 3D array with dimensions (Nspheres, 6, 6), where each slice along the first dimension represents a sphere's data matrix.
-    #         - It checks if all spheres' data matrices are nearly identical within an absolute tolerance of 1e-5. If not, it prints a warning message.
-    #     """
-    #     N = self.Nspheres
-    #     # Reshape M into a 3D array where each element is a 6x6 matrix representing one sphere's data
-    #     M_blocks = M.reshape(6, 6 * N).T.reshape(N, 6, 6)
-
-    #     # Check if all blocks are close to the first block with tolerance 1e-5
-    #     warning_printed = False
-    #     for i in range(1, N):
-    #         if not jnp.isclose(M_blocks[i], M_blocks[0], atol=1e-5).all():
-    #             warning_printed = True
-    #             break
-
-    #     # Print a warning if any block differs significantly from the first one
-    #     if warning_printed:
-    #         print("Warning: Matrix blocks of Mk are different (absolute tol 1e-5)")
-
-    #     # Compute the mean matrix by summing all blocks and dividing by Nspheres (implicitly through summation along axis=0)
-    #     M_mean = jnp.mean(M_blocks, axis=0)
-
-    #     return M_mean
 
     def _compute_composition_of_strain(self, *args):
         C_S = jnp.block(
@@ -469,3 +437,37 @@ class SoftBody(SphereAssembly):
             ]
         )
         return T
+
+    def _validate_default_geometry(self):
+        """
+        Check that the default configuration produces a finite mobility matrix.
+        Warns the user early rather than letting NaN appear silently at runtime.
+        """
+        try:
+            dofs = jnp.array(self.dof_defaults)
+            design = jnp.array(self.design_defaults)
+            tensors = self.compute_mobility_problem(dofs, design)
+
+            issues = []
+            for name, tensor in [("M_H", tensors.M_H), ("M_K", tensors.M_K), ("C_E", tensors.C_E)]:
+                if not jnp.all(jnp.isfinite(tensor)):
+                    issues.append(name)
+
+            if issues:
+                warnings.warn(
+                    f"Default configuration produces NaN/Inf in: {issues}. "
+                    f"Check that default DOFs and design parameters describe a "
+                    f"physically valid, non-degenerate geometry (e.g. spheres not "
+                    f"overlapping or at zero separation).\n"
+                    f"  dof_defaults    = {list(self.dof_defaults)}\n"
+                    f"  design_defaults = {dict(self.design_defaults)}",
+                    UserWarning,
+                    stacklevel=2,
+                )
+
+        except Exception as e:
+            warnings.warn(
+                f"Could not validate default geometry: {e}",
+                UserWarning,
+                stacklevel=2,
+            )
