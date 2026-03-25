@@ -3,5 +3,5 @@ __all__ = [
     "sphereassembly",
     "softbody",
     "inputs",
-    "flowbodysolver",
+    "solver",
 ]

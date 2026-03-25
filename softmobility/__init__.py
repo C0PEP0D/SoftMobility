@@ -18,7 +18,7 @@ from .classes.inputs import (
     extensional_flow,
     Taylor_Green_flow,
 )
-from .classes.flowbodysolver import FlowBodySolver
+from .classes.solver import FlowBodyRollout, FlowBodyOptimizer, FlowBodyRL
 
 from ._version import get_versions
 
