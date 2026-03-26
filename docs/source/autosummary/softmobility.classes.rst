@@ -1,4 +1,4 @@
-softmobility.classes
+﻿softmobility.classes
 ====================
 
 .. automodule:: softmobility.classes
@@ -13,5 +13,6 @@ softmobility.classes
    flowbodysolver
    inputs
    softbody
+   solver
    sphere
    sphereassembly

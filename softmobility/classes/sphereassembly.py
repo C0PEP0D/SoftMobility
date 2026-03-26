@@ -11,6 +11,10 @@ from .sphere import Sphere
 
 
 class SphereAssembly:
+    """
+    Assembly of sphere used to define a soft body.
+    """
+
     def __init__(self, parameters_source: str = None, verbose=True):
         """
         Initialize SphereAssembly. Can be initialized from a parameters file or left empty.
@@ -685,6 +689,12 @@ def create_coupling_functions(sp_exprs, dof_variables, design_variables, input_v
     ]
 
     def C_field_func(dof_args, design_args):
+        n_rows = len(C_field_funcs)
+        n_cols = len(C_field_funcs[0]) if n_rows > 0 else 0
+
+        if n_rows == 0 or n_cols == 0:
+            return jnp.empty((n_rows, n_cols))
+
         return jnp.stack(
             [
                 jnp.stack([jnp.asarray(c(dof_args, design_args), dtype=float).reshape(()) for c in row])

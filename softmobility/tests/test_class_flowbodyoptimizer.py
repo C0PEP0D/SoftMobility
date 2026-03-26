@@ -27,9 +27,6 @@ ROLLOUT = FlowBodyRollout(
     input_map={"gravity": gravity_field(), "active_force": constant_scalar()},
 )
 
-POS = jnp.ones(3) * 1e-6
-ORI = jnp.ones(3) * 1e-6
-DOFS = jnp.ones(BODY.Ndof) * 1e-6
 DESIGN = BODY.design_defaults
 DT = 0.1
 N_STEPS = 10
@@ -37,7 +34,7 @@ N_STEPS = 10
 
 # --- Minimal objective: maximize final X displacement ---
 def simple_objective(rollout, design):
-    positions, _, _ = rollout.rollout(design, POS, ORI, DOFS, dt=DT, n_steps=N_STEPS)
+    positions, _, _ = rollout.rollout(dt=DT, n_steps=N_STEPS, design=design)
     return positions[-1, 0]
 
 
