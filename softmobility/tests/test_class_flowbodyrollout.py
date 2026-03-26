@@ -34,9 +34,9 @@ ROLLOUT = FlowBodyRollout(
     input_map={"gravity": gravity_field(), "active_force": constant_scalar()},
 )
 
-POS = jnp.ones(3) * 1e-6
-ORI = jnp.ones(3) * 1e-6
-DOFS = jnp.ones(BODY.Ndof) * 1e-6
+POS = jnp.zeros(3)
+ORI = jnp.zeros(3)
+DOFS = jnp.zeros(BODY.Ndof)
 DT = 0.1
 N_STEPS = 2
 
@@ -52,21 +52,21 @@ def test_velocity_shapes():
 
 
 def test_rollout_shapes():
-    positions, orientations, dofs = ROLLOUT.rollout(DESIGN, POS, ORI, DOFS, dt=DT, n_steps=N_STEPS)
+    positions, orientations, dofs = ROLLOUT.rollout(DT, N_STEPS)
     assert positions.shape == (N_STEPS, 3)
     assert orientations.shape == (N_STEPS, 3)
     assert dofs.shape == (N_STEPS, BODY.Ndof)
 
 
 def test_jittable():
-    jitted = jax.jit(lambda d: ROLLOUT.rollout(d, POS, ORI, DOFS, dt=DT, n_steps=N_STEPS))
+    jitted = jax.jit(lambda d: ROLLOUT.rollout(DT, N_STEPS, design=d))
     positions, _, _ = jitted(DESIGN)
     assert positions.shape == (N_STEPS, 3)
 
 
 def test_differentiable():
     def objective(design):
-        positions, _, _ = ROLLOUT.rollout(design, POS, ORI, DOFS, dt=DT, n_steps=N_STEPS)
+        positions, _, _ = ROLLOUT.rollout(DT, N_STEPS, design=design)
         return positions[-1, 0]
 
     grad = jax.grad(objective)(DESIGN)
@@ -76,7 +76,7 @@ def test_differentiable():
 
 def test_vmappable():
     init_positions = jnp.stack([POS, POS + 1.0])
-    batched = jax.vmap(lambda pos: ROLLOUT.rollout(DESIGN, pos, ORI, DOFS, dt=DT, n_steps=N_STEPS))
+    batched = jax.vmap(lambda pos: ROLLOUT.rollout(DT, N_STEPS, init_position=pos))
     positions, _, _ = batched(init_positions)
     assert positions.shape == (2, N_STEPS, 3)
 

@@ -37,15 +37,21 @@ class Field:
     B = Field(MeasuredField(hdf5_data))
     """
 
-    def __init__(self, func):
+    def __init__(self, func, param_shape=None):
         if not callable(func):
             raise TypeError(f"Field expects a callable, got {type(func).__name__}.")
         self._func = func
+        self.param_shape = param_shape  # e.g., (2,) for a 2D parameter
+        self._params = jnp.zeros(param_shape) if param_shape else None
+
+    def update_from_parameter(self, param):
+        if self._params is not None:
+            self._params = jnp.atleast_1d(jnp.array(param, dtype=float))
 
     def vector(self, pos=jnp.zeros(3), time=0.0):
         """Returns field vector (3,) at position pos and time."""
         pos = jnp.asarray(pos, dtype=float)
-        result = jnp.asarray(self._func(pos, time), dtype=float)
+        result = jnp.asarray(self._func(pos, time, self._params), dtype=float)
         if result.shape != (3,):
             raise ValueError(f"Field must return a (3,) array, got shape {result.shape}.")
         return result
@@ -66,16 +72,21 @@ class Scalar:
     control = Scalar(lambda pos, t: pid_controller(pos, t))  # any callable works
     """
 
-    def __init__(self, func):
+    def __init__(self, func, param_shape=None):
         if not callable(func):
             raise TypeError(f"Scalar expects a callable, got {type(func).__name__}.")
         self._func = func
+        self.param_shape = param_shape  # e.g., (2,) for a 2D parameter
+        self._params = jnp.zeros(param_shape) if param_shape else None
+
+    def update_from_parameter(self, param):
+        if self._params is not None:
+            self._params = jnp.atleast_1d(jnp.array(param, dtype=float))
 
     def value(self, pos=jnp.zeros(3), time=0.0) -> float:
         """Returns scalar value at position pos and time."""
         pos = jnp.asarray(pos, dtype=float)
-        result = float(self._func(pos, time))
-        return result
+        return jnp.asarray(self._func(pos, time, self._params), dtype=float)
 
 
 class Flow:
@@ -94,15 +105,21 @@ class Flow:
     flow       = Flow(my_cfd_solver.interpolate)   # any (pos, t) -> (3,) callable
     """
 
-    def __init__(self, func):
+    def __init__(self, func, param_shape=None):
         if not callable(func):
             raise TypeError(f"Flow expects a callable, got {type(func).__name__}.")
         self._func = func
+        self.param_shape = param_shape  # e.g., (2,) for a 2D parameter
+        self._params = jnp.zeros(param_shape) if param_shape else None
+
+    def update_from_parameter(self, param):
+        if self._params is not None:
+            self._params = jnp.atleast_1d(jnp.array(param, dtype=float))
 
     def velocity(self, pos=jnp.zeros(3), time=0.0):
         """Returns velocity vector of shape (3,) at position pos and time."""
         pos = jnp.asarray(pos, dtype=float)
-        result = jnp.asarray(self._func(pos, time), dtype=float)
+        result = jnp.asarray(self._func(pos, time, self._params), dtype=float)
         if result.shape != (3,):
             raise ValueError(f"Flow must return a (3,) array, got shape {result.shape}.")
         return result
@@ -111,7 +128,7 @@ class Flow:
         """Returns spatial velocity gradient ∇u of shape (3, 3) at position pos and time."""
         pos = jnp.asarray(pos, dtype=float)
         # Freeze time so jacfwd differentiates w.r.t. pos only
-        return jax.jacfwd(lambda p: self._func(p, time))(pos)
+        return jax.jacfwd(lambda p: self._func(p, time, self._params))(pos)
 
     def omega_rate_of_strain(self, pos=jnp.zeros(3), time=0.0):
         """
@@ -135,17 +152,17 @@ class Flow:
 
 def gravity_field(g=9.81):
     """Uniform gravity along -z."""
-    return Field(lambda pos, t: jnp.array([0.0, 0.0, -g]))
+    return Field(lambda pos, t, params: jnp.array([0.0, 0.0, -g]))
 
 
 def rotating_magnetic_field(amp_x=1, amp_y=1, omega=1):
     """Constant component along x, rotating in y-z plane."""
-    return Field(lambda pos, t: jnp.array([amp_x, amp_y * jnp.cos(omega * t), amp_y * jnp.sin(omega * t)]))
+    return Field(lambda pos, t, params: jnp.array([amp_x, amp_y * jnp.cos(omega * t), amp_y * jnp.sin(omega * t)]))
 
 
 def oscillating_magnetic_field(amp_x=1, amp_y=1, omega=1):
     """Constant component along x, oscillating along y."""
-    return Field(lambda pos, t: jnp.array([amp_x, amp_y * jnp.sin(omega * t), 0.0]))
+    return Field(lambda pos, t, params: jnp.array([amp_x, amp_y * jnp.sin(omega * t), 0.0]))
 
 
 # ---------------------------------------------------------------------------
@@ -155,12 +172,12 @@ def oscillating_magnetic_field(amp_x=1, amp_y=1, omega=1):
 
 def constant_scalar(value=1):
     """Constant scalar input."""
-    return Scalar(lambda pos, t: value)
+    return Scalar(lambda pos, t, params: value)
 
 
 def oscillating_scalar(amplitude=1, omega=1, phase=0.0):
     """Sinusoidally oscillating scalar input."""
-    return Scalar(lambda pos, t: amplitude * jnp.sin(omega * t + phase))
+    return Scalar(lambda pos, t, params: amplitude * jnp.sin(omega * t + phase))
 
 
 # ---------------------------------------------------------------------------
@@ -170,28 +187,28 @@ def oscillating_scalar(amplitude=1, omega=1, phase=0.0):
 
 def no_flow():
     """Quiet fluid."""
-    return Flow(lambda pos, t: jnp.zeros(3))
+    return Flow(lambda pos, t, params: jnp.zeros(3))
 
 
 def shear_flow(shear_rate=1.0):
     """Simple shear flow u = (shear_rate * y, 0, 0)."""
-    return Flow(lambda pos, t: jnp.array([shear_rate * pos[1], 0.0, 0.0]))
+    return Flow(lambda pos, t, params: jnp.array([shear_rate * pos[1], 0.0, 0.0]))
 
 
 def rotating_flow(omega=1.0):
     """Solid-body rotation u = (-omega*y, omega*x, 0)."""
-    return Flow(lambda pos, t: jnp.array([-omega * pos[1], omega * pos[0], 0.0]))
+    return Flow(lambda pos, t, params: jnp.array([-omega * pos[1], omega * pos[0], 0.0]))
 
 
 def extensional_flow(rate=1.0):
     """Uniaxial extensional flow u = (rate*x, -rate/2*y, -rate/2*z)."""
-    return Flow(lambda pos, t: jnp.array([rate * pos[0], -rate / 2 * pos[1], -rate / 2 * pos[2]]))
+    return Flow(lambda pos, t, params: jnp.array([rate * pos[0], -rate / 2 * pos[1], -rate / 2 * pos[2]]))
 
 
 def Taylor_Green_flow(omega=1.0):
     """Taylor-Green vortex flow u = 0.5 * omega * (sin(x)cos(y), -cos(x)sin(y), 0)."""
     return Flow(
-        lambda pos, t: 0.5
+        lambda pos, t, params: 0.5
         * omega
         * jnp.array([0.0, jnp.sin(pos[1]) * jnp.cos(pos[2]), -jnp.cos(pos[1]) * jnp.sin(pos[2])])
     )

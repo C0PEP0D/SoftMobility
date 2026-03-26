@@ -1,10 +1,12 @@
 # softmobility/jax_solver.py
 """
 JAX-traceable simulation and optimization for soft bodies in flows.
-Three classes in one file:
-  - FlowBodyRollout  : pure functional simulation (jit/grad/vmap compatible)
-  - FlowBodyOptimizer: gradient-based design optimization
-  - FlowBodyRL       : actor-critic RL loop (design = actor)
+
+Classes
+-------
+- FlowBodyRollout  : pure functional simulation (jit/grad/vmap compatible)
+- FlowBodyOptimizer: gradient-based design optimization
+- FlowBodyRL       : actor-critic RL loop (design = actor)
 """
 
 from functools import partial
@@ -92,14 +94,19 @@ class FlowBodyRollout:
 
         return (pos_new, ori_new, dof_new), (pos_new, ori_new, dof_new)
 
-    def rollout(self, design, init_position, init_orientation, init_dofs, dt, n_steps):
+    def rollout(
+        self, dt, n_steps, init_position=jnp.zeros(3), init_orientation=jnp.zeros(3), init_dofs=None, design=None
+    ):
         """
         Simulate n_steps from initial state.
         Returns: positions (N,3), orientations (N,3), dofs (N,Ndof)
 
         This is the core function to pass to jit/grad/vmap.
         """
-        dt = jnp.asarray(dt, dtype=float)  # ← now a traced value, no retracing on change
+        init_dofs = jnp.array(self.soft_body.dof_defaults) if init_dofs is None else jnp.asarray(init_dofs)
+        design = jnp.asarray(self.soft_body.design_defaults) if design is None else jnp.asarray(design)
+
+        dt = jnp.asarray(dt, dtype=float)
         carry = (init_position, init_orientation, init_dofs)
         _, (positions, orientations, dofs) = jax.lax.scan(
             partial(self.step, design=design, dt=dt), carry, jnp.arange(n_steps)
@@ -163,8 +170,8 @@ class FlowBodyOptimizer:
     The objective function has signature:
         objective(rollout, design) -> scalar
 
-    Example
-    -------
+    Examples
+    --------
     def my_objective(rollout, design):
         positions, _, _ = rollout.rollout(design, init_pos, init_ori, init_dofs)
         return positions[-1, 2] / final_time   # mean Z velocity
@@ -177,9 +184,7 @@ class FlowBodyOptimizer:
         self.rollout = rollout
         self.objective = objective
         self.optimizer = optimizer or optax.adam(1e-3)
-        self._grad_fn = jax.jit(
-            jax.value_and_grad(lambda d: self.objective(self.rollout, d))  # negate: maximize by default
-        )
+        self._grad_fn = jax.jit(jax.value_and_grad(lambda d: self.objective(self.rollout, d)))
 
     def run(
         self,
@@ -221,8 +226,10 @@ class FlowBodyOptimizer:
                 best_value, best_design = value, design
 
             if step % print_every == 0 or step == n_steps - 1:
-                vals = "  ".join(f"d{i}={float(v):.4f}" for i, v in enumerate(jnp.atleast_1d(design)))
-                print(f"step {step:4d}  value={value:.5f}  " f"|grad|={float(jnp.linalg.norm(grad)):.5f}  {vals}")
+                vals = "  ".join(f"design{i}={float(v):.2f}" for i, v in enumerate(jnp.atleast_1d(design)))
+                print(
+                    f"step {step:4d}  objective={value:.4f}  " f"|grad|={float(jnp.linalg.norm(grad)):.4f}  {vals}"
+                )
 
         return best_design
 
@@ -245,8 +252,8 @@ class FlowBodyRL:
     reward_fn signature:  reward_fn(position, orientation, dofs) -> scalar
     value_fn signature:   value_fn(position, orientation, dofs) -> scalar  (critic)
 
-    Example
-    -------
+    Examples
+    --------
     def reward_fn(pos, ori, dofs):
         return pos[2]   # instantaneous Z position gain
 
