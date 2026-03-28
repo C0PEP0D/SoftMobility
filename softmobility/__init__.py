@@ -16,7 +16,7 @@ from .classes.inputs import (
     shear_flow,
     rotating_flow,
     extensional_flow,
-    Taylor_Green_flow,
+    taylor_green_flow,
 )
 from .classes.solver import FlowBodyRollout, FlowBodyOptimizer, FlowBodyRL
 
