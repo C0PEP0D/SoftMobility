@@ -1,103 +1,26 @@
-# inputs.py
-"""Field and Scalar input classes for position- and time-dependent inputs."""
+"""Parametric input fields for softmobility."""
 
 import jax.numpy as jnp
 import jax
 
 # =============================================================================
-# Scalar
+# Parent class
 # =============================================================================
 
 
-class Scalar:
-    """
-    Scalar input (active force, control signal, ...).
+class _ParametricBase:
+    """Shared param logic for Field, Scalar, Flow."""
 
-    Wraps a callable with signature ``(pos, time)`` or ``(pos, time, params)``
-    into a JAX-compatible scalar input. Supports optional named parameters that
-    can be updated at runtime and differentiated through with ``jax.grad``.
-
-    Parameters
-    ----------
-    func : callable
-        Signature ``(pos, time)`` or ``(pos, time, params)`` where:
-
-        - ``pos``    : jnp.ndarray of shape (3,)
-        - ``time``   : float
-        - ``params`` : list of jnp.ndarray, one per parameter (only if params are defined)
-
-        Must return a scalar (float or 0-d array).
-    params : float, array-like, or list thereof, optional
-        Initial parameter values. A single value is treated as a one-element list.
-        Each element is converted to a 1D JAX array via ``jnp.atleast_1d``.
-        If None, ``func`` is called without ``params``.
-    param_names : str or list of str, optional
-        Names for each parameter, enabling named access and updates.
-        If provided, must have the same length as ``params``.
-
-    Attributes
-    ----------
-    param_names : list of str or None
-        Names of the parameters, if provided.
-
-    Examples
-    --------
-    Simple scalar with no parameters:
-
-    >>> torque = Scalar(lambda pos, t: 0.5 * jnp.sin(2 * t))
-
-    Single named parameter, updatable at runtime:
-
-    >>> force = Scalar(
-    ...     lambda pos, t, p: p[0],
-    ...     params      = 1.0,
-    ...     param_names = "magnitude",
-    ... )
-    >>> force.update_params(magnitude=2.0)
-
-    Multiple parameters with different shapes:
-
-    >>> signal = Scalar(
-    ...     lambda pos, t, p: p[0] * jnp.sin(p[1] @ jnp.array([t, t**2])),
-    ...     params      = [1.0,         jnp.array([2.0, 0.1])],
-    ...     param_names = ["amplitude", "freq_coeffs"],
-    ... )
-
-    Differentiating through a parameter with ``jax.grad``:
-
-    >>> grad = jax.grad(lambda p: signal.value(jnp.zeros(3), 1.0))(signal._params)
-
-    Notes
-    -----
-    Internally, params are stored as a list of JAX arrays, which is a valid
-    JAX pytree. This means ``jax.jit``, ``jax.grad``, and ``jax.vmap`` trace
-    through params transparently without any special handling. Parameter shapes
-    must remain fixed after construction, as JAX requires static shapes at
-    trace time.
-    """
-
-    def __init__(self, func, params=None, param_names=None):
-        if not callable(func):
-            raise TypeError(f"Scalar expects a callable, got {type(func).__name__}.")
-        self._func = func
-
-        # Normalize params to a list of JAX arrays
-        if params is None:
-            self._params = None
-        else:
-            self._params = (
-                [_to_jax_param(p) for p in params]
-                if isinstance(params, (list, tuple))
-                else [_to_jax_param(params)]
-            )
-
+    def __init__(self, params, param_names):
+        self._params = (
+            ([_to_jax_param(p) for p in params] if isinstance(params, (list, tuple)) else [_to_jax_param(params)])
+            if params is not None
+            else None
+        )
         if param_names is not None:
             param_names = [param_names] if isinstance(param_names, str) else list(param_names)
             if self._params is not None and len(param_names) != len(self._params):
-                raise ValueError(
-                    f"param_names length {len(param_names)} does not match "
-                    f"number of params {len(self._params)}"
-                )
+                raise ValueError(f"param_names length {len(param_names)} != {len(self._params)}")
         self.param_names = param_names
 
     def update_params(self, params=None, **kwargs):
@@ -183,6 +106,85 @@ class Scalar:
             raise ValueError("No param_names defined.")
         return self._params[self.param_names.index(name)]
 
+
+# =============================================================================
+# Scalar
+# =============================================================================
+
+
+class Scalar(_ParametricBase):
+    """
+    Scalar input (active force, control signal, ...).
+
+    Wraps a callable with signature ``(pos, time)`` or ``(pos, time, params)``
+    into a JAX-compatible scalar input. Supports optional named parameters that
+    can be updated at runtime and differentiated through with ``jax.grad``.
+
+    Parameters
+    ----------
+    func : callable
+        Signature ``(pos, time)`` or ``(pos, time, params)`` where:
+
+        - ``pos``    : jnp.ndarray of shape (3,)
+        - ``time``   : float
+        - ``params`` : list of jnp.ndarray, one per parameter (only if params are defined)
+
+        Must return a scalar (float or 0-d array).
+    params : float, array-like, or list thereof, optional
+        Initial parameter values. A single value is treated as a one-element list.
+        Each element is converted to a 1D JAX array via ``jnp.atleast_1d``.
+        If None, ``func`` is called without ``params``.
+    param_names : str or list of str, optional
+        Names for each parameter, enabling named access and updates.
+        If provided, must have the same length as ``params``.
+
+    Attributes
+    ----------
+    param_names : list of str or None
+        Names of the parameters, if provided.
+
+    Examples
+    --------
+    Simple scalar with no parameters:
+
+    >>> torque = Scalar(lambda pos, t: 0.5 * jnp.sin(2 * t))
+
+    Single named parameter, updatable at runtime:
+
+    >>> force = Scalar(
+    ...     lambda pos, t, p: p[0],
+    ...     params      = 1.0,
+    ...     param_names = "magnitude",
+    ... )
+    >>> force.update_params(magnitude=2.0)
+
+    Multiple parameters with different shapes:
+
+    >>> signal = Scalar(
+    ...     lambda pos, t, p: p[0] * jnp.sin(p[1] @ jnp.array([t, t**2])),
+    ...     params      = [1.0,         jnp.array([2.0, 0.1])],
+    ...     param_names = ["amplitude", "freq_coeffs"],
+    ... )
+
+    Differentiating through a parameter with ``jax.grad``:
+
+    >>> grad = jax.grad(lambda p: signal.value(jnp.zeros(3), 1.0))(signal._params)
+
+    Notes
+    -----
+    Internally, params are stored as a list of JAX arrays, which is a valid
+    JAX pytree. This means ``jax.jit``, ``jax.grad``, and ``jax.vmap`` trace
+    through params transparently without any special handling. Parameter shapes
+    must remain fixed after construction, as JAX requires static shapes at
+    trace time.
+    """
+
+    def __init__(self, func, params=None, param_names=None):
+        super().__init__(params, param_names)
+        if not callable(func):
+            raise TypeError(f"Scalar expects a callable, got {type(func).__name__}.")
+        self._func = func
+
     def value(self, pos=jnp.zeros(3), time=0.0):
         """
         Evaluate the scalar at a given position and time.
@@ -225,93 +227,123 @@ class Scalar:
         return f"Scalar(params={[p.tolist() for p in self._params]})"
 
 
-# class Scalar:
-#     """
-#     Scalar input (active force, control signal, ...).
-
-#     Parameters
-#     ----------
-#     func : callable
-#         Signature: (pos: jnp.ndarray, time: float) -> float
-
-#     Examples
-#     --------
-#     torque  = Scalar(lambda pos, t: 0.5 * jnp.sin(2 * t))
-#     control = Scalar(lambda pos, t: pid_controller(pos, t))  # any callable works
-#     """
-
-#     def __init__(self, func, param_shape=None):
-#         if not callable(func):
-#             raise TypeError(f"Scalar expects a callable, got {type(func).__name__}.")
-#         self._func = func
-#         self.param_shape = param_shape  # e.g., (2,) for a 2D parameter
-#         self._params = jnp.zeros(param_shape) if param_shape else None
-
-#     def update_from_parameter(self, param):
-#         if self._params is not None:
-#             self._params = jnp.atleast_1d(jnp.array(param, dtype=float))
-
-#     def value(self, pos=jnp.zeros(3), time=0.0) -> float:
-#         """Returns scalar value at position pos and time."""
-#         pos = jnp.asarray(pos, dtype=float)
-#         return jnp.asarray(self._func(pos, time, self._params), dtype=float)
-
-
 # =============================================================================
 # Field
 # =============================================================================
 
 
-class Field:
+class Field(_ParametricBase):
     """
-    3D vector field (gravity, magnetic field, ...).
+    Field input (force field, magnetic field, ...).
 
-    Can be instantiated directly with a callable, or subclassed for complex cases.
+    Wraps a callable with signature ``(pos, time)`` or ``(pos, time, params)``
+    into a JAX-compatible field input. Supports optional named parameters that
+    can be updated at runtime and differentiated through with ``jax.grad``.
 
     Parameters
     ----------
     func : callable
-        Function with signature (pos: jnp.ndarray, time: float) -> jnp.ndarray of shape (3,).
+        Signature ``(pos, time)`` or ``(pos, time, params)`` where:
+
+        - ``pos``    : jnp.ndarray of shape (3,)
+        - ``time``   : float
+        - ``params`` : list of jnp.ndarray, one per parameter (only if params are defined)
+
+        Must return a 3D vector (jnp.ndarray of shape (3,)).
+    params : float, array-like, or list thereof, optional
+        Initial parameter values. A single value is treated as a one-element list.
+        Each element is converted to a 1D JAX array via ``jnp.atleast_1d``.
+        If None, ``func`` is called without ``params``.
+    param_names : str or list of str, optional
+        Names for each parameter, enabling named access and updates.
+        If provided, must have the same length as ``params``.
+
+    Attributes
+    ----------
+    param_names : list of str or None
+        Names of the parameters, if provided.
 
     Examples
     --------
-    # Simple: one line
-    gravity = GravityField(g=9.81)
+    Uniform gravity field along -z:
 
-    # Intermediate: inline lambda
-    B = Field(lambda pos, t: jnp.array([1.0, jnp.cos(2*t), jnp.sin(2*t)]))
+    >>> gravity = Field(lambda pos, t: jnp.array([0.0, 0.0, -9.81]))
 
-    # Advanced: link to external solver or database
-    B = Field(my_fem_solver.interpolate)   # anything with (pos, t) -> (3,) signature
+    Rotating magnetic field in y-z plane:
 
-    # Advanced: stateful object with __call__
-    class MeasuredField:
-        def __init__(self, data):
-            self.data = data        # e.g. loaded from HDF5
-        def __call__(self, pos, t):
-            return self.data.interpolate(pos, t)
+    >>> def rotating_magnetic_field(pos, t, params):
+    ...     return jnp.array([
+    ...         params[0],
+    ...         params[1] * jnp.cos(params[2] * t),
+    ...         params[1] * jnp.sin(params[2] * t)])
+    >>> mag_field = Field(
+    ...     rotating_magnetic_field,
+    ...     params=[1.0, 2.0, 3.0],
+    ...     param_names=['amp_x', 'amp_y', 'omega']
+    ... )
 
-    B = Field(MeasuredField(hdf5_data))
+    Differentiating through a parameter with ``jax.grad``:
+
+    >>> grad = jax.grad(lambda p: mag_field.vector(jnp.zeros(3), 1.0)[0])(mag_field._params)
+
+    Notes
+    -----
+    Internally, params are stored as a list of JAX arrays, which is a valid
+    JAX pytree. This means ``jax.jit``, ``jax.grad``, and ``jax.vmap`` trace
+    through params transparently without any special handling. Parameter shapes
+    must remain fixed after construction, as JAX requires static shapes at
+    trace time.
     """
 
-    def __init__(self, func, param_shape=None):
+    def __init__(self, func, params=None, param_names=None):
+        super().__init__(params, param_names)
         if not callable(func):
             raise TypeError(f"Field expects a callable, got {type(func).__name__}.")
         self._func = func
-        self.param_shape = param_shape  # e.g., (2,) for a 2D parameter
-        self._params = jnp.zeros(param_shape) if param_shape else None
-
-    def update_from_parameter(self, param):
-        if self._params is not None:
-            self._params = jnp.atleast_1d(jnp.array(param, dtype=float))
 
     def vector(self, pos=jnp.zeros(3), time=0.0):
-        """Returns field vector (3,) at position pos and time."""
+        """
+        Evaluate the field at a given position and time.
+
+        JAX-safe: compatible with ``jax.jit``, ``jax.grad``, and ``jax.vmap``.
+        Gradients can be taken with respect to ``pos``, ``time``, or any element
+        of ``_params``.
+
+        Parameters
+        ----------
+        pos : jnp.ndarray of shape (3,), optional
+            Position in lab frame. Defaults to the origin.
+        time : float, optional
+            Current time. Defaults to 0.
+
+        Returns
+        -------
+        jnp.ndarray
+            return a 3D vector (jnp.ndarray of shape (3,)).
+
+        Examples
+        --------
+        >>> v = myfiel.vector(jnp.array([0., 0., 0.]), time=1.0)
+        """
         pos = jnp.asarray(pos, dtype=float)
-        result = jnp.asarray(self._func(pos, time, self._params), dtype=float)
+        result = (
+            jnp.asarray(self._func(pos, time, self._params), dtype=float)
+            if self._params is not None
+            else jnp.asarray(self._func(pos, time), dtype=float)
+        )
         if result.shape != (3,):
             raise ValueError(f"Field must return a (3,) array, got shape {result.shape}.")
         return result
+
+    def __repr__(self):
+        if self._params is None:
+            return "Field(no params)"
+        if self.param_names is not None:
+            pairs = ", ".join(
+                f"{k}={v.tolist() if v.size > 1 else float(v):.4g}" for k, v in zip(self.param_names, self._params)
+            )
+            return f"Field({pairs})"
+        return f"Field(params={[p.tolist() for p in self._params]})"
 
 
 # =============================================================================
@@ -319,60 +351,169 @@ class Field:
 # =============================================================================
 
 
-class Flow:
+class Flow(_ParametricBase):
     """
-    3D flow field, possibly unsteady.
+    Flow input (fluid flow, velocity field, ...).
+
+    Wraps a callable with signature ``(pos, time)`` or ``(pos, time, params)``
+    into a JAX-compatible flow input. Supports optional named parameters that
+    can be updated at runtime and differentiated through with ``jax.grad`` and ``jax.jacfwd``.
 
     Parameters
     ----------
     func : callable
-        Signature: (pos: jnp.ndarray, time: float) -> jnp.ndarray of shape (3,)
+        Signature ``(pos, time)`` or ``(pos, time, params)`` where:
+
+        - ``pos``    : jnp.ndarray of shape (3,)
+        - ``time``   : float
+        - ``params`` : list of jnp.ndarray, one per parameter (only if params are defined)
+
+        Must return a 3D vector (jnp.ndarray of shape (3,)), representing the flow velocity.
+    params : float, array-like, or list thereof, optional
+        Initial parameter values. A single value is treated as a one-element list.
+        Each element is converted to a 1D JAX array via ``jnp.atleast_1d``.
+        If None, ``func`` is called without ``params``.
+    param_names : str or list of str, optional
+        Names for each parameter, enabling named access and updates.
+        If provided, must have the same length as ``params``.
+
+    Attributes
+    ----------
+    param_names : list of str or None
+        Names of the parameters, if provided.
 
     Examples
     --------
-    shear      = Flow(lambda pos, t: jnp.array([pos[1], 0., 0.]))
-    oscillating = Flow(lambda pos, t: jnp.array([jnp.sin(t) * pos[1], 0., 0.]))
-    flow       = Flow(my_cfd_solver.interpolate)   # any (pos, t) -> (3,) callable
+    Simple shear flow:
+
+    >>> shear = Flow(lambda pos, t: jnp.array([1.0 * pos[1], 0.0, 0.0]))
+
+    Flow with parameters:
+
+    >>> def custom_flow(pos, t, params):
+    ...     return jnp.array([params[0] * pos[1], params[1] * pos[0], 0.0])
+    >>> flow = Flow(
+    ...     custom_flow,
+    ...     params=[2.0, 3.0],
+    ...     param_names=['shear_rate', 'rotation_rate']
+    ... )
+
+    Notes
+    -----
+    Internally, params are stored as a list of JAX arrays, which is a valid
+    JAX pytree. This means ``jax.jit``, ``jax.grad``, and ``jax.vmap`` trace
+    through params transparently without any special handling. Parameter shapes
+    must remain fixed after construction, as JAX requires static shapes at
+    trace time.
     """
 
-    def __init__(self, func, param_shape=None):
+    def __init__(self, func, params=None, param_names=None):
+        super().__init__(params, param_names)
         if not callable(func):
             raise TypeError(f"Flow expects a callable, got {type(func).__name__}.")
         self._func = func
-        self.param_shape = param_shape  # e.g., (2,) for a 2D parameter
-        self._params = jnp.zeros(param_shape) if param_shape else None
-
-    def update_from_parameter(self, param):
-        if self._params is not None:
-            self._params = jnp.atleast_1d(jnp.array(param, dtype=float))
 
     def velocity(self, pos=jnp.zeros(3), time=0.0):
-        """Returns velocity vector of shape (3,) at position pos and time."""
+        """
+        Evaluate the flow velocity at a given position and time.
+
+        JAX-safe: compatible with ``jax.jit``, ``jax.grad``, and ``jax.vmap``.
+
+        Parameters
+        ----------
+        pos : jnp.ndarray of shape (3,), optional
+            Position in lab frame. Defaults to the origin.
+        time : float, optional
+            Current time. Defaults to 0.
+
+        Returns
+        -------
+        jnp.ndarray
+            Flow velocity as a 3D vector (array of shape (3,)).
+
+        Examples
+        --------
+        >>> v = shear.velocity(jnp.array([0., 0., 0.]), time=1.0)
+        """
         pos = jnp.asarray(pos, dtype=float)
-        result = jnp.asarray(self._func(pos, time, self._params), dtype=float)
+        result = (
+            jnp.asarray(self._func(pos, time, self._params), dtype=float)
+            if self._params is not None
+            else jnp.asarray(self._func(pos, time), dtype=float)
+        )
         if result.shape != (3,):
             raise ValueError(f"Flow must return a (3,) array, got shape {result.shape}.")
         return result
 
     def gradient(self, pos=jnp.zeros(3), time=0.0):
-        """Returns spatial velocity gradient ∇u of shape (3, 3) at position pos and time."""
+        """
+        Evaluate the Jacobian (gradient) of the flow velocity field at a given position and time.
+
+        JAX-safe: compatible with ``jax.jit`` and ``jax.jacfwd``.
+
+        Parameters
+        ----------
+        pos : jnp.ndarray of shape (3,), optional
+            Position in lab frame. Defaults to the origin.
+        time : float, optional
+            Current time. Defaults to 0.
+
+        Returns
+        -------
+        jnp.ndarray
+            Jacobian matrix of shape (3, 3).
+
+        Examples
+        --------
+        >>> grad_u = shear.gradient(jnp.array([1., 2., 3.]), time=1.0)
+        """
         pos = jnp.asarray(pos, dtype=float)
-        # Freeze time so jacfwd differentiates w.r.t. pos only
-        return jax.jacfwd(lambda p: self._func(p, time, self._params))(pos)
+        fn = (
+            (lambda p: self._func(p, time, self._params))
+            if self._params is not None
+            else (lambda p: self._func(p, time))
+        )
+        return jax.jacfwd(fn)(pos)
 
     def omega_rate_of_strain(self, pos=jnp.zeros(3), time=0.0):
         """
-        Returns vorticity vector Omega (3,) and rate-of-strain tensor E (3, 3).
+        Evaluate the vorticity vector and rate-of-strain tensor.
 
-        Decomposition: ∇u = A + E
-            A = 0.5 * (∇u - ∇uᵀ)  antisymmetric → Omega
-            E = 0.5 * (∇u + ∇uᵀ)  symmetric     → rate-of-strain
+        The vorticity vector comes from the skew-symmetric part of the velocity gradient,
+        and the rate-of-strain tensor is the symmetric part.
+
+        Parameters
+        ----------
+        pos : jnp.ndarray of shape (3,), optional
+            Position in lab frame. Defaults to the origin.
+        time : float, optional
+            Current time. Defaults to 0.
+
+        Returns
+        -------
+        tuple
+            A tuple `(omega, E)` where:
+            - `omega` : jnp.ndarray of shape (3,), the vorticity vector
+            - `E` : jnp.ndarray of shape (3, 3), the rate-of-strain tensor
+
+        Examples
+        --------
+        >>> omega, E = shear.omega_rate_of_strain(jnp.array([1., 2., 3.]), time=1.0)
         """
         grad_u = self.gradient(pos, time)
         A = 0.5 * (grad_u - grad_u.T)
         E = 0.5 * (grad_u + grad_u.T)
-        Omega = jnp.array([A[2, 1], A[0, 2], A[1, 0]])
-        return Omega, E
+        return jnp.array([A[2, 1], A[0, 2], A[1, 0]]), E
+
+    def __repr__(self):
+        if self._params is None:
+            return "Flow(no params)"
+        if self.param_names is not None:
+            pairs = ", ".join(
+                f"{k}={v.tolist() if v.size > 1 else float(v):.4g}" for k, v in zip(self.param_names, self._params)
+            )
+            return f"Flow({pairs})"
+        return f"Flow(params={[p.tolist() for p in self._params]})"
 
 
 # ---------------------------------------------------------------------------
@@ -409,16 +550,6 @@ def oscillating_scalar(amplitude=1.0, omega=1.0, phase=0.0):
     )
 
 
-# def constant_scalar(value=1):
-#     """Constant scalar input."""
-#     return Scalar(lambda pos, t, params: value)
-
-
-# def oscillating_scalar(amplitude=1, omega=1, phase=0.0):
-#     """Sinusoidally oscillating scalar input."""
-#     return Scalar(lambda pos, t, params: amplitude * jnp.sin(omega * t + phase))
-
-
 # ---------------------------------------------------------------------------
 # Named constructors for common fields
 # ---------------------------------------------------------------------------
@@ -426,17 +557,29 @@ def oscillating_scalar(amplitude=1.0, omega=1.0, phase=0.0):
 
 def gravity_field(g=9.81):
     """Uniform gravity along -z."""
-    return Field(lambda pos, t, params: jnp.array([0.0, 0.0, -g]))
+    return Field(
+        lambda pos, t, param: jnp.array([0.0, 0.0, -param[0]]),
+        params=float(g),
+        param_names="g",
+    )
 
 
 def rotating_magnetic_field(amp_x=1, amp_y=1, omega=1):
     """Constant component along x, rotating in y-z plane."""
-    return Field(lambda pos, t, params: jnp.array([amp_x, amp_y * jnp.cos(omega * t), amp_y * jnp.sin(omega * t)]))
+    return Field(
+        lambda pos, t, p: jnp.array([p[0], p[1] * jnp.cos(p[2] * t), p[1] * jnp.sin(p[2] * t)]),
+        params=[float(amp_x), float(amp_y), float(omega)],
+        param_names=["amp_x", "amp_y", "omega"],
+    )
 
 
 def oscillating_magnetic_field(amp_x=1, amp_y=1, omega=1):
     """Constant component along x, oscillating along y."""
-    return Field(lambda pos, t, params: jnp.array([amp_x, amp_y * jnp.sin(omega * t), 0.0]))
+    return Field(
+        lambda pos, t, p: jnp.array([p[0], p[1] * jnp.sin(p[2] * t), 0.0]),
+        params=[float(amp_x), float(amp_y), float(omega)],
+        param_names=["amp_x", "amp_y", "omega"],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -446,28 +589,42 @@ def oscillating_magnetic_field(amp_x=1, amp_y=1, omega=1):
 
 def no_flow():
     """Quiet fluid."""
-    return Flow(lambda pos, t, params: jnp.zeros(3))
+    return Flow(lambda pos, t: jnp.zeros(3))
 
 
 def shear_flow(shear_rate=1.0):
     """Simple shear flow u = (shear_rate * y, 0, 0)."""
-    return Flow(lambda pos, t, params: jnp.array([shear_rate * pos[1], 0.0, 0.0]))
+    return Flow(
+        lambda pos, t, shear_rate: jnp.array([shear_rate[0] * pos[1], 0.0, 0.0]),
+        params=float(shear_rate),
+        param_names="shear_rate",
+    )
 
 
 def rotating_flow(omega=1.0):
     """Solid-body rotation u = (-omega*y, omega*x, 0)."""
-    return Flow(lambda pos, t, params: jnp.array([-omega * pos[1], omega * pos[0], 0.0]))
+    return Flow(
+        lambda pos, t, omega: jnp.array([-omega[0] * pos[1], omega * pos[0], 0.0]),
+        params=float(omega),
+        param_names="omega",
+    )
 
 
 def extensional_flow(rate=1.0):
     """Uniaxial extensional flow u = (rate*x, -rate/2*y, -rate/2*z)."""
-    return Flow(lambda pos, t, params: jnp.array([rate * pos[0], -rate / 2 * pos[1], -rate / 2 * pos[2]]))
+    return Flow(
+        lambda pos, t, rate: jnp.array([rate[0] * pos[0], -rate[0] / 2 * pos[1], -rate[0] / 2 * pos[2]]),
+        params=float(rate),
+        param_names="rate",
+    )
 
 
-def Taylor_Green_flow(omega=1.0):
+def taylor_green_flow(omega=1.0):
     """Taylor-Green vortex flow u = 0.5 * omega * (sin(x)cos(y), -cos(x)sin(y), 0)."""
     return Flow(
-        lambda pos, t, params: 0.5
-        * omega
-        * jnp.array([0.0, jnp.sin(pos[1]) * jnp.cos(pos[2]), -jnp.cos(pos[1]) * jnp.sin(pos[2])])
+        lambda pos, t, omega: 0.5
+        * omega[0]
+        * jnp.array([0.0, jnp.sin(pos[1]) * jnp.cos(pos[2]), -jnp.cos(pos[1]) * jnp.sin(pos[2])]),
+        params=float(omega),
+        param_names="omega",
     )
