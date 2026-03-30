@@ -233,19 +233,44 @@ class FlowBodyRollout:
 
 class FlowBodyOptimizer:
     """
-    Gradient-based optimizer for design parameters.
+    FlowBodyOptimizer (gradient-based optimization for design parameters).
 
-    The objective function has signature:
-        objective(rollout, design) -> scalar
+    Optimizes design parameters for a soft body rollout using gradient-based methods.
+    Supports JAX-compatible optimizers (e.g., Optax) and automatic differentiation
+    with ``jax.grad`` and ``jax.jit``.
+
+    Parameters
+    ----------
+    rollout : FlowBodyRollout
+        The rollout object to simulate the soft body's advection and deformation.
+        Must implement a ``rollout`` method compatible with JAX transformations.
+    objective : callable
+        Objective function with signature ``objective(rollout, design) -> scalar``.
+        Computes the scalar value to optimize (minimize or maximize).
+    optimizer : optax.GradientTransformation, optional
+        Optax optimizer (e.g., ``optax.adam(1e-3)``). If None, defaults to Adam with learning rate 1e-3.
+
+    Attributes
+    ----------
+    _grad_fn : callable
+        JAX-jitted function that computes both the objective value and its gradient.
 
     Examples
     --------
-    def my_objective(rollout, design):
-        positions, _, _ = rollout.rollout(design, init_pos, init_ori, init_dofs)
-        return positions[-1, 2] / final_time   # mean Z velocity
+    Minimize the mean Z velocity of a soft body:
 
-    opt = FlowBodyOptimizer(rollout, my_objective, optax.adam(1e-3))
-    optimal_design = opt.run(init_design, n_steps=500)
+    >>> def my_objective(rollout, design):
+    ...     positions, _, _ = rollout.rollout(design, init_pos, init_ori, init_dofs)
+    ...     return positions[-1, 2] / final_time   # mean Z velocity
+
+    >>> opt = FlowBodyOptimizer(rollout, my_objective, optax.adam(1e-3))
+    >>> optimal_design = opt.run(init_design, n_steps=500)
+
+    Notes
+    -----
+    - The optimizer uses JAX's ``jax.value_and_grad`` for efficient gradient computation.
+    - Supports clipping of design parameters and gradients during optimization.
+    - Compatible with ``jax.jit`` for just-in-time compilation of the optimization loop.
     """
 
     def __init__(self, rollout, objective, optimizer=None):
@@ -264,6 +289,41 @@ class FlowBodyOptimizer:
         grad_clip=None,
         maximize=True,
     ):
+        """
+        Run the optimization loop to find the optimal design parameters.
+
+        Iteratively updates the design parameters using the specified optimizer and objective function.
+        Supports clipping of design parameters and gradients, and can maximize or minimize the objective.
+
+        Parameters
+        ----------
+        init_design : array-like
+            Initial design parameters.
+        n_steps : int, default=500
+            Number of optimization steps.
+        print_every : int, default=100
+            Print progress every `print_every` steps.
+        clip_min : float, optional
+            Minimum allowed value for design parameters. If None, no lower bound.
+        clip_max : float, optional
+            Maximum allowed value for design parameters. If None, no upper bound.
+        grad_clip : float, optional
+            Maximum allowed norm for the gradient. If None, no clipping.
+        maximize : bool, default=True
+            If True, maximize the objective; if False, minimize.
+
+        Returns
+        -------
+        jnp.ndarray
+            Optimal design parameters after `n_steps` iterations.
+
+        Notes
+        -----
+        - Uses JAX's ``jax.value_and_grad`` for efficient gradient computation.
+        - If NaN is encountered in the loss or gradient, reverts to the best known design.
+        - Supports clipping of design parameters and gradients to ensure stability.
+        - Prints progress during optimization, including objective value and gradient norm.
+        """
         sign = -1.0 if maximize else 1.0
 
         design = jnp.atleast_1d(jnp.array(init_design, dtype=float))
