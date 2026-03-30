@@ -1,0 +1,49 @@
+﻿softmobility.classes.sphereassembly.SphereAssembly
+==================================================
+
+.. currentmodule:: softmobility.classes.sphereassembly
+
+.. autoclass:: SphereAssembly
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SphereAssembly.add_design
+      ~SphereAssembly.add_dof
+      ~SphereAssembly.add_sphere
+      ~SphereAssembly.compute_C_U
+      ~SphereAssembly.compute_Jacobian_matrix
+      ~SphereAssembly.compute_Jass
+      ~SphereAssembly.compute_composition_of_forces
+      ~SphereAssembly.from_file
+      ~SphereAssembly.grand_c_field
+      ~SphereAssembly.grand_c_stiff
+      ~SphereAssembly.grand_coordinates_func
+      ~SphereAssembly.grand_radius_func
+      ~SphereAssembly.set_design_defaults
+      ~SphereAssembly.set_dof_defaults
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SphereAssembly.Ndesign
+      ~SphereAssembly.Ndof
+      ~SphereAssembly.Ninput
+      ~SphereAssembly.Nspheres
+      ~SphereAssembly.design_defaults
+      ~SphereAssembly.design_variables
+      ~SphereAssembly.dof_defaults
+      ~SphereAssembly.dof_variables
+      ~SphereAssembly.input_variables
+   
+   
