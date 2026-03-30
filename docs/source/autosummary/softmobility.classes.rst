@@ -10,7 +10,6 @@
    :toctree:
    :recursive:
 
-   flowbodysolver
    inputs
    softbody
    solver

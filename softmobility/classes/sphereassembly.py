@@ -445,13 +445,19 @@ class SphereAssembly:
             # Use these converted lists instead of raw data
             sphere_exprs = radius + position + orientation + force + torque
 
+            DIGIT_SUFFIX = r"(?:\d+)?"
+
+            dof_patterns = [re.compile(r"(?:" + p + r")" + DIGIT_SUFFIX) for p in dof_prefixes]
+            design_patterns = [re.compile(r"(?:" + p + r")" + DIGIT_SUFFIX) for p in design_prefixes]
+            input_patterns = [re.compile(r"(?:" + p + r")" + DIGIT_SUFFIX) for p in input_prefixes]
+
             for expr in sphere_exprs:
-                for dof_prefix in dof_prefixes:
-                    dof_set.update(re.findall(r"(?:" + dof_prefix + ")(?:\d+)?", expr))
-                for design_prefix in design_prefixes:
-                    design_set.update(re.findall(r"(?:" + design_prefix + ")(?:\d+)?", expr))
-                for input_prefix in input_prefixes:
-                    input_set.update(re.findall(r"(?:" + input_prefix + ")(?:\d+)?", expr))
+                for pat in dof_patterns:
+                    dof_set.update(pat.findall(expr))
+                for pat in design_patterns:
+                    design_set.update(pat.findall(expr))
+                for pat in input_patterns:
+                    input_set.update(pat.findall(expr))
 
             for expr in sphere_exprs:
                 expr_symbols = {str(s) for s in sp.sympify(expr).free_symbols}

@@ -10,6 +10,7 @@
    :toctree:
    :recursive:
 
+   test_class_Scalar
    test_class_flowbodyoptimizer
    test_class_flowbodyrollout
    test_class_softbody
