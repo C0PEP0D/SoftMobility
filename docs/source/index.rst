@@ -14,6 +14,7 @@ Soft Mobility Documentation
    :toctree: autosummary
    :caption: Body
 
+   softmobility.classes.sphere.sphere
    softmobility.classes.sphereassembly.SphereAssembly
    softmobility.classes.softbody.SoftBody
 
