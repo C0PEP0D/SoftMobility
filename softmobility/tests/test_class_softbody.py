@@ -24,7 +24,7 @@ def test_mobility_matrices():
     assert jnp.allclose(M, Mexpected)
     assert jnp.allclose(M - M.transpose(), jnp.zeros((12, 12)))
 
-    Malt = sp.compute_mobility_tensor_alt()
+    Malt = sp._compute_mobility_tensor_alt()
     Maltexpected = jnp.array(
         [
             [0.21220659, 0.0, 0.0, 0.04807806, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.03978874, 0.0],
