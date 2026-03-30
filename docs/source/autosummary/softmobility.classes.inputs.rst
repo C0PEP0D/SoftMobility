@@ -8,7 +8,6 @@ softmobility.classes.inputs
 
    .. autosummary::
    
-      Taylor_Green_flow
       constant_scalar
       extensional_flow
       gravity_field
@@ -18,6 +17,7 @@ softmobility.classes.inputs
       rotating_flow
       rotating_magnetic_field
       shear_flow
+      taylor_green_flow
    
    .. rubric:: Classes
 
