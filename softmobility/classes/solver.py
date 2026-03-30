@@ -24,16 +24,53 @@ from softmobility import SoftBody, Flow, Field, Scalar
 
 class FlowBodyRollout:
     """
-    Pure-functional rollout to simulate the advection and deformation of a soft body in a flow.
-    Compatible with jax.jit, jax.grad, jax.vmap.
+    FlowBodyRollout (soft body simulation in fluid flow).
 
-    Usage
+    Wraps a soft body, flow, and input map into a JAX-compatible rollout for simulating
+    advection and deformation of a soft body in a flow. Supports automatic differentiation
+    with ``jax.grad`` and just-in-time compilation with ``jax.jit``.
+
+    Parameters
+    ----------
+    soft_body : SoftBody
+        The soft body to be simulated. Must implement methods for position, orientation,
+        and degrees of freedom.
+    flow : Flow
+        The flow field in which the soft body is advected. Must provide velocity and
+        gradient methods.
+    input_map : dict[str, Field | Scalar], optional
+        Mapping of input variable names to their corresponding field or scalar objects.
+        Used to pass external inputs to the soft body during simulation.
+
+    Attributes
+    ----------
+    fields : list of Field
+        List of field inputs extracted from the input_map.
+    scalars : list of Scalar
+        List of scalar inputs extracted from the input_map.
+
+    Examples
+    --------
+    Basic rollout simulation:
+
+    >>> mysoftbody = SoftBody(...)
+    >>> myflow = Flow(...)
+    >>> myfield = Field(...)
+    >>> myscalar = Scalar(...)
+    >>> mymap = {"field": field, "scalar": scalar}
+    >>> rollout = FlowBodyRollout(soft_body=mysoftbody, flow=myflow, input_map=mymap)
+    >>> positions, orientations, dofs = rollout.rollout(dt, n_steps)
+
+    Using JAX for optimization:
+
+    >>> grad_fn = jax.jit(jax.grad(lambda d: rollout.rollout(dt, n_steps, init_pos, init_ori, init_dofs, d)[0][2]))
+    >>> gradient = grad_fn(design)
+
+    Notes
     -----
-    rollout = FlowBodyRollout(soft_body, flow, input_map, dt, n_steps)
-    pos, ori, dofs = rollout.rollout(design, init_pos, init_ori, init_dofs)
-
-    # For optimization:
-    grad_fn = jax.jit(jax.grad(lambda d: rollout.rollout(d, ...)[0][2]))
+    - The rollout is pure-functional and stateless, making it compatible with JAX transformations.
+    - Inputs (fields and scalars) are validated during initialization to ensure compatibility with the soft body and flow.
+    - The velocity method computes the soft body's linear velocity, angular velocity, and dof derivatives in the lab frame.
     """
 
     def __init__(
@@ -46,7 +83,7 @@ class FlowBodyRollout:
         self.flow = flow
         self.fields, self.scalars = self._validate_inputs(input_map)
 
-    def velocity(self, design, position, orientation, dofs, time):
+    def _velocity(self, design, position, orientation, dofs, time):
         """Returns (v_lab, omega_lab, dot_dofs), the soft body's linear velocity,
         angular velocity and derivative of degrees-of-freedom, all in lab frame."""
         rot, sixc_rot = rotation_matrix_from_Rodrigues(orientation, Ndof=self.soft_body.Ndof)
@@ -69,14 +106,14 @@ class FlowBodyRollout:
 
         return v_lab, omega, dot_dofs
 
-    def step(self, carry, t, design, dt):
+    def _step(self, carry, t, design, dt):
         """Time stepping the soft mobility equation, lax.scan compatible"""
         position, orientation, dofs = carry
         time = t * dt
         bortz = compute_Bortz_operator(orientation)
 
         def vel(pos, ori, dof, time):
-            return self.velocity(design, pos, ori, dof, time)
+            return self._velocity(design, pos, ori, dof, time)
 
         v1, w1, d1 = vel(position, orientation, dofs, time)
 
@@ -98,10 +135,41 @@ class FlowBodyRollout:
         self, dt, n_steps, init_position=jnp.zeros(3), init_orientation=jnp.zeros(3), init_dofs=None, design=None
     ):
         """
-        Simulate n_steps from initial state.
-        Returns: positions (N,3), orientations (N,3), dofs (N,Ndof)
+        Simulate the advection and deformation of the soft body over n_steps.
 
-        This is the core function to pass to jit/grad/vmap.
+        Core function for JAX transformations (``jax.jit``, ``jax.grad``, ``jax.vmap``).
+        Computes the trajectory of the soft body's position, orientation, and degrees of freedom
+        from an initial state, given a time step and number of steps.
+
+        Parameters
+        ----------
+        dt : float
+            Time step for each simulation step.
+        n_steps : int
+            Number of simulation steps to perform.
+        init_position : jnp.ndarray of shape (3,), optional
+            Initial position of the soft body. Defaults to the origin.
+        init_orientation : jnp.ndarray of shape (3,), optional
+            Initial orientation of the soft body. Defaults to zero orientation.
+        init_dofs : jnp.ndarray, optional
+            Initial degrees of freedom. If None, uses the soft body's default values.
+        design : jnp.ndarray, optional
+            Design parameters. If None, uses the soft body's default values.
+
+        Returns
+        -------
+        tuple of jnp.ndarray
+            - positions : jnp.ndarray of shape (n_steps, 3)
+                Positions of the soft body at each step.
+            - orientations : jnp.ndarray of shape (n_steps, 3)
+                Orientations of the soft body at each step.
+            - dofs : jnp.ndarray of shape (n_steps, Ndof)
+                Degrees of freedom of the soft body at each step.
+
+        Notes
+        -----
+        - This method is stateless and pure-functional, making it fully compatible with JAX transformations.
+        - The simulation is performed using ``jax.lax.scan`` for efficient, JAX-compatible iteration.
         """
         init_dofs = jnp.array(self.soft_body.dof_defaults) if init_dofs is None else jnp.asarray(init_dofs)
         design = jnp.asarray(self.soft_body.design_defaults) if design is None else jnp.asarray(design)
@@ -109,7 +177,7 @@ class FlowBodyRollout:
         dt = jnp.asarray(dt, dtype=float)
         carry = (init_position, init_orientation, init_dofs)
         _, (positions, orientations, dofs) = jax.lax.scan(
-            partial(self.step, design=design, dt=dt), carry, jnp.arange(n_steps)
+            partial(self._step, design=design, dt=dt), carry, jnp.arange(n_steps)
         )
         return positions, orientations, dofs
 
@@ -242,9 +310,10 @@ class FlowBodyOptimizer:
 class FlowBodyRL:
     """
     Online actor-critic RL where:
-      - Actor  : design parameters (optimized by policy gradient or grad ascent)
-      - Critic : user-supplied value network V(position, orientation, dofs) -> scalar
-      - Env    : FlowBodyRollout.step (the Markov transition)
+
+    - Actor  : design parameters (optimized by policy gradient or grad ascent)
+    - Critic : user-supplied value network V(position, orientation, dofs) -> scalar
+    - Env    : FlowBodyRollout.step (the Markov transition)
 
     The architecture is compatible with the optimizer above because the actor
     is just `design` and the environment step is already a pure function.

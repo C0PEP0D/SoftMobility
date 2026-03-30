@@ -44,7 +44,7 @@ N_STEPS = 2
 
 
 def test_velocity_shapes():
-    v, omega, ddofs = ROLLOUT.velocity(DESIGN, POS, ORI, DOFS, time=0.0)
+    v, omega, ddofs = ROLLOUT._velocity(DESIGN, POS, ORI, DOFS, time=0.0)
     assert v.shape == (3,)
     assert omega.shape == (3,)
     assert ddofs.shape == (BODY.Ndof,)

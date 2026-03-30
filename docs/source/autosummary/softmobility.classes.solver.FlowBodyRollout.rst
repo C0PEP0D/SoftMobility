@@ -14,8 +14,6 @@
    .. autosummary::
    
       ~FlowBodyRollout.rollout
-      ~FlowBodyRollout.step
-      ~FlowBodyRollout.velocity
    
    
 
