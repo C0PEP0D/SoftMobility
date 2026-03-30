@@ -23,8 +23,6 @@
       ~SphereAssembly.from_file
       ~SphereAssembly.grand_c_field
       ~SphereAssembly.grand_c_stiff
-      ~SphereAssembly.grand_coordinates_func
-      ~SphereAssembly.grand_radius_func
       ~SphereAssembly.set_design_defaults
       ~SphereAssembly.set_dof_defaults
    
