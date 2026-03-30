@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Soft Mobility Documentation &mdash; Soft Mobility 0.post35.dev0+g5d795da documentation</title>
+  <title>Soft Mobility Documentation &mdash; Soft Mobility 0.post36.dev0+g3e79aa0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
@@ -15,7 +15,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=a4888bab"></script>
+      <script src="_static/documentation_options.js?v=a0ebd1e8"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -51,9 +51,25 @@
 <li class="toctree-l1"><a class="reference internal" href="release-history.html">Release History</a></li>
 <li class="toctree-l1"><a class="reference internal" href="min_versions.html">Minimum Version of Python and NumPy</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">Body</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.html">softmobility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.sphere.Sphere.html">softmobility.classes.sphere.Sphere</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html">softmobility.classes.sphereassembly.SphereAssembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.softbody.SoftBody.html">softmobility.classes.softbody.SoftBody</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Inputs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Field.html">softmobility.classes.inputs.Field</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Scalar.html">softmobility.classes.inputs.Scalar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Flow.html">softmobility.classes.inputs.Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.gravity_field.html">softmobility.classes.inputs.gravity_field</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.constant_scalar.html">softmobility.classes.inputs.constant_scalar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.no_flow.html">softmobility.classes.inputs.no_flow</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Solver</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRollout.html">softmobility.classes.solver.FlowBodyRollout</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html">softmobility.classes.solver.FlowBodyOptimizer</a></li>
 </ul>
 
         </div>
@@ -95,8 +111,46 @@
 </div>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.html#module-softmobility" title="softmobility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.sphere.Sphere.html#softmobility.classes.sphere.Sphere" title="softmobility.classes.sphere.Sphere"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.sphere.Sphere</span></code></a>([radius, ...])</p></td>
 <td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html#softmobility.classes.sphereassembly.SphereAssembly" title="softmobility.classes.sphereassembly.SphereAssembly"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.sphereassembly.SphereAssembly</span></code></a>([...])</p></td>
+<td><p>Assembly of sphere used to define a soft body.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.softbody.SoftBody.html#softmobility.classes.softbody.SoftBody" title="softmobility.classes.softbody.SoftBody"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.softbody.SoftBody</span></code></a>(...)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.Field.html#softmobility.classes.inputs.Field" title="softmobility.classes.inputs.Field"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.Field</span></code></a>(func[, ...])</p></td>
+<td><p>Field input (force field, magnetic field, ...).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.Scalar.html#softmobility.classes.inputs.Scalar" title="softmobility.classes.inputs.Scalar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.Scalar</span></code></a>(func[, ...])</p></td>
+<td><p>Scalar input (active force, control signal, ...).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.Flow.html#softmobility.classes.inputs.Flow" title="softmobility.classes.inputs.Flow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.Flow</span></code></a>(func[, ...])</p></td>
+<td><p>Flow input (fluid flow, velocity field, ...).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.gravity_field.html#softmobility.classes.inputs.gravity_field" title="softmobility.classes.inputs.gravity_field"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.gravity_field</span></code></a>([g])</p></td>
+<td><p>Uniform gravity along -z.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.constant_scalar.html#softmobility.classes.inputs.constant_scalar" title="softmobility.classes.inputs.constant_scalar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.constant_scalar</span></code></a>([value])</p></td>
+<td><p>Constant scalar input with updatable value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.no_flow.html#softmobility.classes.inputs.no_flow" title="softmobility.classes.inputs.no_flow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.no_flow</span></code></a>()</p></td>
+<td><p>Quiet fluid.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRollout.html#softmobility.classes.solver.FlowBodyRollout" title="softmobility.classes.solver.FlowBodyRollout"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.solver.FlowBodyRollout</span></code></a>(...)</p></td>
+<td><p>Pure-functional rollout to simulate the advection and deformation of a soft body in a flow.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html#softmobility.classes.solver.FlowBodyOptimizer" title="softmobility.classes.solver.FlowBodyOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.solver.FlowBodyOptimizer</span></code></a>(...)</p></td>
+<td><p>Gradient-based optimizer for design parameters.</p></td>
 </tr>
 </tbody>
 </table>
