@@ -666,7 +666,7 @@ def test_two_spheres():
     sp = SoftBody()
     sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 1], radius=1))
-    mu = sp.compute_mobility_tensor_alt()
+    mu = sp._compute_mobility_tensor_alt()
     assert np.allclose(mu, gmm_two)
 
 
@@ -676,7 +676,7 @@ def test_four_spheres():
     sp.add_sphere(Sphere(position=[0, 0, 1], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 2], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 3], radius=1))
-    mu = sp.compute_mobility_tensor_alt()
+    mu = sp._compute_mobility_tensor_alt()
     assert np.allclose(mu, gmm_four)
 
 

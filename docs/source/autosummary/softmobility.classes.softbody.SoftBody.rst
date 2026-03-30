@@ -20,9 +20,8 @@
       ~SoftBody.compute_Jacobian_matrix
       ~SoftBody.compute_Jass
       ~SoftBody.compute_composition_of_forces
-      ~SoftBody.compute_mobility_problem
       ~SoftBody.compute_mobility_tensor
-      ~SoftBody.compute_mobility_tensor_alt
+      ~SoftBody.compute_tensors
       ~SoftBody.from_file
       ~SoftBody.grand_c_field
       ~SoftBody.grand_c_stiff

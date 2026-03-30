@@ -1,23 +1,72 @@
+"""SoftBody class."""
+
+from collections import namedtuple
 import warnings
 import jax.numpy as jnp
 import jax
 from jax import lax
-from collections import namedtuple
 from .sphere import Sphere
 from .sphereassembly import SphereAssembly
 
+SoftMobilityTensors = namedtuple("SoftMobilityTensors", ["M", "M_K", "M_H", "C_E", "P"])
+
 
 class SoftBody(SphereAssembly):
+    """
+    SoftBody (simulation of deformable bodies in fluid flow).
 
-    SoftMobilityTensors = namedtuple("SoftMobilityTensors", ["M", "M_K", "M_H", "C_E", "P"])
+    Extends ``SphereAssembly`` to model soft bodies with mobility tensors and hydrodynamic interactions.
+    Supports computation of mobility matrices, coupling tensors, and forces for soft body dynamics.
+    Compatible with JAX for automatic differentiation and just-in-time compilation.
+
+    Parameters
+    ----------
+    parameters_source : str, optional
+        Path to a YAML file containing assembly parameters (spheres, dofs, design variables, etc.).
+        If provided, the assembly is initialized from this file.
+    verbose : bool, default=True
+        If True, prints debug and progress information during initialization and computation.
+
+    Attributes
+    ----------
+    SoftMobilityTensors : namedtuple
+        A named tuple containing the mobility tensors:
+
+        - M : jnp.ndarray
+            Grand mobility matrix (to be multiplied by grand forces [F1, T1, F2, T2...]).
+        - M_K : jnp.ndarray
+            Elastic mobility matrix (to be multiplied by degrees of freedom dofs).
+        - M_H : jnp.ndarray
+            Input mobility matrix (coupling with 3D and scalar fields).
+        - C_E : jnp.ndarray
+            Elastic coupling matrix.
+        - P : jnp.ndarray
+            Projection matrix.
+
+    Examples
+    --------
+    Initialize a soft body from a YAML file:
+
+    >>> soft_body = SoftBody.from_file("path/to/parameters.yaml")
+
+    Compute mobility tensors:
+
+    >>> tensors = soft_body.compute_tensors(dofs, design)
+
+    Notes
+    -----
+    - Inherits all functionality from ``SphereAssembly``, including sphere management and degree of freedom handling.
+    - Mobility tensors are computed using symbolic expressions for efficiency and accuracy.
+    - Compatible with JAX transformations (``jax.jit``, ``jax.grad``, ``jax.vmap``).
+    """
 
     def __init__(self, *args, **kwargs):
         # Call the __init__ method of the parent class (SphereAssembly)
         super().__init__(*args, **kwargs)
         self._validate_default_geometry()
-        self.compute_fast_mobility = jax.jit(self.compute_mobility_problem)
+        self.compute_fast_tensors = jax.jit(self.compute_tensors)
 
-    def compute_mobility_problem(self, dofs=None, design=None):
+    def compute_tensors(self, dofs=None, design=None):
         """
         Compute the full mobility problem for a given system configuration.
 
@@ -35,10 +84,11 @@ class SoftBody(SphereAssembly):
         -------
         SoftMobilityTensors
             A named tuple containing:
-            - M (jax.numpy.ndarray): Mobility matrix for forces expressed in the coordinate of assembly.
-            - G (jax.numpy.ndarray): Coupling matrix with strain.
-            - V (jax.numpy.ndarray): Velocity projection matrix.
-            - P (jax.numpy.ndarray): Active velocity projection matrix.
+            - M (jax.numpy.ndarray): Mobility matrix for forces/torques expressed at the center of spheres.
+            - M_K (jax.numpy.ndarray): Mobility matrix with degrees.
+            - M_H (jax.numpy.ndarray): Mobility matrix with inputs (3D and scalar fields).
+            - C_E (jax.numpy.ndarray): Coupling matrix with strain.
+            - P (jax.numpy.ndarray): Projection matrix.
 
         Examples
         --------
@@ -75,7 +125,7 @@ class SoftBody(SphereAssembly):
         M_K = M @ C_K
         M_H = M @ C_H
 
-        return self.SoftMobilityTensors(M, M_K, M_H, C_E, P)
+        return SoftMobilityTensors(M, M_K, M_H, C_E, P)
 
     def compute_mobility_tensor(self, dofs=None, design=None):
         dofs, design = self._setup_params(dofs, design)
@@ -107,7 +157,7 @@ class SoftBody(SphereAssembly):
 
         return M
 
-    def compute_mobility_tensor_alt(self, dofs=None, design=None, inputs=None):
+    def _compute_mobility_tensor_alt(self, dofs=None, design=None, inputs=None):
         dofs, design = self._setup_params(dofs, design)
         # Define the blocks functions
         mu_tt = jnp.block(
@@ -159,7 +209,7 @@ class SoftBody(SphereAssembly):
         return C_S
 
     def _compute_coupling_with_strain(self, *args):
-        Svecmat = jnp.array(
+        svecmat = jnp.array(
             [
                 [[1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0]],
                 [[0, 1, 0, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]],
@@ -193,20 +243,20 @@ class SoftBody(SphereAssembly):
             tensor_blocks.append(tensor_block)
 
         # Stack all blocks into a final 6 * Nspheres x 3 x 3 tensor
-        GE = jnp.concatenate(tensor_blocks, axis=0)
+        ge = jnp.concatenate(tensor_blocks, axis=0)
 
         # Perform tensor contraction with Svecmat (if needed)
-        R_S = jnp.einsum("ijk,jkl->il", GE, Svecmat)  # Adjust contraction as needed
+        rs = jnp.einsum("ijk,jkl->il", ge, svecmat)  # Adjust contraction as needed
 
-        return R_S
+        return rs
 
     # Functions to compute the GRPY tensors #######################################
-    def _1sphere_GRPY_quantities(self, sphere: Sphere, dofs=None, design=None, inputs=None):
+    def _1sphere_grpy_quantities(self, sphere: Sphere, dofs=None, design=None, inputs=None):
         dofs, design = self._setup_params(dofs, design)
 
         return sphere.radius(dofs, design)
 
-    def _2spheres_GRPY_quantities(self, sphere_i: Sphere, sphere_j: Sphere, dofs=None, design=None, inputs=None):
+    def _2spheres_grpy_quantities(self, sphere_i: Sphere, sphere_j: Sphere, dofs=None, design=None, inputs=None):
         dofs, design = self._setup_params(dofs, design)
 
         position_i = sphere_i.position(dofs, design)
@@ -222,19 +272,19 @@ class SoftBody(SphereAssembly):
         return rnorm, runit, radius_i, radius_j
 
     def _compute_mu_tt_ii(self, sphere, *args):
-        a_i = self._1sphere_GRPY_quantities(sphere, *args)
+        a_i = self._1sphere_grpy_quantities(sphere, *args)
         matrix = 1 / (6 * jnp.pi * a_i) * jnp.eye(3)
 
         return matrix
 
     def _compute_mu_rr_ii(self, sphere, *args):
-        a_i = self._1sphere_GRPY_quantities(sphere, *args)
+        a_i = self._1sphere_grpy_quantities(sphere, *args)
         matrix = 1 / (8 * jnp.pi * a_i**3) * jnp.eye(3)
 
         return matrix
 
     def _compute_mu_tt_ij(self, sphere_i, sphere_j, *args):
-        Rij, Rij_hat, ai, aj = self._2spheres_GRPY_quantities(sphere_i, sphere_j, *args)
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
 
         a_inf = jnp.minimum(ai, aj)
         a_sup = jnp.maximum(ai, aj)
@@ -269,7 +319,7 @@ class SoftBody(SphereAssembly):
         return matrix
 
     def _compute_mu_rr_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args):
-        Rij, Rij_hat, ai, aj = self._2spheres_GRPY_quantities(sphere_i, sphere_j, *args)
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
 
         a_inf = jnp.minimum(ai, aj)
         a_sup = jnp.maximum(ai, aj)
@@ -312,7 +362,7 @@ class SoftBody(SphereAssembly):
         return matrix
 
     def _compute_mu_rt_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args):
-        Rij, Rij_hat, ai, aj = self._2spheres_GRPY_quantities(sphere_i, sphere_j, *args)
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
 
         a_inf = jnp.minimum(ai, aj)
         a_sup = jnp.maximum(ai, aj)
@@ -348,7 +398,7 @@ class SoftBody(SphereAssembly):
         return matrix
 
     def _compute_mu_td_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args):
-        Rij, Rij_hat, ai, aj = self._2spheres_GRPY_quantities(sphere_i, sphere_j, *args)
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
 
         a_inf = jnp.minimum(ai, aj)
         a_sup = jnp.maximum(ai, aj)
@@ -391,7 +441,7 @@ class SoftBody(SphereAssembly):
         return matrix
 
     def _compute_mu_rd_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args):
-        Rij, Rij_hat, ai, aj = self._2spheres_GRPY_quantities(sphere_i, sphere_j, *args)
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
 
         a_inf = jnp.minimum(ai, aj)
         a_sup = jnp.maximum(ai, aj)
@@ -446,7 +496,7 @@ class SoftBody(SphereAssembly):
         try:
             dofs = jnp.array(self.dof_defaults)
             design = jnp.array(self.design_defaults)
-            tensors = self.compute_mobility_problem(dofs, design)
+            tensors = self.compute_tensors(dofs, design)
 
             issues = []
             for name, tensor in [("M_H", tensors.M_H), ("M_K", tensors.M_K), ("C_E", tensors.C_E)]:

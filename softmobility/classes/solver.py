@@ -1,4 +1,3 @@
-# softmobility/jax_solver.py
 """
 JAX-traceable simulation and optimization for soft bodies in flows.
 
@@ -92,7 +91,7 @@ class FlowBodyRollout:
         omega_lab, E_lab = self.flow.omega_rate_of_strain(position, time)
         E_body = rot.T @ E_lab @ rot
         E_inf = jnp.array([E_body[0, 0], E_body[0, 1], E_body[0, 2], E_body[1, 1], E_body[1, 2]])
-        tensors = self.soft_body.compute_mobility_problem(dofs, design)
+        tensors = self.soft_body.compute_tensors(dofs, design)
 
         # Soft mobility equation in the body frame
         p_body = tensors.M_H @ inputs + tensors.M_K @ dofs + tensors.C_E @ E_inf
@@ -257,14 +256,14 @@ class FlowBodyOptimizer:
 
     Examples
     --------
-    Minimize the mean Z velocity of a soft body:
+    Minimize the Z displacement of a soft body:
 
     >>> def my_objective(rollout, design):
     ...     positions, _, _ = rollout.rollout(design, init_pos, init_ori, init_dofs)
-    ...     return positions[-1, 2] / final_time   # mean Z velocity
+    ...     return positions[-1, 2]   # final Z position
 
     >>> opt = FlowBodyOptimizer(rollout, my_objective, optax.adam(1e-3))
-    >>> optimal_design = opt.run(init_design, n_steps=500)
+    >>> optimal_design = opt.run(init_design, n_steps=500, maximize=False)
 
     Notes
     -----
