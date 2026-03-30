@@ -1,18 +1,80 @@
-import numpy as np
+"""Assembly of spheres used to define a soft body."""
+
+import re
+from io import StringIO
+import os
 import yaml
 import jax
 import jax.numpy as jnp
-import re
 import sympy as sp
-from io import StringIO
-import os
 
 from .sphere import Sphere
 
 
 class SphereAssembly:
     """
-    Assembly of sphere used to define a soft body.
+    The class `SphereAssembly` represents an assembly of rigid spheres connected by springs used to define a soft body.
+
+    There are three set of variables:
+
+    - Degrees of freedom (`dofs`): variables that define the deformation of the assembly (e.g. lengths of springs)
+    - Design variables (`design`): parameters that define the morphology of the assembly and that can be optimized (e.g. radius, stiffness)
+    - Input variables (`input`): parameters that define the input fields, either 3D-fields (e.g. gravity, magnetic field) or scalars (e.g. internal active force)
+
+    Supports initialization from a YAML parameters file or incremental construction via methods.
+    Enables symbolic and numerical computation of coupling matrices, Jacobians, and forces.
+    Compatible with JAX for automatic differentiation and just-in-time compilation.
+
+    Parameters
+    ----------
+    parameters_source : str, optional
+        Path to a YAML file containing assembly parameters (spheres, dofs, design variables, etc.).
+        If provided, the assembly is initialized from this file.
+    verbose : bool, default=True
+        If True, prints debug and progress information during initialization and computation.
+
+    Attributes
+    ----------
+    Ndof : int
+        Number of degrees of freedom in the assembly.
+    Ndesign : int
+        Number of design variables in the assembly.
+    Ninput : int
+        Number of input variables in the assembly.
+    Nspheres : int
+        Number of spheres in the assembly.
+    dof_variables : list of str
+        Names of the degrees of freedom.
+    design_variables : list of str
+        Names of the design variables.
+    input_variables : list of str
+        Names of the input variables.
+    dof_defaults : dict
+        Default values for the degrees of freedom.
+    design_defaults : dict
+        Default values for the design variables.
+
+    Examples
+    --------
+    Initialize an empty assembly:
+
+    >>> assembly = SphereAssembly()
+
+    Initialize from a YAML file:
+
+    >>> assembly = SphereAssembly(parameters_source="path/to/parameters.yaml")
+
+    Add a sphere and a degree of freedom:
+
+    >>> sphere = Sphere(radius=1.0, position=[0, 0, 0])
+    >>> assembly.add_sphere(sphere)
+    >>> assembly.add_dof(name="rotation", default=0.0)
+
+    Notes
+    -----
+    - The assembly supports numerical evaluation and automatic differentiation via JAX.
+    - Input variables are classified into 3D fields and scalars based on naming conventions.
+    - Design parameters has a fixed shape after construction for JAX compatibility.
     """
 
     def __init__(self, parameters_source: str = None, verbose=True):
@@ -170,7 +232,7 @@ class SphereAssembly:
         dofs, design = self._setup_params(dofs, design)
 
         # Compute the Jacobian of X with respect to dofs Q using JAX's automatic differentiation
-        Jacobian_X = jax.jacfwd(self.grand_coordinates_func, argnums=0)
+        Jacobian_X = jax.jacfwd(self._grand_coordinates_func, argnums=0)
         J_X = jnp.array(Jacobian_X(dofs, design))
 
         # Create the block-diagonal
@@ -240,6 +302,17 @@ class SphereAssembly:
         return J
 
     def set_dof_defaults(self, new_dofs=None, new_dict=None, verbose=True):
+        """
+        Sets new default values for the degrees of freedom (dofs).
+
+        Args:
+            new_dofs (array-like, optional): New default values for all dofs. Must match the number of dofs.
+            new_dict (dict, optional): Dictionary mapping dof variable names to new default values.
+            verbose (bool, optional): If True, prints old and new default dof values. Defaults to True.
+
+        Raises:
+            ValueError: If new_dofs cannot be cast to a JAX array, has incorrect shape, or if a variable name in new_dict is invalid.
+        """
         if verbose:
             print("OLD default dof values:", self.dof_variables, self.dof_defaults)
         if new_dofs is not None:
@@ -272,6 +345,17 @@ class SphereAssembly:
             print("NEW default dof values:", self.dof_variables, self.dof_defaults)
 
     def set_design_defaults(self, new_design=None, new_dict=None, verbose=True):
+        """
+        Sets new default values for the design variables.
+
+        Args:
+            new_design (array-like, optional): New default values for all design variables. Must match the number of design variables.
+            new_dict (dict, optional): Dictionary mapping design variable names to new default values.
+            verbose (bool, optional): If True, prints old and new default design values. Defaults to True.
+
+        Raises:
+            ValueError: If new_design cannot be cast to a JAX array, has incorrect shape, or if a variable name in new_dict is invalid.
+        """
         if verbose:
             print("OLD default param values:", self.design_variables, self.design_defaults)
         if new_design is not None:
@@ -303,14 +387,12 @@ class SphereAssembly:
         if verbose:
             print("NEW default param values:", self.design_variables, self.design_defaults)
 
-    def grand_radius_func(self, dofs=None, design=None):
-        """Calculates the radius of each sphere based on input parameters."""
+    def _grand_radius_func(self, dofs=None, design=None):
         dofs, design = self._setup_params(dofs, design)
 
         return jnp.concatenate([jnp.array([sphere.radius(dofs, design)]) for sphere in self.spheres])
 
-    def grand_coordinates_func(self, dofs=None, design=None):
-        """Computes X, the grand coordinate for all spheres simultaneously."""
+    def _grand_coordinates_func(self, dofs=None, design=None):
         dofs, design = self._setup_params(dofs, design)
         coords = [
             jnp.concatenate([sphere.position(dofs, design), sphere.orientation(dofs, design)])
@@ -347,7 +429,6 @@ class SphereAssembly:
         return output
 
     def _setup_params(self, dofs=None, design=None):
-        """Private helper to setup default parameters"""
         if dofs is None:
             dofs = self.dof_defaults
         if design is None:
@@ -355,39 +436,6 @@ class SphereAssembly:
         return jnp.array(dofs).astype(float), jnp.array(design).astype(float)
 
     def _parse_parameter_file(self, parameters_source: str, verbose: bool):
-        """
-        Parse the YAML parameter file to generate the coordinates function and radii of a sphere assembly.
-
-        Parameters
-        ----------
-        parameters_source : str
-            Path to the YAML file (if is_file=True) or a YAML string (if is_file=False).
-        verbose : bool, default=True
-            Whether to print debug information.
-
-        Returns
-        -------
-        Ndof : int
-            Number of degrees of freedom.
-        Ndesign : int
-            Number of design parameters.
-        Ninput : int
-            Number of input parameters.
-        Nspheres : int
-            Number of spheres in the assembly.
-        dof_variables : list[str]
-            List of dof variable names.
-        design_variables : list[str]
-            List of design parameter variable names.
-        input_variables : list[str]
-            List of input parameter variable names.
-        dof_defaults : jax.numpy.ndarray
-            Default array of values for dof.
-        design_defaults : jax.numpy.ndarray
-            Default array of values for design param.
-        sphere : list[Sphere]
-            List of Sphere objects representing each sphere in the assembly.
-        """
         # Read YAML data from file or string
         try:
             # Check if the input is a file path (ends with .yaml or .yml, case insensitive)
@@ -541,10 +589,10 @@ class SphereAssembly:
             for_exprs = [str(x) for x in data.get("force", [0, 0, 0])]
             tor_exprs = [str(x) for x in data.get("torque", [0, 0, 0])]
 
-            rad_func = create_function(rad_exprs, dof_variables, design_variables, constants)
-            pos_func = create_function(pos_exprs, dof_variables, design_variables, constants)
-            ori_func = create_function(ori_exprs, dof_variables, design_variables, constants)
-            C_field_func, C_stiff_func = create_coupling_functions(
+            rad_func = _create_function(rad_exprs, dof_variables, design_variables, constants)
+            pos_func = _create_function(pos_exprs, dof_variables, design_variables, constants)
+            ori_func = _create_function(ori_exprs, dof_variables, design_variables, constants)
+            C_field_func, C_stiff_func = _create_coupling_functions(
                 for_exprs + tor_exprs, dof_variables, design_variables, input_variables, constants
             )
             spheres.append(Sphere(rad_func, pos_func, ori_func, C_field_func, C_stiff_func))
@@ -592,7 +640,7 @@ JAX_MODULES = {
 }
 
 
-def create_function(sp_exprs, dofs, design, constants):
+def _create_function(sp_exprs, dofs, design, constants):
     """
     Create a function that takes dofs and yaml_data as input and returns the evaluated symbolic expressions sp_exprs.
 
@@ -652,7 +700,7 @@ def create_function(sp_exprs, dofs, design, constants):
         return wrapper
 
 
-def create_coupling_functions(sp_exprs, dof_variables, design_variables, input_variables, constants):
+def _create_coupling_functions(sp_exprs, dof_variables, design_variables, input_variables, constants):
     dof_symbols = [sp.Symbol(v) for v in dof_variables]
     design_symbols = [sp.Symbol(v) for v in design_variables]
     input_symbols = [sp.Symbol(v) for v in input_variables]

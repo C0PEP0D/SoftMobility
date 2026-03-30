@@ -26,8 +26,6 @@
       ~SoftBody.from_file
       ~SoftBody.grand_c_field
       ~SoftBody.grand_c_stiff
-      ~SoftBody.grand_coordinates_func
-      ~SoftBody.grand_radius_func
       ~SoftBody.set_design_defaults
       ~SoftBody.set_dof_defaults
    

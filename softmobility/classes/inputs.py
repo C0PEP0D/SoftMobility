@@ -1,4 +1,4 @@
-"""Parametric input fields for softmobility."""
+"""Parametric inputs (3D and scalar fields) for softmobility."""
 
 import jax.numpy as jnp
 import jax
