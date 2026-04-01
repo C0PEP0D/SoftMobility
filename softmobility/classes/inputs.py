@@ -544,7 +544,7 @@ def constant_scalar(value=1.0):
 def oscillating_scalar(amplitude=1.0, omega=1.0, phase=0.0):
     """Sinusoidally oscillating scalar with updatable parameters."""
     return Scalar(
-        lambda pos, t, p: p[0] * jnp.sin(p[1] * t + p[2]),  # clean, no double indexing
+        lambda pos, t, p: p[0] * jnp.sin(p[1] * t + p[2]),
         params=[float(amplitude), float(omega), float(phase)],
         param_names=["amplitude", "omega", "phase"],
     )
