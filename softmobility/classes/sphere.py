@@ -39,45 +39,70 @@ class Sphere:
         return self._c_stiff_func(dofs, design)
 
     def _bortz_equation(self, *args):
-        """
-        Compute the Bortz Jacobian for a 3D rotation vector.
-
-        Args:
-            rotation_vector (jnp.ndarray): 3D rotation vector (r_x, r_y, r_z).
-
-        Returns:
-            jnp.ndarray: 3x3 Jacobian matrix.
-        """
         rotation_vector = self.orientation(*args)
-        norm_r = jnp.linalg.norm(rotation_vector)
+        r_sq = jnp.dot(rotation_vector, rotation_vector)
+        safe_r = jnp.sqrt(jnp.maximum(r_sq, 1e-12))
+        unit_r = rotation_vector / safe_r
 
-        def zero_case(_):
-            """Case when norm_r is zero: Return identity matrix."""
-            return jnp.eye(3)
+        sin_r = jnp.sin(safe_r)
+        cos_r = jnp.cos(safe_r)
 
-        def nonzero_case(norm_r):
-            """Compute Bortz Jacobian for nonzero rotation."""
-            unit_r = rotation_vector / norm_r
-            sin_norm_r = jnp.sin(norm_r)
-            cos_norm_r = jnp.cos(norm_r)
+        skew_unit_r = jnp.array(
+            [
+                [0, -unit_r[2], unit_r[1]],
+                [unit_r[2], 0, -unit_r[0]],
+                [-unit_r[1], unit_r[0], 0],
+            ]
+        )
 
-            # Skew-symmetric matrix of the vectorial product with unit_r
-            skew_unit_r = jnp.array(
-                [
-                    [0, -unit_r[2], unit_r[1]],
-                    [unit_r[2], 0, -unit_r[0]],
-                    [-unit_r[1], unit_r[0], 0],
-                ]
-            )
+        full = (
+            (sin_r / safe_r) * jnp.eye(3)
+            + (1 - sin_r / safe_r) * jnp.outer(unit_r, unit_r)
+            + (1 - cos_r) / safe_r * skew_unit_r
+        )
 
-            return (
-                (sin_norm_r / norm_r) * jnp.eye(3)
-                + (1 - sin_norm_r / norm_r) * jnp.outer(unit_r, unit_r)
-                + (1 - cos_norm_r) / norm_r * skew_unit_r
-            )
+        return jnp.where(r_sq < 1e-12, jnp.eye(3), full)
 
-        # Use JAX's lax.cond to switch between cases without breaking JIT
-        return lax.cond(norm_r < 1e-6, zero_case, nonzero_case, norm_r)
+    # def _bortz_equation(self, *args):
+    #     """
+    #     Compute the Bortz Jacobian for a 3D rotation vector.
+
+    #     Args:
+    #         rotation_vector (jnp.ndarray): 3D rotation vector (r_x, r_y, r_z).
+
+    #     Returns:
+    #         jnp.ndarray: 3x3 Jacobian matrix.
+    #     """
+    #     rotation_vector = self.orientation(*args)
+    #     norm_r = jnp.linalg.norm(rotation_vector)
+
+    #     def zero_case(_):
+    #         """Case when norm_r is zero: Return identity matrix."""
+    #         return jnp.eye(3)
+
+    #     def nonzero_case(norm_r):
+    #         """Compute Bortz Jacobian for nonzero rotation."""
+    #         unit_r = rotation_vector / norm_r
+    #         sin_norm_r = jnp.sin(norm_r)
+    #         cos_norm_r = jnp.cos(norm_r)
+
+    #         # Skew-symmetric matrix of the vectorial product with unit_r
+    #         skew_unit_r = jnp.array(
+    #             [
+    #                 [0, -unit_r[2], unit_r[1]],
+    #                 [unit_r[2], 0, -unit_r[0]],
+    #                 [-unit_r[1], unit_r[0], 0],
+    #             ]
+    #         )
+
+    #         return (
+    #             (sin_norm_r / norm_r) * jnp.eye(3)
+    #             + (1 - sin_norm_r / norm_r) * jnp.outer(unit_r, unit_r)
+    #             + (1 - cos_norm_r) / norm_r * skew_unit_r
+    #         )
+
+    #     # Use JAX's lax.cond to switch between cases without breaking JIT
+    #     return lax.cond(norm_r < 1e-6, zero_case, nonzero_case, norm_r)
 
     def bortz_jacobian(self, *args):
         # Compute the Bortz Jacobian for the rotation vector
