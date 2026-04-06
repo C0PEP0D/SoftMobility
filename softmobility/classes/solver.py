@@ -91,10 +91,10 @@ class FlowBodyRollout:
         omega_lab, E_lab = self.flow.omega_rate_of_strain(position, time)
         E_body = rot.T @ E_lab @ rot
         E_inf = jnp.array([E_body[0, 0], E_body[0, 1], E_body[0, 2], E_body[1, 1], E_body[1, 2]])
-        tensors = self.soft_body.compute_tensors(dofs, design)
+        tensors = self.soft_body.compute_tensors(dofs, design, time)
 
         # Soft mobility equation in the body frame
-        p_body = tensors.M_H @ inputs + tensors.M_K @ dofs + tensors.C_E @ E_inf
+        p_body = tensors.M_H @ inputs + tensors.M_K @ dofs + tensors.C_E @ E_inf + tensors.p_act
 
         # Rotate body-frame result back to lab frame
         p_lab = sixc_rot @ p_body
@@ -452,75 +452,6 @@ class FlowBodyRL:
 
 # Useful functions for rotation with rotation vector ########################
 
-# @jax.jit
-# def rescale_orientation(rvec):
-#     """
-#     Rescale the orientation vector to avoid singularities.
-#     """
-#     rvec = jnp.array(rvec)
-#     r = jnp.linalg.norm(rvec)
-
-#     def rescale(_):
-#         return rvec - 2 * jnp.pi * rvec / r
-
-#     return lax.cond(r >= jnp.pi, rescale, lambda _: rvec, None)
-
-
-# @jax.jit
-# def compute_bortz_operator(rvec):
-#     """
-#     Compute the time derivative of the orientation vector using the Bortz formula.
-#     """
-#     rvec = jnp.array(rvec)
-#     theta = jnp.linalg.norm(rvec)
-
-#     def small_r_case(_):
-#         """Return omega directly if r is small."""
-#         return jnp.eye(3)
-
-#     def normal_case(_):
-#         """Compute Bortz derivative normally."""
-#         runit = rvec / theta
-#         kx, ky, kz = runit
-#         runitcross = jnp.array([[0, -kz, ky], [kz, 0, -kx], [-ky, kx, 0]])
-#         term1 = -(theta / 2) * runitcross
-#         term2 = (theta / 2) / jnp.tan(theta / 2) * jnp.eye(3)
-#         term3 = (1 - (theta / 2) / jnp.tan(theta / 2)) * jnp.outer(runit, runit)
-#         return term1 + term2 + term3
-
-#     return lax.cond(theta < 1e-6, small_r_case, normal_case, None)
-
-# def _rotation_matrix_from_Rodrigues_impl(rvec, Ndof):
-#     """
-#     Rotation matrix from rotation vector r using Rodrigues' rotation formula.
-#     """
-#     rvec = jnp.array(rvec)
-#     theta = jnp.linalg.norm(rvec)
-
-#     def no_rotation(_):
-#         """Return identity matrix when theta is very small."""
-#         R = jnp.eye(3)
-#         sixc_R = jnp.eye(Ndof + 6)
-#         return R, sixc_R
-
-#     def compute_rotation(_):
-#         """Compute Rodrigues' rotation matrix."""
-#         runit = rvec / theta
-#         kx, ky, kz = runit
-#         runitcross = jnp.array([[0, -kz, ky], [kz, 0, -kx], [-ky, kx, 0]])
-#         R = jnp.eye(3) + jnp.sin(theta) * runitcross + (1 - jnp.cos(theta)) * jnp.dot(runitcross, runitcross)
-
-#         sixc_R = jnp.block(
-#             [
-#                 [R, jnp.zeros((3, 3)), jnp.zeros((3, Ndof))],  # pos
-#                 [jnp.zeros((3, 3)), R, jnp.zeros((3, Ndof))],  # ori
-#                 [jnp.zeros((Ndof, 6)), jnp.eye(Ndof)],  # dof
-#             ]
-#         )
-#         return R, sixc_R
-
-#     return lax.cond(theta < 1e-6, no_rotation, compute_rotation, None)
-
 
 @jax.jit
 def rescale_orientation(rvec):
@@ -551,7 +482,7 @@ def compute_bortz_operator(rvec):
     return jnp.where(r_sq < 1e-12, jnp.eye(3), term1 + term2 + term3)
 
 
-def _rotation_matrix_from_Rodrigues_impl(rvec, Ndof):
+def _rotation_matrix_from_Rodrigues_impl(rvec, num_dofs):
     rvec = jnp.asarray(rvec, dtype=float)
     r_sq = jnp.dot(rvec, rvec)
     safe_r = jnp.sqrt(jnp.maximum(r_sq, 1e-12))  # ← key fix
@@ -564,18 +495,35 @@ def _rotation_matrix_from_Rodrigues_impl(rvec, Ndof):
 
     sixc_R = jnp.block(
         [
-            [R, jnp.zeros((3, 3)), jnp.zeros((3, Ndof))],
-            [jnp.zeros((3, 3)), R, jnp.zeros((3, Ndof))],
-            [jnp.zeros((Ndof, 6)), jnp.eye(Ndof)],
+            [R, jnp.zeros((3, 3)), jnp.zeros((3, num_dofs))],
+            [jnp.zeros((3, 3)), R, jnp.zeros((3, num_dofs))],
+            [jnp.zeros((num_dofs, 6)), jnp.eye(num_dofs)],
         ]
     )
 
     # Return identity at zero — value correct, gradient finite
     R_out = jnp.where(r_sq < 1e-12, jnp.eye(3), R)
-    sixc_out = jnp.where(r_sq < 1e-12, jnp.eye(6 + Ndof), sixc_R)
+    sixc_out = jnp.where(r_sq < 1e-12, jnp.eye(6 + num_dofs), sixc_R)
     return R_out, sixc_out
 
 
 rotation_matrix_from_Rodrigues = jax.jit(
     lambda rvec, Ndof: _rotation_matrix_from_Rodrigues_impl(rvec, Ndof), static_argnums=(1,)
 )
+
+
+@jax.jit
+def rotation_matrix(rvec):
+    rvec = jnp.asarray(rvec, dtype=float)
+    r_sq = jnp.dot(rvec, rvec)
+    safe_r = jnp.sqrt(jnp.maximum(r_sq, 1e-12))
+    runit = rvec / safe_r
+
+    kx, ky, kz = runit
+    runitcross = jnp.array([[0, -kz, ky], [kz, 0, -kx], [-ky, kx, 0]])
+
+    R = jnp.eye(3) + jnp.sin(safe_r) * runitcross + (1 - jnp.cos(safe_r)) * runitcross @ runitcross
+
+    # Return identity at zero — value correct, gradient finite
+    R_out = jnp.where(r_sq < 1e-12, jnp.eye(3), R)
+    return R_out

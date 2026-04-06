@@ -27,14 +27,14 @@ def test_position_entries():
 
     s = Sphere(position=[1, 0, 0])
 
-    position_func = lambda _, __: [2.0, 0.0, 0.0]
+    position_func = lambda _, __, ___: [2.0, 0.0, 0.0]
     s = Sphere(position=position_func)
 
     try:
         position_func = lambda _: 1
         s = Sphere(position=position_func)
     except ValueError as e:
-        assert str(e) == "position must accept exactly two arguments: 'dofs', 'design'."
+        assert str(e) == "position must accept exactly three arguments: 'dofs', 'design', 'time'."
 
     try:
         s = Sphere(position=[1, 2])
@@ -50,14 +50,14 @@ def test_orientation_entries():
 
     s = Sphere(orientation=[1, 0, 0])
 
-    orientation_func = lambda _, __: [2.0, 0.0, 0.0]
+    orientation_func = lambda _, __, ___: [2.0, 0.0, 0.0]
     s = Sphere(orientation=orientation_func)
 
     try:
         orientation_func = lambda _: [2.0, 0.0, 0.0]
         s = Sphere(orientation=orientation_func)
     except ValueError as e:
-        assert str(e) == "orientation must accept exactly two arguments: 'dofs', 'design'."
+        assert str(e) == "orientation must accept exactly three arguments: 'dofs', 'design', 'time'."
 
     try:
         s = Sphere(orientation=[1, 2, 3, 4])

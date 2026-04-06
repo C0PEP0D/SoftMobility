@@ -8,7 +8,7 @@ from jax import lax
 from .sphere import Sphere
 from .sphereassembly import SphereAssembly
 
-SoftMobilityTensors = namedtuple("SoftMobilityTensors", ["M", "M_K", "M_H", "C_E", "P"])
+SoftMobilityTensors = namedtuple("SoftMobilityTensors", ["M", "M_K", "M_H", "C_E", "P", "p_act"])
 
 
 class SoftBody(SphereAssembly):
@@ -66,7 +66,7 @@ class SoftBody(SphereAssembly):
         self._validate_default_geometry()
         self.compute_fast_tensors = jax.jit(self.compute_tensors)
 
-    def compute_tensors(self, dofs=None, design=None):
+    def compute_tensors(self, dofs=None, design=None, time=None):
         """
         Compute the full mobility problem for a given system configuration.
 
@@ -107,15 +107,15 @@ class SoftBody(SphereAssembly):
         - This function leverages JAX for automatic differentiation and efficient computation.
         """
         # Handling dofs and params, passing default value if None are given
-        dofs, design = self._setup_params(dofs, design)
+        dofs, design, time = self._setup_params(dofs, design, time)
 
-        J = self.compute_Jacobian_matrix(dofs, design)
-        Mgrand = self.compute_mobility_tensor(dofs, design)
+        J, v_act = self.compute_Jacobian_matrix(dofs, design, time)
+        Mgrand = self.compute_mobility_tensor(dofs, design, time)
         Rgrand = jnp.linalg.inv(Mgrand)
-        C_S = self._compute_composition_of_strain(dofs, design)
-        R_S = self._compute_coupling_with_strain(dofs, design)
-        C_H = self.grand_c_field(dofs, design)
-        C_K = self.grand_c_stiff(dofs, design)
+        C_S = self._compute_composition_of_strain(dofs, design, time)
+        R_S = self._compute_coupling_with_strain(dofs, design, time)
+        C_H = self.grand_c_field(dofs, design, time)
+        C_K = self.grand_c_stiff(dofs, design, time)
 
         # Compute soft mobility tensors
         Mred = jnp.linalg.inv(J.T @ Rgrand @ J)
@@ -124,26 +124,27 @@ class SoftBody(SphereAssembly):
         C_E = P @ C_S + M @ R_S
         M_K = M @ C_K
         M_H = M @ C_H
+        p_act = -P @ v_act.squeeze()
 
-        return SoftMobilityTensors(M, M_K, M_H, C_E, P)
+        return SoftMobilityTensors(M=M, M_K=M_K, M_H=M_H, C_E=C_E, P=P, p_act=p_act)
 
-    def compute_mobility_tensor(self, dofs=None, design=None):
-        dofs, design = self._setup_params(dofs, design)
+    def compute_mobility_tensor(self, dofs=None, design=None, time=None):
+        dofs, design, time = self._setup_params(dofs, design, time)
 
         # Function to compute diagonal blocks (i == j)
         def compute_diag_block(i):
-            mu_tt = self._compute_mu_tt_ii(self.spheres[i], dofs, design)
-            mu_rr = self._compute_mu_rr_ii(self.spheres[i], dofs, design)
+            mu_tt = self._compute_mu_tt_ii(self.spheres[i], dofs, design, time)
+            mu_rr = self._compute_mu_rr_ii(self.spheres[i], dofs, design, time)
             mu_rt = jnp.zeros((3, 3))
             mu_tr = jnp.zeros((3, 3))
             return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
 
         # Function to compute off-diagonal blocks (i ≠ j)
         def compute_off_diag_block(i, j):
-            mu_tt = self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, design)
-            mu_rr = self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, design)
-            mu_rt = self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, design)
-            mu_tr = self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, design).T
+            mu_tt = self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, design, time)
+            mu_rr = self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, design, time)
+            mu_rt = self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, design, time)
+            mu_tr = self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, design, time).T
             return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
 
         # Function to select correct block using lax.cond
@@ -157,13 +158,13 @@ class SoftBody(SphereAssembly):
 
         return M
 
-    def _compute_mobility_tensor_alt(self, dofs=None, design=None, inputs=None):
-        dofs, design = self._setup_params(dofs, design)
+    def _compute_mobility_tensor_alt(self, dofs=None, design=None, time=None):
+        dofs, design, time = self._setup_params(dofs, design, time)
         # Define the blocks functions
         mu_tt = jnp.block(
             [
                 [
-                    self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, design)
+                    self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, design, time)
                     for j in range(self.Nspheres)
                 ]
                 for i in range(self.Nspheres)
@@ -172,7 +173,7 @@ class SoftBody(SphereAssembly):
         mu_rr = jnp.block(
             [
                 [
-                    self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, design)
+                    self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, design, time)
                     for j in range(self.Nspheres)
                 ]
                 for i in range(self.Nspheres)
@@ -181,7 +182,7 @@ class SoftBody(SphereAssembly):
         mu_rt = jnp.block(
             [
                 [
-                    self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, design)
+                    self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, design, time)
                     for j in range(self.Nspheres)
                 ]
                 for i in range(self.Nspheres)
@@ -190,7 +191,7 @@ class SoftBody(SphereAssembly):
         mu_tr = jnp.block(
             [
                 [
-                    self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, design).T
+                    self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, design, time).T
                     for j in range(self.Nspheres)
                 ]
                 for i in range(self.Nspheres)
@@ -251,16 +252,16 @@ class SoftBody(SphereAssembly):
         return rs
 
     # Functions to compute the GRPY tensors #######################################
-    def _1sphere_grpy_quantities(self, sphere: Sphere, dofs=None, design=None, inputs=None):
-        dofs, design = self._setup_params(dofs, design)
+    def _1sphere_grpy_quantities(self, sphere: Sphere, dofs=None, design=None, time=None):
+        dofs, design, time = self._setup_params(dofs, design, time)
 
         return sphere.radius(dofs, design)
 
-    def _2spheres_grpy_quantities(self, sphere_i: Sphere, sphere_j: Sphere, dofs=None, design=None, inputs=None):
-        dofs, design = self._setup_params(dofs, design)
+    def _2spheres_grpy_quantities(self, sphere_i: Sphere, sphere_j: Sphere, dofs=None, design=None, time=None):
+        dofs, design, time = self._setup_params(dofs, design, time)
 
-        position_i = sphere_i.position(dofs, design)
-        position_j = sphere_j.position(dofs, design)
+        position_i = sphere_i.position(dofs, design, time)
+        position_j = sphere_j.position(dofs, design, time)
         radius_i = sphere_i.radius(dofs, design)
         radius_j = sphere_j.radius(dofs, design)
         posi = jnp.array(position_i)
@@ -472,10 +473,10 @@ class SoftBody(SphereAssembly):
 
         return matrix
 
-    def _individual_composition_of_strain(self, sphere: Sphere, dofs=None, design=None, inputs=None):
-        dofs, design = self._setup_params(dofs, design)
+    def _individual_composition_of_strain(self, sphere: Sphere, dofs=None, design=None, time=None):
+        dofs, design, time = self._setup_params(dofs, design, time)
 
-        X, Y, Z = sphere.position(dofs, design)
+        X, Y, Z = sphere.position(dofs, design, time)
         T = jnp.array(
             [
                 [X, Y, Z, 0, 0],
@@ -496,7 +497,8 @@ class SoftBody(SphereAssembly):
         try:
             dofs = jnp.array(self.dof_defaults)
             design = jnp.array(self.design_defaults)
-            tensors = self.compute_tensors(dofs, design)
+            time = jnp.array([0.0])
+            tensors = self.compute_tensors(dofs, design, time)
 
             issues = []
             for name, tensor in [("M_H", tensors.M_H), ("M_K", tensors.M_K), ("C_E", tensors.C_E)]:
@@ -510,7 +512,8 @@ class SoftBody(SphereAssembly):
                     f"physically valid, non-degenerate geometry (e.g. spheres not "
                     f"overlapping or at zero separation).\n"
                     f"  dof_defaults    = {list(self.dof_defaults)}\n"
-                    f"  design_defaults = {dict(self.design_defaults)}",
+                    f"  design_defaults = {dict(self.design_defaults)}"
+                    f"  time_default    = {[0.0]}",
                     UserWarning,
                     stacklevel=2,
                 )
