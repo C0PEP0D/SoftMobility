@@ -74,7 +74,7 @@ def test_kinematic_tensors():
     sa = SphereAssembly("./softmobility/tests/parameters.yaml")
 
     # compute_velocity_matrix()
-    M1 = sa.compute_Jass()
+    M1, _ = sa.compute_Jassembly()
     M1test = jnp.array(
         [
             [0.0, 0.0],
@@ -113,7 +113,7 @@ def test_kinematic_tensors():
     )
     assert jnp.allclose(M2, M2test)
 
-    M3 = sa.compute_Jacobian_matrix()
+    M3, _ = sa.compute_Jacobian_matrix()
     print(M3)
     M3test = jnp.array(
         [

@@ -131,10 +131,11 @@ class SphereAssembly:
         try:
             test_dof = jnp.zeros(self.Ndof)
             test_design = jnp.zeros(self.Ndesign)
+            test_time = jnp.zeros((1,))
 
             sphere.radius(dofs=test_dof, design=test_design)
-            sphere.position(dofs=test_dof, design=test_design)
-            sphere.orientation(dofs=test_dof, design=test_design)
+            sphere.position(dofs=test_dof, design=test_design, time=test_time)
+            sphere.orientation(dofs=test_dof, design=test_design, time=test_time)
             sphere.c_field(dofs=test_dof, design=test_design)
             sphere.c_stiff(dofs=test_dof, design=test_design)
 
@@ -201,23 +202,23 @@ class SphereAssembly:
     def design_defaults(self):
         return self._design_defaults
 
-    def grand_c_field(self, dofs=None, design=None):
+    def grand_c_field(self, dofs=None, design=None, time=None):
         """
         Returns C_field of shape (6N, Ninput) such that:
             grand_force_torque = C_field @ inputs + C_stiff @ dofs
         """
-        dofs, design = self._setup_params(dofs, design)
+        dofs, design, time = self._setup_params(dofs, design, time)
         return jnp.vstack([sphere.c_field(dofs, design) for sphere in self.spheres])
 
-    def grand_c_stiff(self, dofs=None, design=None):
+    def grand_c_stiff(self, dofs=None, design=None, time=None):
         """
         Returns C_stiff of shape (6N, Ndof) such that:
             grand_force_torque = C_field @ inputs + C_stiff @ dofs
         """
-        dofs, design = self._setup_params(dofs, design)
+        dofs, design, time = self._setup_params(dofs, design, time)
         return jnp.vstack([sphere.c_stiff(dofs, design) for sphere in self.spheres])
 
-    def compute_Jass(self, dofs=None, design=None):
+    def compute_Jassembly(self, dofs=None, design=None, time=None):
         """
         Computes Jass, which is defined by V = Jass . dotQ, with V the grand velocity in the body's frame and dotQ the time derivative of the dofs.
         We use: V = B . dotX = B . J_X . dotQ, suh that Jass = B . J_X
@@ -229,15 +230,19 @@ class SphereAssembly:
         Returns:
             jnp_array: Jass
         """
-        dofs, design = self._setup_params(dofs, design)
+        dofs, design, time = self._setup_params(dofs, design, time)
 
         # Compute the Jacobian of X with respect to dofs Q using JAX's automatic differentiation
         Jacobian_X = jax.jacfwd(self._grand_coordinates_func, argnums=0)
-        J_X = jnp.array(Jacobian_X(dofs, design))
+        J_X = jnp.array(Jacobian_X(dofs, design, time))
+
+        # Velocity: derivative of X with respect to time
+        velocity = jax.jacfwd(self._grand_coordinates_func, argnums=2)
+        v = jnp.array(velocity(dofs, design, time))
 
         # Create the block-diagonal
         # Each block is computed by bortz_jacobian_for_sphere for each sphere
-        Bi_s = [sphere.bortz_jacobian(dofs, design) for sphere in self.spheres]
+        Bi_s = [sphere.bortz_jacobian(dofs, design, time) for sphere in self.spheres]
 
         # Construct N by stacking the blocks along the diagonal
         B = jnp.block(
@@ -247,11 +252,12 @@ class SphereAssembly:
             ]
         )
 
-        Jass = B @ J_X
+        Jassembly = B @ J_X
+        v_act = B @ v
 
-        return Jass
+        return Jassembly, v_act
 
-    def compute_C_U(self, dofs=None, design=None):
+    def compute_C_U(self, dofs=None, design=None, time=None):
         """
         Computes C_U, such that v = V + C_U .v_0, with V and v the grand velocity in the body and lab frame, and v_0 the six-component velocity of the body reference in the lab frame
 
@@ -262,27 +268,27 @@ class SphereAssembly:
         Returns:
             jnp.array: C_U
         """
-        dofs, design = self._setup_params(dofs, design)
+        dofs, design, time = self._setup_params(dofs, design, time)
 
         # Construct T by assembling vertically the individual T's for each sphere
-        C_U = jnp.block([[sphere.composition_of_velocity(dofs, design)] for sphere in self.spheres])
+        C_U = jnp.block([[sphere.composition_of_velocity(dofs, design, time)] for sphere in self.spheres])
 
         return C_U
 
-    def compute_composition_of_forces(self, dofs=None, design=None):
-        dofs, design = self._setup_params(dofs, design)
+    # def compute_composition_of_forces(self, dofs=None, design=None, time=None):
+    #     dofs, design, time = self._setup_params(dofs, design, time)
 
-        # Create blocks for individual spheres
-        blocks = [sphere.composition_of_force(dofs, design) for sphere in self.spheres]
+    #     # Create blocks for individual spheres
+    #     blocks = [sphere.composition_of_force(dofs, design) for sphere in self.spheres]
 
-        # Construct Tf by stacking blocks along the diagonal
-        Tf = jnp.block(
-            [[b if i == j else jnp.zeros_like(b) for j, b in enumerate(blocks)] for i in range(self.Nspheres)]
-        )
+    #     # Construct Tf by stacking blocks along the diagonal
+    #     Tf = jnp.block(
+    #         [[b if i == j else jnp.zeros_like(b) for j, b in enumerate(blocks)] for i in range(self.Nspheres)]
+    #     )
 
-        return Tf
+    #     return Tf
 
-    def compute_Jacobian_matrix(self, dofs=None, design=None):
+    def compute_Jacobian_matrix(self, dofs=None, design=None, time=None):
         """
         Computes the Jacobian tensor J = partial v / partial p
 
@@ -293,13 +299,13 @@ class SphereAssembly:
         Returns:
             jnp.array: J
         """
-        dofs, design = self._setup_params(dofs, design)
+        dofs, design, time = self._setup_params(dofs, design, time)
 
-        Jass = self.compute_Jass(dofs, design)
-        C_U = self.compute_C_U(dofs, design)
+        Jass, v_act = self.compute_Jassembly(dofs, design, time)
+        C_U = self.compute_C_U(dofs, design, time)
         J = jnp.block([C_U, Jass])
 
-        return J
+        return J, v_act
 
     def set_dof_defaults(self, new_dofs=None, new_dict=None, verbose=True):
         """
@@ -387,15 +393,15 @@ class SphereAssembly:
         if verbose:
             print("NEW default param values:", self.design_variables, self.design_defaults)
 
-    def _grand_radius_func(self, dofs=None, design=None):
-        dofs, design = self._setup_params(dofs, design)
+    # def _grand_radius_func(self, dofs=None, design=None, time=None):
+    #     dofs, design, time = self._setup_params(dofs, design, time)
 
-        return jnp.concatenate([jnp.array([sphere.radius(dofs, design)]) for sphere in self.spheres])
+    #     return jnp.concatenate([jnp.array([sphere.radius(dofs, design)]) for sphere in self.spheres])
 
-    def _grand_coordinates_func(self, dofs=None, design=None):
-        dofs, design = self._setup_params(dofs, design)
+    def _grand_coordinates_func(self, dofs=None, design=None, time=None):
+        dofs, design, time = self._setup_params(dofs, design, time)
         coords = [
-            jnp.concatenate([sphere.position(dofs, design), sphere.orientation(dofs, design)])
+            jnp.concatenate([sphere.position(dofs, design, time), sphere.orientation(dofs, design, time)])
             for sphere in self.spheres
         ]
         return jnp.concatenate(coords)
@@ -421,19 +427,26 @@ class SphereAssembly:
         for i, sphere in enumerate(self.spheres):
             output += f"\nSPHERE {i}\n"
             output += f"  radius: {sphere.radius(self.dof_defaults, self.design_defaults)}\n"
-            output += f"  position: {sphere.position(self.dof_defaults, self.design_defaults)}\n"
-            output += f"  orientation: {sphere.orientation(self.dof_defaults, self.design_defaults)}\n"
+            output += f"  position: {sphere.position(self.dof_defaults, self.design_defaults, [0.0])}\n"
+            output += f"  orientation: {sphere.orientation(self.dof_defaults, self.design_defaults, [0.0])}\n"
             output += f"  c_field:\n{sphere.c_field(self.dof_defaults, self.design_defaults)}\n"
             output += f"  c_stiff:\n{sphere.c_stiff(self.dof_defaults, self.design_defaults)}\n"
 
         return output
 
-    def _setup_params(self, dofs=None, design=None):
+    def _setup_params(self, dofs=None, design=None, time=None):
         if dofs is None:
             dofs = self.dof_defaults
         if design is None:
             design = self.design_defaults
-        return jnp.array(dofs).astype(float), jnp.array(design).astype(float)
+        if time is None:
+            time = 0.0
+
+        dofs = jnp.atleast_1d(jnp.asarray(dofs, dtype=float))
+        design = jnp.atleast_1d(jnp.asarray(design, dtype=float))
+        time = jnp.atleast_1d(jnp.asarray(time, dtype=float))
+
+        return dofs, design, time
 
     def _parse_parameter_file(self, parameters_source: str, verbose: bool):
         # Read YAML data from file or string
@@ -459,9 +472,9 @@ class SphereAssembly:
         sphere_data = yaml_data["spheres"]
 
         # Extract all possible prefixes from dof_names and design_names
-        dof_prefixes = set(["dof"])
-        design_prefixes = set(["design"])
-        input_prefixes = set(["input"])
+        dof_prefixes = {"dof"}
+        design_prefixes = {"design"}
+        input_prefixes = {"input"}
 
         if "dof_names" in yaml_data:
             for name in yaml_data["dof_names"]:
@@ -515,13 +528,14 @@ class SphereAssembly:
         dof_variables = sorted(list(dof_set))
         design_variables = sorted(list(design_set))
         input_variables = sorted(list(input_set))
+        time_variable = ["time"]
 
         # Classify and validate input variable names
         field3d_bases, scalar_names = _classify_input_variables(input_variables)
 
         # Reorder canonically: field components first (in field order), scalars last
         input_variables = [base + str(j) for base in field3d_bases for j in range(3)] + scalar_names
-        Ninput = len(input_variables)
+        num_input = len(input_variables)
 
         # printing variables found
         if verbose:
@@ -534,14 +548,14 @@ class SphereAssembly:
                 print(f"  Scalar inputs:    {scalar_names}")
 
         # Determine Ndof, Ndesign, and Nsphere
-        Ndof = len(dof_variables)
-        Ndesign = len(design_variables)
-        Ninput = len(input_variables)
-        Nsphere = len(sphere_data)
+        num_dof = len(dof_variables)
+        num_design = len(design_variables)
+        num_input = len(input_variables)
+        num_sphere = len(sphere_data)
 
         # Create default arrays with zeros
-        dof_defaults = jnp.zeros(Ndof)
-        design_defaults = jnp.zeros(Ndesign)
+        dof_defaults = jnp.zeros(num_dof)
+        design_defaults = jnp.zeros(num_design)
 
         # Extract constants = defaults that are not dof/design/input
         constants = {}
@@ -562,7 +576,13 @@ class SphereAssembly:
                 design_defaults = design_defaults.at[i].set(defaults.get(var, 0.0))
 
         # Detect differences between declared symbols are used ones
-        known_symbols = set(dof_variables) | set(design_variables) | set(input_variables) | set(constants.keys())
+        known_symbols = (
+            set(dof_variables)
+            | set(design_variables)
+            | set(input_variables)
+            | set(time_variable)
+            | set(constants.keys())
+        )
 
         undefined_symbols = all_detected_symbols - known_symbols
 
@@ -590,8 +610,8 @@ class SphereAssembly:
             tor_exprs = [str(x) for x in data.get("torque", [0, 0, 0])]
 
             rad_func = _create_function(rad_exprs, dof_variables, design_variables, constants)
-            pos_func = _create_function(pos_exprs, dof_variables, design_variables, constants)
-            ori_func = _create_function(ori_exprs, dof_variables, design_variables, constants)
+            pos_func = _create_function_time(pos_exprs, dof_variables, design_variables, constants, time_variable)
+            ori_func = _create_function_time(ori_exprs, dof_variables, design_variables, constants, time_variable)
             C_field_func, C_stiff_func = _create_coupling_functions(
                 for_exprs + tor_exprs, dof_variables, design_variables, input_variables, constants
             )
@@ -607,10 +627,10 @@ class SphereAssembly:
                 print(f"      Coupling matrix C_K:\n{C_stiff_func.expression}")
 
         return (
-            Ndof,
-            Ndesign,
-            Ninput,
-            Nsphere,
+            num_dof,
+            num_design,
+            num_input,
+            num_sphere,
             dof_variables,
             design_variables,
             input_variables,
@@ -694,6 +714,53 @@ def _create_function(sp_exprs, dofs, design, constants):
         def wrapper(dof_args, design_args):
             return jnp.stack(
                 [jnp.asarray(jax_expr(dof_args, design_args), dtype=float).reshape(()) for jax_expr in jax_exprs]
+            )
+
+        wrapper.expression = [str(sp_expr) for sp_expr in sp_exprs]
+        return wrapper
+
+
+def _create_function_time(sp_exprs, dofs, design, constants, time):
+    dof_symbols = [sp.symbols(d) for d in dofs]
+    design_symbols = [sp.symbols(d) for d in design]
+    time_symbols = [sp.symbols(t) for t in time]
+
+    if isinstance(sp_exprs, str):
+        # Parse the expression using sympy
+        sp_expr = sp.sympify(sp_exprs)
+        sp_expr = sp_expr.subs(constants)
+
+        # Convert expression to a JAX function or raise ValueError
+        try:
+            jax_expr = sp.lambdify([dof_symbols, design_symbols, time_symbols], sp_expr, JAX_MODULES)
+        except Exception as e:
+            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
+
+        # Callable build out of the JAX function
+        def wrapper(dof_args, design_args, time_args):
+            result = jax_expr(dof_args, design_args, time_args)
+            return jnp.asarray(result, dtype=float).reshape(())
+
+        wrapper.expression = str(sp_expr)  # str(jax_expr(*dofs, *yaml_data))
+        return wrapper
+    else:
+        # Parse the expressions using sympy
+        sp_exprs = [sp.sympify(expr).subs(constants) for expr in sp_exprs]
+        jax_exprs = []
+
+        # Convert each expression to a JAX function and append it to the list of functions
+        for sp_expr in sp_exprs:
+            try:
+                jax_exprs.append(sp.lambdify([dof_symbols, design_symbols, time_symbols], sp_expr, JAX_MODULES))
+            except Exception as e:
+                raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
+
+        def wrapper(dof_args, design_args, time_args):
+            return jnp.stack(
+                [
+                    jnp.asarray(jax_expr(dof_args, design_args, time_args), dtype=float).reshape(())
+                    for jax_expr in jax_exprs
+                ]
             )
 
         wrapper.expression = [str(sp_expr) for sp_expr in sp_exprs]
