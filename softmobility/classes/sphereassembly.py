@@ -275,18 +275,18 @@ class SphereAssembly:
 
         return C_U
 
-    # def compute_composition_of_forces(self, dofs=None, design=None, time=None):
-    #     dofs, design, time = self._setup_params(dofs, design, time)
+    def compute_composition_of_forces(self, dofs=None, design=None, time=None):
+        dofs, design, time = self._setup_params(dofs, design, time)
 
-    #     # Create blocks for individual spheres
-    #     blocks = [sphere.composition_of_force(dofs, design) for sphere in self.spheres]
+        # Create blocks for individual spheres
+        blocks = [sphere.composition_of_force(dofs, design, time) for sphere in self.spheres]
 
-    #     # Construct Tf by stacking blocks along the diagonal
-    #     Tf = jnp.block(
-    #         [[b if i == j else jnp.zeros_like(b) for j, b in enumerate(blocks)] for i in range(self.Nspheres)]
-    #     )
+        # Construct Tf by stacking blocks along the diagonal
+        Tf = jnp.block(
+            [[b if i == j else jnp.zeros_like(b) for j, b in enumerate(blocks)] for i in range(self.Nspheres)]
+        )
 
-    #     return Tf
+        return Tf
 
     def compute_Jacobian_matrix(self, dofs=None, design=None, time=None):
         """
