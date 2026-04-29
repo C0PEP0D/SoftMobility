@@ -35,7 +35,8 @@ class _ParametricBase:
         **kwargs : float or array-like
             Named parameter updates. Keys must match names provided at
             construction. Can update one or several parameters at a time.
-            Each value is converted to a 1D JAX array via ``jnp.atleast_1d``.
+            Each value is converted to a JAX array using the same scalar-
+            preserving conversion as construction.
 
         Raises
         ------
@@ -69,13 +70,13 @@ class _ParametricBase:
                 if name not in self.param_names:
                     raise ValueError(f"Unknown param '{name}'. Known: {self.param_names}")
                 idx = self.param_names.index(name)
-                new_params[idx] = jnp.atleast_1d(jnp.asarray(value, dtype=float))
+                new_params[idx] = _to_jax_param(value)
             self._params = new_params
         elif params is not None:
             if isinstance(params, (list, tuple)):
-                self._params = [jnp.atleast_1d(jnp.asarray(p, dtype=float)) for p in params]
+                self._params = [_to_jax_param(p) for p in params]
             else:
-                self._params = [jnp.atleast_1d(jnp.asarray(params, dtype=float))]
+                self._params = [_to_jax_param(params)]
 
     def get_param(self, name):
         """
@@ -533,7 +534,26 @@ def _to_jax_param(p):
 
 
 def constant_scalar(value=1.0):
-    """Constant scalar input with updatable value."""
+    """
+    Create a scalar input with a constant value.
+
+    Parameters
+    ----------
+    value : float, default=1.0
+        Constant value returned by the scalar.
+
+    Returns
+    -------
+    Scalar
+        Parametric scalar with one named parameter, ``"value"``.
+
+    Examples
+    --------
+    >>> signal = constant_scalar(2.0)
+    >>> signal.value()
+    Array(2., dtype=float32)
+    >>> signal.update_params(value=3.0)
+    """
     return Scalar(
         lambda pos, t, p: p[0],  # p[0] is a 0-d scalar directly
         params=float(value),
@@ -542,7 +562,27 @@ def constant_scalar(value=1.0):
 
 
 def oscillating_scalar(amplitude=1.0, omega=1.0, phase=0.0):
-    """Sinusoidally oscillating scalar with updatable parameters."""
+    """
+    Create a sinusoidal scalar input.
+
+    The returned scalar evaluates
+    ``amplitude * sin(omega * time + phase)``.
+
+    Parameters
+    ----------
+    amplitude : float, default=1.0
+        Oscillation amplitude.
+    omega : float, default=1.0
+        Angular frequency.
+    phase : float, default=0.0
+        Phase shift in radians.
+
+    Returns
+    -------
+    Scalar
+        Parametric scalar with named parameters ``"amplitude"``, ``"omega"``,
+        and ``"phase"``.
+    """
     return Scalar(
         lambda pos, t, p: p[0] * jnp.sin(p[1] * t + p[2]),
         params=[float(amplitude), float(omega), float(phase)],
@@ -556,7 +596,20 @@ def oscillating_scalar(amplitude=1.0, omega=1.0, phase=0.0):
 
 
 def gravity_field(g=9.81):
-    """Uniform gravity along -z."""
+    """
+    Create a uniform gravity field directed along negative z.
+
+    Parameters
+    ----------
+    g : float, default=9.81
+        Magnitude of gravitational acceleration.
+
+    Returns
+    -------
+    Field
+        Field whose value is ``[0, 0, -g]`` and whose named parameter is
+        ``"g"``.
+    """
     return Field(
         lambda pos, t, param: jnp.array([0.0, 0.0, -param[0]]),
         params=float(g),
@@ -565,7 +618,27 @@ def gravity_field(g=9.81):
 
 
 def rotating_magnetic_field(amp_x=1, amp_y=1, omega=1):
-    """Constant component along x, rotating in y-z plane."""
+    """
+    Create a magnetic-field-like vector rotating in the y-z plane.
+
+    The field is ``[amp_x, amp_y*cos(omega*time),
+    amp_y*sin(omega*time)]``.
+
+    Parameters
+    ----------
+    amp_x : float, default=1
+        Constant x component.
+    amp_y : float, default=1
+        Amplitude of the rotating y-z component.
+    omega : float, default=1
+        Angular frequency.
+
+    Returns
+    -------
+    Field
+        Parametric field with named parameters ``"amp_x"``, ``"amp_y"``, and
+        ``"omega"``.
+    """
     return Field(
         lambda pos, t, p: jnp.array([p[0], p[1] * jnp.cos(p[2] * t), p[1] * jnp.sin(p[2] * t)]),
         params=[float(amp_x), float(amp_y), float(omega)],
@@ -574,7 +647,26 @@ def rotating_magnetic_field(amp_x=1, amp_y=1, omega=1):
 
 
 def oscillating_magnetic_field(amp_x=1, amp_y=1, omega=1):
-    """Constant component along x, oscillating along y."""
+    """
+    Create a magnetic-field-like vector oscillating along y.
+
+    The field is ``[amp_x, amp_y*sin(omega*time), 0]``.
+
+    Parameters
+    ----------
+    amp_x : float, default=1
+        Constant x component.
+    amp_y : float, default=1
+        Amplitude of the oscillating y component.
+    omega : float, default=1
+        Angular frequency.
+
+    Returns
+    -------
+    Field
+        Parametric field with named parameters ``"amp_x"``, ``"amp_y"``, and
+        ``"omega"``.
+    """
     return Field(
         lambda pos, t, p: jnp.array([p[0], p[1] * jnp.sin(p[2] * t), 0.0]),
         params=[float(amp_x), float(amp_y), float(omega)],
@@ -588,12 +680,33 @@ def oscillating_magnetic_field(amp_x=1, amp_y=1, omega=1):
 
 
 def no_flow():
-    """Quiet fluid."""
+    """
+    Create a quiescent background flow.
+
+    Returns
+    -------
+    Flow
+        Flow whose velocity is zero everywhere.
+    """
     return Flow(lambda pos, t: jnp.zeros(3))
 
 
 def shear_flow(shear_rate=1.0):
-    """Simple shear flow u = (shear_rate * y, 0, 0)."""
+    """
+    Create a simple shear flow.
+
+    The velocity is ``u = (shear_rate * y, 0, 0)``.
+
+    Parameters
+    ----------
+    shear_rate : float, default=1.0
+        Shear rate multiplying the y coordinate.
+
+    Returns
+    -------
+    Flow
+        Parametric flow with named parameter ``"shear_rate"``.
+    """
     return Flow(
         lambda pos, t, shear_rate: jnp.array([shear_rate[0] * pos[1], 0.0, 0.0]),
         params=float(shear_rate),
@@ -602,16 +715,44 @@ def shear_flow(shear_rate=1.0):
 
 
 def rotating_flow(omega=1.0):
-    """Solid-body rotation u = (-omega*y, omega*x, 0)."""
+    """
+    Create a solid-body rotation flow.
+
+    The velocity is ``u = (-omega*y, omega*x, 0)``.
+
+    Parameters
+    ----------
+    omega : float, default=1.0
+        Angular speed of the background rotation.
+
+    Returns
+    -------
+    Flow
+        Parametric flow with named parameter ``"omega"``.
+    """
     return Flow(
-        lambda pos, t, omega: jnp.array([-omega[0] * pos[1], omega * pos[0], 0.0]),
+        lambda pos, t, omega: jnp.array([-omega[0] * pos[1], omega[0] * pos[0], 0.0]),
         params=float(omega),
         param_names="omega",
     )
 
 
 def extensional_flow(rate=1.0):
-    """Uniaxial extensional flow u = (rate*x, -rate/2*y, -rate/2*z)."""
+    """
+    Create a uniaxial extensional flow.
+
+    The velocity is ``u = (rate*x, -rate*y/2, -rate*z/2)``.
+
+    Parameters
+    ----------
+    rate : float, default=1.0
+        Extension rate along x.
+
+    Returns
+    -------
+    Flow
+        Parametric flow with named parameter ``"rate"``.
+    """
     return Flow(
         lambda pos, t, rate: jnp.array([rate[0] * pos[0], -rate[0] / 2 * pos[1], -rate[0] / 2 * pos[2]]),
         params=float(rate),
@@ -620,7 +761,22 @@ def extensional_flow(rate=1.0):
 
 
 def taylor_green_flow(omega=1.0):
-    """Taylor-Green vortex flow u = 0.5 * omega * (sin(x)cos(y), -cos(x)sin(y), 0)."""
+    """
+    Create a Taylor-Green-style vortex flow.
+
+    The implemented velocity is
+    ``0.5 * omega * [0, sin(y)*cos(z), -cos(y)*sin(z)]``.
+
+    Parameters
+    ----------
+    omega : float, default=1.0
+        Velocity scale.
+
+    Returns
+    -------
+    Flow
+        Parametric flow with named parameter ``"omega"``.
+    """
     return Flow(
         lambda pos, t, omega: 0.5
         * omega[0]

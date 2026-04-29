@@ -129,6 +129,25 @@ class SoftBody(SphereAssembly):
         return SoftMobilityTensors(M=M, M_K=M_K, M_H=M_H, C_E=C_E, P=P, p_act=p_act)
 
     def compute_mobility_tensor(self, dofs=None, design=None, time=None):
+        """
+        Compute the grand hydrodynamic mobility tensor.
+
+        Parameters
+        ----------
+        dofs : array-like, optional
+            Degrees of freedom. Defaults to ``dof_defaults``.
+        design : array-like, optional
+            Design variables. Defaults to ``design_defaults``.
+        time : float or array-like, optional
+            Time used for time-dependent geometry.
+
+        Returns
+        -------
+        jnp.ndarray
+            Grand mobility matrix of shape ``(6*Nspheres, 6*Nspheres)`` that
+            maps force and torque on each sphere to translational and angular
+            velocities.
+        """
         dofs, design, time = self._setup_params(dofs, design, time)
 
         # Function to compute diagonal blocks (i == j)

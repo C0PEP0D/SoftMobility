@@ -168,38 +168,47 @@ class SphereAssembly:
     # Read-only properties for fundamental attributes
     @property
     def Ndof(self):
+        """Number of dynamic degrees of freedom."""
         return self._Ndof
 
     @property
     def Ndesign(self):
+        """Number of design variables."""
         return self._Ndesign
 
     @property
     def Ninput(self):
+        """Number of input variables."""
         return self._Ninput
 
     @property
     def Nspheres(self):
+        """Number of spheres in the assembly."""
         return self._Nspheres
 
     @property
     def dof_variables(self):
+        """Names of degrees of freedom in canonical order."""
         return self._dof_variables
 
     @property
     def design_variables(self):
+        """Names of design variables in canonical order."""
         return self._design_variables
 
     @property
     def input_variables(self):
+        """Names of input variables in canonical order."""
         return self._input_variables
 
     @property
     def dof_defaults(self):
+        """Default degree-of-freedom values."""
         return self._dof_defaults
 
     @property
     def design_defaults(self):
+        """Default design-variable values."""
         return self._design_defaults
 
     def grand_c_field(self, dofs=None, design=None, time=None):
@@ -276,6 +285,24 @@ class SphereAssembly:
         return C_U
 
     def compute_composition_of_forces(self, dofs=None, design=None, time=None):
+        """
+        Compute the grand force-composition matrix.
+
+        Parameters
+        ----------
+        dofs : array-like, optional
+            Degrees of freedom. Defaults to ``dof_defaults``.
+        design : array-like, optional
+            Design variables. Defaults to ``design_defaults``.
+        time : float or array-like, optional
+            Time used for time-dependent geometry.
+
+        Returns
+        -------
+        jnp.ndarray
+            Block-diagonal matrix of shape ``(6*Nspheres, 6*Nspheres)`` that
+            maps sphere forces and torques to the body-reference convention.
+        """
         dofs, design, time = self._setup_params(dofs, design, time)
 
         # Create blocks for individual spheres

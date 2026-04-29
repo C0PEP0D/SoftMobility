@@ -1,62 +1,167 @@
-================
-Soft Planktonics
-================
+============
+SoftMobility
+============
 
 .. image:: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml/badge.svg
    :target: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml
+   :alt: Test status
 
+SoftMobility is a Python library for modelling deformable assemblies of
+spheres in Stokes flows. It is intended for scientific users who want to define
+soft bodies, compute mobility tensors, run differentiable simulations, and
+optimize design parameters with JAX.
 
-Python package to compute the mobility of soft plankton in Stokes flows.
+The package is installed as ``soft-mobility`` and imported as
+``softmobility``.
 
-* Free software: 3-clause BSD license
-* Documentation: (COMING SOON!) https://celoy.github.io/SoftMobility.
+Documentation
+-------------
 
-Workflow
---------
-Once the repository is cloned, it is advisable to run a virtualenv, with Python 3.8.18 or above.
+The Sphinx documentation is in ``docs/source`` and can be built locally:
 
-Then to install the package `softmobility` properly, run
+.. code-block:: bash
 
-`pip install -e .`
+   sphinx-build -b html docs/source docs/build/html
 
-To install the packages required for development, the command is
+Then open ``docs/build/html/index.html`` in a browser. The documentation
+includes:
 
-`pip install --upgrade -r requirements-dev.txt`
+* an overview of the physical and numerical conventions,
+* geometry and YAML model definitions,
+* scalar, field, and flow inputs,
+* rollout simulation,
+* design optimization,
+* the full API reference.
 
-Features
---------
+Installation
+------------
 
-Developpers
+SoftMobility requires Python 3.8 or newer. For a new user, the safest path is
+to work in a virtual environment:
+
+.. code-block:: bash
+
+   git clone https://github.com/celoy/SoftMobility.git
+   cd SoftMobility
+   python -m venv .venv
+   source .venv/bin/activate
+   python -m pip install --upgrade pip
+   python -m pip install -e .
+
+To install the development and documentation tools:
+
+.. code-block:: bash
+
+   python -m pip install -r requirements-dev.txt
+
+Verify the installation:
+
+.. code-block:: bash
+
+   python -c "import softmobility as sm; print(sm.__version__)"
+
+Quick Start
 -----------
 
-Version number is changed with `git tag vX.Y.Z`
+Start with the built-in input and flow objects:
 
+.. code-block:: python
 
-TODOS
------
-Documentation:
+   import jax.numpy as jnp
+   from softmobility import gravity_field, shear_flow
 
-Development:
-- TODO. Solve steady NL problem Mdof(theta)=0 
-- TODO. Time dependent parameters or forces
-- TODO. Adding constraints on DOFs (intervals)
-- TODO. table lookout for soft motility problem
-- TODO. Interactions between assemblies
-- TODO. Assemblies of non-spherical particles
-- TODO. General formulation of forces
-- TODO. Units and properties (mu in flow property)
-- TODO. Check problems arising when one sphere completely inside another
+   gravity = gravity_field(g=9.81)
+   flow = shear_flow(shear_rate=1.0)
 
-Unit tests:
-- TODO. Unit test for flow and fluidplankton
+   pos = jnp.array([0.0, 2.0, 0.0])
+   print(gravity.vector(pos))      # [0, 0, -9.81]
+   print(flow.velocity(pos))       # [2, 0, 0]
+   print(flow.gradient(pos))       # velocity-gradient matrix
 
-Tutorials:
-- TODO. Tutorial on surfing particles
-- TODO. Tutorial on using automatic jax differentiation to optimize (isocahedron?)
-- TODO. Tutorial on motility problems
-- TODO. Tutorial on free fall 
-- TODO. Tutorial on Jeffery orbits
-- TODO. Example of time-stepping for a falling object
+A complete simulation uses three pieces:
 
-Research questions:
-- TODO. test surf in the limit of Vswim<<1 with Lagrangian trajectories of passive particles
+1. ``SoftBody`` for the deformable sphere assembly.
+2. ``Flow`` and optional ``Field`` or ``Scalar`` inputs.
+3. ``FlowBodyRollout`` to integrate the body trajectory.
+
+.. code-block:: python
+
+   import jax.numpy as jnp
+   from softmobility import SoftBody, FlowBodyRollout, no_flow
+
+   yaml_text = """
+   dof_names: [x]
+   design_names: [radius, length, k]
+   defaults:
+     x0: 0.1
+     radius: 0.25
+     length: 1.0
+     k: 1.0
+   spheres:
+     - radius: radius
+       position: [-length / 2, 0, 0]
+       orientation: [0, x0, 0]
+       torque: [0, -k * x0, 0]
+     - radius: radius
+       position: [length / 2, 0, 0]
+       orientation: [0, -x0, 0]
+       torque: [0, k * x0, 0]
+   """
+
+   body = SoftBody(yaml_text, verbose=False)
+   rollout = FlowBodyRollout(body, no_flow())
+
+   positions, orientations, dofs = rollout.rollout(
+       dt=0.01,
+       n_steps=100,
+       init_position=jnp.zeros(3),
+       init_orientation=jnp.zeros(3),
+   )
+
+Examples
+--------
+
+Tutorial notebooks live in ``softmobility/notebooks``:
+
+* ``01_tutorial_sphere_assemblies.ipynb``
+* ``02_rigid_assembly.ipynb``
+* ``03_freefall_trajectories.ipynb``
+* ``04_Jeffery_orbits.ipynb``
+* ``06_three_sphere_swimmer.ipynb``
+* ``07_soft_surfer.ipynb``
+
+For new users, start with the sphere assembly tutorial before moving to
+rollouts or optimization.
+
+Testing
+-------
+
+Run the test suite with:
+
+.. code-block:: bash
+
+   pytest
+
+Build the documentation with warnings treated as errors:
+
+.. code-block:: bash
+
+   sphinx-build -W -b html docs/source docs/build/html
+
+Contributing
+------------
+
+Contributions are welcome. Before opening a pull request, please run the tests
+and, when documentation is touched, build the Sphinx docs locally.
+
+Development notes and TODO items are kept in ``TODO.md``. This keeps the
+GitHub README focused on users while still making TODOs visible to editor tools
+such as the VS Code `Todo Tree`_ extension.
+
+.. _Todo Tree: https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree
+
+License
+-------
+
+SoftMobility is distributed under the 3-clause BSD license. See ``LICENSE`` for
+details.

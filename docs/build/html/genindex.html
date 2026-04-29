@@ -5,16 +5,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; Soft Mobility 1.0.0.post4.dev0+gaaa3f9b documentation</title>
+  <title>Index &mdash; Soft Mobility 1.0.0.post9.dev0+gd762ccd documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="_static/plot_directive.css?v=7f9a90b1" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=1fabc461"></script>
+      <script src="_static/documentation_options.js?v=dc101f77"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -45,29 +45,15 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="geometry.html">Geometry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inputs.html">Inputs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation.html">Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimization.html">Optimization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="release-history.html">Release History</a></li>
 <li class="toctree-l1"><a class="reference internal" href="min_versions.html">Minimum Version of Python and NumPy</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Body</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.sphere.Sphere.html">softmobility.classes.sphere.Sphere</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html">softmobility.classes.sphereassembly.SphereAssembly</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.softbody.SoftBody.html">softmobility.classes.softbody.SoftBody</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Inputs</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Field.html">softmobility.classes.inputs.Field</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Scalar.html">softmobility.classes.inputs.Scalar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Flow.html">softmobility.classes.inputs.Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.gravity_field.html">softmobility.classes.inputs.gravity_field</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.constant_scalar.html">softmobility.classes.inputs.constant_scalar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.no_flow.html">softmobility.classes.inputs.no_flow</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Solver</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRollout.html">softmobility.classes.solver.FlowBodyRollout</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html">softmobility.classes.solver.FlowBodyOptimizer</a></li>
 </ul>
 
         </div>
@@ -102,6 +88,7 @@
  | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#I"><strong>I</strong></a>
@@ -110,6 +97,7 @@
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
  | <a href="#V"><strong>V</strong></a>
  
 </div>
@@ -126,6 +114,8 @@
         <li><a href="autosummary/softmobility.classes.softbody.SoftBody.html#softmobility.classes.softbody.SoftBody.__init__">(softmobility.classes.softbody.SoftBody method)</a>
 </li>
         <li><a href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html#softmobility.classes.solver.FlowBodyOptimizer.__init__">(softmobility.classes.solver.FlowBodyOptimizer method)</a>
+</li>
+        <li><a href="autosummary/softmobility.classes.solver.FlowBodyRL.html#softmobility.classes.solver.FlowBodyRL.__init__">(softmobility.classes.solver.FlowBodyRL method)</a>
 </li>
         <li><a href="autosummary/softmobility.classes.solver.FlowBodyRollout.html#softmobility.classes.solver.FlowBodyRollout.__init__">(softmobility.classes.solver.FlowBodyRollout method)</a>
 </li>
@@ -170,6 +160,8 @@
 </li>
       <li><a href="autosummary/softmobility.classes.sphere.Sphere.html#softmobility.classes.sphere.Sphere.composition_of_velocity">composition_of_velocity() (softmobility.classes.sphere.Sphere method)</a>
 </li>
+      <li><a href="autosummary/softmobility.classes.solver.compute_bortz_operator.html#softmobility.classes.solver.compute_bortz_operator">compute_bortz_operator() (in module softmobility.classes.solver)</a>
+</li>
       <li><a href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html#softmobility.classes.sphereassembly.SphereAssembly.compute_C_U">compute_C_U() (softmobility.classes.sphereassembly.SphereAssembly method)</a>
 </li>
   </ul></td>
@@ -178,7 +170,7 @@
 </li>
       <li><a href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html#softmobility.classes.sphereassembly.SphereAssembly.compute_Jacobian_matrix">compute_Jacobian_matrix() (softmobility.classes.sphereassembly.SphereAssembly method)</a>
 </li>
-      <li><a href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html#softmobility.classes.sphereassembly.SphereAssembly.compute_Jass">compute_Jass() (softmobility.classes.sphereassembly.SphereAssembly method)</a>
+      <li><a href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html#softmobility.classes.sphereassembly.SphereAssembly.compute_Jassembly">compute_Jassembly() (softmobility.classes.sphereassembly.SphereAssembly method)</a>
 </li>
       <li><a href="autosummary/softmobility.classes.softbody.SoftBody.html#softmobility.classes.softbody.SoftBody.compute_mobility_tensor">compute_mobility_tensor() (softmobility.classes.softbody.SoftBody method)</a>
 </li>
@@ -205,6 +197,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autosummary/softmobility.classes.inputs.extensional_flow.html#softmobility.classes.inputs.extensional_flow">extensional_flow() (in module softmobility.classes.inputs)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -212,9 +212,11 @@
 </li>
       <li><a href="autosummary/softmobility.classes.inputs.Flow.html#softmobility.classes.inputs.Flow">Flow (class in softmobility.classes.inputs)</a>
 </li>
+      <li><a href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html#softmobility.classes.solver.FlowBodyOptimizer">FlowBodyOptimizer (class in softmobility.classes.solver)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html#softmobility.classes.solver.FlowBodyOptimizer">FlowBodyOptimizer (class in softmobility.classes.solver)</a>
+      <li><a href="autosummary/softmobility.classes.solver.FlowBodyRL.html#softmobility.classes.solver.FlowBodyRL">FlowBodyRL (class in softmobility.classes.solver)</a>
 </li>
       <li><a href="autosummary/softmobility.classes.solver.FlowBodyRollout.html#softmobility.classes.solver.FlowBodyRollout">FlowBodyRollout (class in softmobility.classes.solver)</a>
 </li>
@@ -270,9 +272,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autosummary/softmobility.classes.inputs.Flow.html#softmobility.classes.inputs.Flow.omega_rate_of_strain">omega_rate_of_strain() (softmobility.classes.inputs.Flow method)</a>
 </li>
+      <li><a href="autosummary/softmobility.classes.sphere.Sphere.html#softmobility.classes.sphere.Sphere.orientation">orientation() (softmobility.classes.sphere.Sphere method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="autosummary/softmobility.classes.sphere.Sphere.html#softmobility.classes.sphere.Sphere.orientation">orientation() (softmobility.classes.sphere.Sphere method)</a>
+      <li><a href="autosummary/softmobility.classes.inputs.oscillating_magnetic_field.html#softmobility.classes.inputs.oscillating_magnetic_field">oscillating_magnetic_field() (in module softmobility.classes.inputs)</a>
+</li>
+      <li><a href="autosummary/softmobility.classes.inputs.oscillating_scalar.html#softmobility.classes.inputs.oscillating_scalar">oscillating_scalar() (in module softmobility.classes.inputs)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -290,12 +296,24 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autosummary/softmobility.classes.sphere.Sphere.html#softmobility.classes.sphere.Sphere.radius">radius() (softmobility.classes.sphere.Sphere method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autosummary/softmobility.classes.solver.rescale_orientation.html#softmobility.classes.solver.rescale_orientation">rescale_orientation() (in module softmobility.classes.solver)</a>
+</li>
       <li><a href="autosummary/softmobility.classes.solver.FlowBodyRollout.html#softmobility.classes.solver.FlowBodyRollout.rollout">rollout() (softmobility.classes.solver.FlowBodyRollout method)</a>
 </li>
-      <li><a href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html#softmobility.classes.solver.FlowBodyOptimizer.run">run() (softmobility.classes.solver.FlowBodyOptimizer method)</a>
+      <li><a href="autosummary/softmobility.classes.inputs.rotating_flow.html#softmobility.classes.inputs.rotating_flow">rotating_flow() (in module softmobility.classes.inputs)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autosummary/softmobility.classes.inputs.rotating_magnetic_field.html#softmobility.classes.inputs.rotating_magnetic_field">rotating_magnetic_field() (in module softmobility.classes.inputs)</a>
+</li>
+      <li><a href="autosummary/softmobility.classes.solver.rotation_matrix.html#softmobility.classes.solver.rotation_matrix">rotation_matrix() (in module softmobility.classes.solver)</a>
+</li>
+      <li><a href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html#softmobility.classes.solver.FlowBodyOptimizer.run">run() (softmobility.classes.solver.FlowBodyOptimizer method)</a>
+
+      <ul>
+        <li><a href="autosummary/softmobility.classes.solver.FlowBodyRL.html#softmobility.classes.solver.FlowBodyRL.run">(softmobility.classes.solver.FlowBodyRL method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -310,11 +328,21 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autosummary/softmobility.classes.inputs.shear_flow.html#softmobility.classes.inputs.shear_flow">shear_flow() (in module softmobility.classes.inputs)</a>
+</li>
       <li><a href="autosummary/softmobility.classes.softbody.SoftBody.html#softmobility.classes.softbody.SoftBody">SoftBody (class in softmobility.classes.softbody)</a>
 </li>
       <li><a href="autosummary/softmobility.classes.sphere.Sphere.html#softmobility.classes.sphere.Sphere">Sphere (class in softmobility.classes.sphere)</a>
 </li>
       <li><a href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html#softmobility.classes.sphereassembly.SphereAssembly">SphereAssembly (class in softmobility.classes.sphereassembly)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autosummary/softmobility.classes.inputs.taylor_green_flow.html#softmobility.classes.inputs.taylor_green_flow">taylor_green_flow() (in module softmobility.classes.inputs)</a>
 </li>
   </ul></td>
 </tr></table>

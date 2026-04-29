@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage &mdash; Soft Mobility 1.0.0.post4.dev0+gaaa3f9b documentation</title>
+  <title>Usage &mdash; Soft Mobility 1.0.0.post9.dev0+gd762ccd documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="_static/plot_directive.css?v=7f9a90b1" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=1fabc461"></script>
+      <script src="_static/documentation_options.js?v=dc101f77"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -23,8 +23,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Release History" href="release-history.html" />
-    <link rel="prev" title="Installation" href="installation.html" /> 
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Optimization" href="optimization.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -48,29 +48,24 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="geometry.html">Geometry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inputs.html">Inputs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation.html">Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimization.html">Optimization</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-import">Basic Import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-a-soft-body">Creating a Soft Body</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#working-with-flows">Working with Flows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-simulations">Running Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optimization">Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-notebooks">Example Notebooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api-reference">API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="release-history.html">Release History</a></li>
 <li class="toctree-l1"><a class="reference internal" href="min_versions.html">Minimum Version of Python and NumPy</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Body</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.sphere.Sphere.html">softmobility.classes.sphere.Sphere</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html">softmobility.classes.sphereassembly.SphereAssembly</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.softbody.SoftBody.html">softmobility.classes.softbody.SoftBody</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Inputs</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Field.html">softmobility.classes.inputs.Field</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Scalar.html">softmobility.classes.inputs.Scalar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Flow.html">softmobility.classes.inputs.Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.gravity_field.html">softmobility.classes.inputs.gravity_field</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.constant_scalar.html">softmobility.classes.inputs.constant_scalar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.no_flow.html">softmobility.classes.inputs.no_flow</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Solver</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRollout.html">softmobility.classes.solver.FlowBodyRollout</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html">softmobility.classes.solver.FlowBodyOptimizer</a></li>
 </ul>
 
         </div>
@@ -99,18 +94,125 @@
              
   <section id="usage">
 <h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
-<p>Start by importing Soft Planktonics.</p>
+<p>This page gives a compact, end-to-end example. For conceptual background, see
+<a class="reference internal" href="overview.html"><span class="doc">Overview</span></a>; for the complete object list, see <a class="reference internal" href="api.html"><span class="doc">API Reference</span></a>.</p>
+<section id="basic-import">
+<h2>Basic Import<a class="headerlink" href="#basic-import" title="Link to this heading"></a></h2>
+<p>Start by importing the main classes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sphere</span><span class="p">,</span> <span class="n">SphereAssembly</span><span class="p">,</span> <span class="n">SoftBody</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlowBodyRollout</span><span class="p">,</span> <span class="n">FlowBodyOptimizer</span>
 </pre></div>
 </div>
+</section>
+<section id="creating-a-soft-body">
+<h2>Creating a Soft Body<a class="headerlink" href="#creating-a-soft-body" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SoftBody</span></code> can be created from a YAML file path or from a YAML string. The
+YAML parser detects degrees of freedom, design variables, and inputs from the
+symbols used in sphere expressions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftBody</span>
+
+<span class="n">yaml_text</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">dof_names:</span>
+<span class="s2">  - x</span>
+<span class="s2">design_names:</span>
+<span class="s2">  - radius</span>
+<span class="s2">  - length</span>
+<span class="s2">  - k</span>
+<span class="s2">defaults:</span>
+<span class="s2">  x0: 0.1</span>
+<span class="s2">  radius: 0.25</span>
+<span class="s2">  length: 1.0</span>
+<span class="s2">  k: 1.0</span>
+<span class="s2">spheres:</span>
+<span class="s2">  - radius: radius</span>
+<span class="s2">    position: [-length / 2, 0, 0]</span>
+<span class="s2">    orientation: [0, x0, 0]</span>
+<span class="s2">    torque: [0, -k * x0, 0]</span>
+<span class="s2">  - radius: radius</span>
+<span class="s2">    position: [length / 2, 0, 0]</span>
+<span class="s2">    orientation: [0, -x0, 0]</span>
+<span class="s2">    torque: [0, k * x0, 0]</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">body</span> <span class="o">=</span> <span class="n">SoftBody</span><span class="p">(</span><span class="n">yaml_text</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">body</span><span class="o">.</span><span class="n">dof_variables</span><span class="p">,</span> <span class="n">body</span><span class="o">.</span><span class="n">design_variables</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="working-with-flows">
+<h2>Working with Flows<a class="headerlink" href="#working-with-flows" title="Link to this heading"></a></h2>
+<p>Define fluid flows using the Flow classes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">shear_flow</span><span class="p">,</span> <span class="n">no_flow</span>
+
+<span class="c1"># Create a shear flow</span>
+<span class="n">flow</span> <span class="o">=</span> <span class="n">shear_flow</span><span class="p">(</span><span class="n">shear_rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># Or no flow for stationary fluid</span>
+<span class="n">flow</span> <span class="o">=</span> <span class="n">no_flow</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="running-simulations">
+<h2>Running Simulations<a class="headerlink" href="#running-simulations" title="Link to this heading"></a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">FlowBodyRollout</span></code> to simulate the body trajectory:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlowBodyRollout</span>
+
+<span class="n">rollout</span> <span class="o">=</span> <span class="n">FlowBodyRollout</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+<span class="n">positions</span><span class="p">,</span> <span class="n">orientations</span><span class="p">,</span> <span class="n">dofs</span> <span class="o">=</span> <span class="n">rollout</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span>
+    <span class="n">dt</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">n_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">init_position</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+    <span class="n">init_orientation</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="optimization">
+<h2>Optimization<a class="headerlink" href="#optimization" title="Link to this heading"></a></h2>
+<p>Optimization is expressed through an objective function of <code class="docutils literal notranslate"><span class="pre">(rollout,</span>
+<span class="pre">design)</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlowBodyOptimizer</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">final_height</span><span class="p">(</span><span class="n">rollout</span><span class="p">,</span> <span class="n">design</span><span class="p">):</span>
+    <span class="n">positions</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">rollout</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">design</span><span class="o">=</span><span class="n">design</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">positions</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">FlowBodyOptimizer</span><span class="p">(</span><span class="n">rollout</span><span class="p">,</span> <span class="n">final_height</span><span class="p">,</span> <span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">))</span>
+<span class="n">optimized_design</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="n">init_design</span><span class="o">=</span><span class="n">body</span><span class="o">.</span><span class="n">design_defaults</span><span class="p">,</span>
+    <span class="n">n_steps</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-notebooks">
+<h2>Example Notebooks<a class="headerlink" href="#example-notebooks" title="Link to this heading"></a></h2>
+<p>For more detailed examples, see the tutorial notebooks:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">01_tutorial_sphere_assemblies.ipynb</span></code> - Basic sphere assembly usage</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">02_rigid_assembly.ipynb</span></code> - Rigid body simulations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">03_freefall_trajectories.ipynb</span></code> - Freefall dynamics</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">04_Jeffery_orbits.ipynb</span></code> - Jeffery orbits in flow</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">06_three_sphere_swimmer.ipynb</span></code> - Three-sphere swimmer model</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">07_soft_surfer.ipynb</span></code> - Soft surfer simulations</p></li>
+</ul>
+</section>
+<section id="api-reference">
+<h2>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h2>
+<p>For detailed API documentation, see <a class="reference internal" href="api.html"><span class="doc">API Reference</span></a>.</p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="release-history.html" class="btn btn-neutral float-right" title="Release History" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="optimization.html" class="btn btn-neutral float-left" title="Optimization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

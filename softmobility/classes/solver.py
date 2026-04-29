@@ -376,25 +376,34 @@ class FlowBodyOptimizer:
 
 class FlowBodyRL:
     """
-    Online actor-critic RL where:
+    Experimental actor-critic-style optimizer for rollout rewards.
 
-    - Actor  : design parameters (optimized by policy gradient or grad ascent)
-    - Critic : user-supplied value network V(position, orientation, dofs) -> scalar
-    - Env    : FlowBodyRollout.step (the Markov transition)
+    The actor is the design vector, the environment is a ``FlowBodyRollout``,
+    and the reward is supplied by the user. This class is currently a research
+    skeleton rather than the recommended optimization interface; most users
+    should start with ``FlowBodyOptimizer``.
 
-    The architecture is compatible with the optimizer above because the actor
-    is just `design` and the environment step is already a pure function.
+    Parameters
+    ----------
+    rollout : FlowBodyRollout
+        Rollout object defining the body dynamics.
+    reward_fn : callable
+        Callable with signature ``reward_fn(position, orientation, dofs)``.
+    value_fn : callable, optional
+        Optional baseline or critic with the same state signature as
+        ``reward_fn``.
 
-    reward_fn signature:  reward_fn(position, orientation, dofs) -> scalar
-    value_fn signature:   value_fn(position, orientation, dofs) -> scalar  (critic)
+    Notes
+    -----
+    ``FlowBodyRL`` expects rollout stepping attributes that are still evolving.
+    Treat it as an experimental helper for method development.
 
     Examples
     --------
-    def reward_fn(pos, ori, dofs):
-        return pos[2]   # instantaneous Z position gain
-
-    rl = FlowBodyRL(rollout, reward_fn, value_fn=None)
-    design = rl.run(init_design, init_position, init_orientation, init_dofs)
+    >>> def reward_fn(pos, ori, dofs):
+    ...     return pos[2]
+    >>> rl = FlowBodyRL(rollout, reward_fn, value_fn=None)
+    >>> design = rl.run(init_design, init_position, init_orientation, init_dofs)
     """
 
     def __init__(self, rollout, reward_fn, value_fn=None):
@@ -428,6 +437,33 @@ class FlowBodyRL:
         print_every=100,
         gamma=1.0,
     ):
+        """
+        Optimize design variables using discounted rollout rewards.
+
+        Parameters
+        ----------
+        init_design : array-like
+            Initial design vector.
+        init_position : array-like, shape (3,)
+            Initial body-reference position.
+        init_orientation : array-like, shape (3,)
+            Initial Rodrigues orientation vector.
+        init_dofs : array-like
+            Initial degrees of freedom.
+        n_steps : int, default=500
+            Number of optimizer updates.
+        optimizer : optax.GradientTransformation, optional
+            Optax optimizer. Defaults to Adam with learning rate ``1e-3``.
+        print_every : int, default=100
+            Print progress every ``print_every`` updates.
+        gamma : float, default=1.0
+            Discount factor for rewards.
+
+        Returns
+        -------
+        jnp.ndarray
+            Optimized design vector.
+        """
 
         optimizer = optimizer or optax.adam(1e-3)
         design = jnp.atleast_1d(jnp.array(init_design, dtype=float))
@@ -455,6 +491,20 @@ class FlowBodyRL:
 
 @jax.jit
 def rescale_orientation(rvec):
+    """
+    Keep a Rodrigues orientation vector within the principal rotation range.
+
+    Parameters
+    ----------
+    rvec : array-like, shape (3,)
+        Rodrigues rotation vector.
+
+    Returns
+    -------
+    jnp.ndarray
+        Rescaled rotation vector. Vectors with norm below ``pi`` are returned
+        unchanged.
+    """
     rvec = jnp.asarray(rvec, dtype=float)
     r_sq = jnp.dot(rvec, rvec)
     safe_r = jnp.sqrt(jnp.maximum(r_sq, 1e-12))  # gradient is 1/(2*sqrt(max(r²,ε))), always finite
@@ -464,6 +514,22 @@ def rescale_orientation(rvec):
 
 @jax.jit
 def compute_bortz_operator(rvec):
+    """
+    Compute the Bortz operator for a Rodrigues vector.
+
+    The operator maps angular velocity to the time derivative of the Rodrigues
+    vector in the integration scheme.
+
+    Parameters
+    ----------
+    rvec : array-like, shape (3,)
+        Rodrigues rotation vector.
+
+    Returns
+    -------
+    jnp.ndarray
+        Matrix of shape ``(3, 3)``.
+    """
     rvec = jnp.asarray(rvec, dtype=float)
     r_sq = jnp.dot(rvec, rvec)
     safe_r = jnp.sqrt(jnp.maximum(r_sq, 1e-12))  # ← same fix
@@ -514,6 +580,19 @@ rotation_matrix_from_Rodrigues = jax.jit(
 
 @jax.jit
 def rotation_matrix(rvec):
+    """
+    Convert a Rodrigues vector to a rotation matrix.
+
+    Parameters
+    ----------
+    rvec : array-like, shape (3,)
+        Rodrigues rotation vector.
+
+    Returns
+    -------
+    jnp.ndarray
+        Rotation matrix of shape ``(3, 3)``.
+    """
     rvec = jnp.asarray(rvec, dtype=float)
     r_sq = jnp.dot(rvec, rvec)
     safe_r = jnp.sqrt(jnp.maximum(r_sq, 1e-12))
