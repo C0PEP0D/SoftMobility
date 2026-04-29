@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Soft Mobility Documentation &mdash; Soft Mobility 1.0.0.post4.dev0+gaaa3f9b documentation</title>
+  <title>Soft Mobility &mdash; Soft Mobility 1.0.0.post9.dev0+gd762ccd documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="_static/plot_directive.css?v=7f9a90b1" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=1fabc461"></script>
+      <script src="_static/documentation_options.js?v=dc101f77"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -47,29 +47,15 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="geometry.html">Geometry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inputs.html">Inputs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation.html">Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimization.html">Optimization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="release-history.html">Release History</a></li>
 <li class="toctree-l1"><a class="reference internal" href="min_versions.html">Minimum Version of Python and NumPy</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Body</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.sphere.Sphere.html">softmobility.classes.sphere.Sphere</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html">softmobility.classes.sphereassembly.SphereAssembly</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.softbody.SoftBody.html">softmobility.classes.softbody.SoftBody</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Inputs</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Field.html">softmobility.classes.inputs.Field</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Scalar.html">softmobility.classes.inputs.Scalar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Flow.html">softmobility.classes.inputs.Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.gravity_field.html">softmobility.classes.inputs.gravity_field</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.constant_scalar.html">softmobility.classes.inputs.constant_scalar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.inputs.no_flow.html">softmobility.classes.inputs.no_flow</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Solver</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRollout.html">softmobility.classes.solver.FlowBodyRollout</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html">softmobility.classes.solver.FlowBodyOptimizer</a></li>
 </ul>
 
         </div>
@@ -86,7 +72,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Soft Mobility Documentation</li>
+      <li class="breadcrumb-item active">Soft Mobility</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -96,12 +82,100 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="soft-mobility-documentation">
-<h1>Soft Mobility Documentation<a class="headerlink" href="#soft-mobility-documentation" title="Link to this heading"></a></h1>
+  <section id="soft-mobility">
+<h1>Soft Mobility<a class="headerlink" href="#soft-mobility" title="Link to this heading"></a></h1>
+<p>SoftMobility computes the mobility and dynamics of deformable assemblies of
+spheres in Stokes flows. It is designed for scientific workflows where the same
+model should be simulated, differentiated, and optimized with JAX.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#installation-from-pypi">Installation from PyPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#installation-from-source">Installation from Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#optional-dependencies">Optional Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#verifying-installation">Verifying Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#conceptual-model">Conceptual model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#array-conventions">Array conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#workflow">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="geometry.html">Geometry</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#spheres">Spheres</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#yaml-geometry">YAML geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#assembly-matrices">Assembly matrices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="inputs.html">Inputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="inputs.html#scalars">Scalars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inputs.html#fields">Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inputs.html#flows">Flows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inputs.html#updating-parameters">Updating parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="simulation.html">Simulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html#minimal-rollout">Minimal rollout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html#inputs-during-a-rollout">Inputs during a rollout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html#returned-values">Returned values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="optimization.html">Optimization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="optimization.html#objective-functions">Objective functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optimization.html#practical-guidance">Practical guidance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optimization.html#experimental-reinforcement-learning">Experimental reinforcement learning</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#basic-import">Basic Import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#creating-a-soft-body">Creating a Soft Body</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#working-with-flows">Working with Flows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#running-simulations">Running Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#optimization">Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#example-notebooks">Example Notebooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#api-reference">API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#body-geometry-and-mobility">Body geometry and mobility</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.sphere.Sphere.html">softmobility.classes.sphere.Sphere</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html">softmobility.classes.sphereassembly.SphereAssembly</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.softbody.SoftBody.html">softmobility.classes.softbody.SoftBody</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#inputs-and-flows">Inputs and flows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Scalar.html">softmobility.classes.inputs.Scalar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Field.html">softmobility.classes.inputs.Field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.Flow.html">softmobility.classes.inputs.Flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.constant_scalar.html">softmobility.classes.inputs.constant_scalar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.oscillating_scalar.html">softmobility.classes.inputs.oscillating_scalar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.gravity_field.html">softmobility.classes.inputs.gravity_field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.rotating_magnetic_field.html">softmobility.classes.inputs.rotating_magnetic_field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.oscillating_magnetic_field.html">softmobility.classes.inputs.oscillating_magnetic_field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.no_flow.html">softmobility.classes.inputs.no_flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.shear_flow.html">softmobility.classes.inputs.shear_flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.rotating_flow.html">softmobility.classes.inputs.rotating_flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.extensional_flow.html">softmobility.classes.inputs.extensional_flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.inputs.taylor_green_flow.html">softmobility.classes.inputs.taylor_green_flow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#simulation-and-optimization">Simulation and optimization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRollout.html">softmobility.classes.solver.FlowBodyRollout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html">softmobility.classes.solver.FlowBodyOptimizer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRL.html">softmobility.classes.solver.FlowBodyRL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#rotation-utilities">Rotation utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.rescale_orientation.html">softmobility.classes.solver.rescale_orientation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.compute_bortz_operator.html">softmobility.classes.solver.compute_bortz_operator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.rotation_matrix.html">softmobility.classes.solver.rotation_matrix</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="release-history.html">Release History</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="release-history.html#initial-release-yyyy-mm-dd">Initial Release (YYYY-MM-DD)</a></li>
 </ul>
@@ -109,51 +183,6 @@
 <li class="toctree-l1"><a class="reference internal" href="min_versions.html">Minimum Version of Python and NumPy</a></li>
 </ul>
 </div>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.sphere.Sphere.html#softmobility.classes.sphere.Sphere" title="softmobility.classes.sphere.Sphere"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.sphere.Sphere</span></code></a>([radius, ...])</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.sphereassembly.SphereAssembly.html#softmobility.classes.sphereassembly.SphereAssembly" title="softmobility.classes.sphereassembly.SphereAssembly"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.sphereassembly.SphereAssembly</span></code></a>([...])</p></td>
-<td><p>The class <cite>SphereAssembly</cite> represents an assembly of rigid spheres connected by springs used to define a soft body.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.softbody.SoftBody.html#softmobility.classes.softbody.SoftBody" title="softmobility.classes.softbody.SoftBody"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.softbody.SoftBody</span></code></a>(...)</p></td>
-<td><p>SoftBody (simulation of deformable bodies in fluid flow).</p></td>
-</tr>
-</tbody>
-</table>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.Field.html#softmobility.classes.inputs.Field" title="softmobility.classes.inputs.Field"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.Field</span></code></a>(func[, ...])</p></td>
-<td><p>Field input (force field, magnetic field, ...).</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.Scalar.html#softmobility.classes.inputs.Scalar" title="softmobility.classes.inputs.Scalar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.Scalar</span></code></a>(func[, ...])</p></td>
-<td><p>Scalar input (active force, control signal, ...).</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.Flow.html#softmobility.classes.inputs.Flow" title="softmobility.classes.inputs.Flow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.Flow</span></code></a>(func[, ...])</p></td>
-<td><p>Flow input (fluid flow, velocity field, ...).</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.gravity_field.html#softmobility.classes.inputs.gravity_field" title="softmobility.classes.inputs.gravity_field"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.gravity_field</span></code></a>([g])</p></td>
-<td><p>Uniform gravity along -z.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.constant_scalar.html#softmobility.classes.inputs.constant_scalar" title="softmobility.classes.inputs.constant_scalar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.constant_scalar</span></code></a>([value])</p></td>
-<td><p>Constant scalar input with updatable value.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.inputs.no_flow.html#softmobility.classes.inputs.no_flow" title="softmobility.classes.inputs.no_flow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.inputs.no_flow</span></code></a>()</p></td>
-<td><p>Quiet fluid.</p></td>
-</tr>
-</tbody>
-</table>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRollout.html#softmobility.classes.solver.FlowBodyRollout" title="softmobility.classes.solver.FlowBodyRollout"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.solver.FlowBodyRollout</span></code></a>(...)</p></td>
-<td><p>FlowBodyRollout (soft body simulation in fluid flow).</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html#softmobility.classes.solver.FlowBodyOptimizer" title="softmobility.classes.solver.FlowBodyOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">softmobility.classes.solver.FlowBodyOptimizer</span></code></a>(...)</p></td>
-<td><p>FlowBodyOptimizer (gradient-based optimization for design parameters).</p></td>
-</tr>
-</tbody>
-</table>
 </section>
 
 

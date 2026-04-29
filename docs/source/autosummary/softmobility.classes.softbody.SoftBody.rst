@@ -18,7 +18,7 @@
       ~SoftBody.add_sphere
       ~SoftBody.compute_C_U
       ~SoftBody.compute_Jacobian_matrix
-      ~SoftBody.compute_Jass
+      ~SoftBody.compute_Jassembly
       ~SoftBody.compute_composition_of_forces
       ~SoftBody.compute_mobility_tensor
       ~SoftBody.compute_tensors

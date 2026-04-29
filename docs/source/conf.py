@@ -172,12 +172,18 @@ texinfo_documents = [
     ),
 ]
 
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-    "numpy": ("https://numpy.org/doc/stable", None),
-    "jax": ("https://docs.jax.dev/en/latest/", None),
-    "sympy": ("https://docs.sympy.org/latest/", None),
-    "plotly": ("https://plotly.com/python-api-reference/", None),
-    "ipywidgets": ("https://ipywidgets.readthedocs.io/en/latest/", None),
-}
+# External inventories are useful on hosted documentation builds, but they make
+# local offline builds noisy. Enable them with SOFTMOBILITY_ENABLE_INTERSPHINX=1.
+import os
+
+if os.environ.get("SOFTMOBILITY_ENABLE_INTERSPHINX") == "1":
+    intersphinx_mapping = {
+        "python": ("https://docs.python.org/3", None),
+        "numpy": ("https://numpy.org/doc/stable", None),
+        "jax": ("https://docs.jax.dev/en/latest/", None),
+        "sympy": ("https://docs.sympy.org/latest/", None),
+        "plotly": ("https://plotly.com/python-api-reference/", None),
+        "ipywidgets": ("https://ipywidgets.readthedocs.io/en/latest/", None),
+    }
+else:
+    intersphinx_mapping = {}

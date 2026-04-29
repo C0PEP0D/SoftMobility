@@ -80,6 +80,25 @@ def test_vmappable():
     assert positions.shape == (2, N_STEPS, 3)
 
 
+def test_input_map_validation_errors_are_clear():
+    with pytest.raises(ValueError, match="Missing Field input 'gravity'"):
+        FlowBodyRollout(BODY, no_flow(), input_map={"active_force": constant_scalar()})
+
+    with pytest.raises(TypeError, match="Input 'gravity' expected a Field"):
+        FlowBodyRollout(
+            BODY,
+            no_flow(),
+            input_map={"gravity": constant_scalar(), "active_force": constant_scalar()},
+        )
+
+    with pytest.raises(ValueError, match="Unexpected input keys"):
+        FlowBodyRollout(
+            BODY,
+            no_flow(),
+            input_map={"gravity": gravity_field(), "active_force": constant_scalar(), "extra": constant_scalar()},
+        )
+
+
 if __name__ == "__main__":
     test_velocity_shapes()
     test_rollout_shapes()

@@ -3,6 +3,36 @@ from jax import lax, Array
 
 
 class Sphere:
+    """
+    Spherical element used to build a deformable assembly.
+
+    A ``Sphere`` stores geometry and force-coupling callables as functions of
+    the assembly degrees of freedom and design variables. Constants and arrays
+    are converted to constant callables for convenience.
+
+    Parameters
+    ----------
+    radius : float or callable, optional
+        Sphere radius, or callable ``radius(dofs, design)``.
+    position : array-like or callable, optional
+        Body-frame center position with shape ``(3,)``, or callable
+        ``position(dofs, design, time)``.
+    orientation : array-like or callable, optional
+        Rodrigues orientation vector with shape ``(3,)``, or callable
+        ``orientation(dofs, design, time)``.
+    c_field : array-like or callable, optional
+        Matrix with first dimension 6 mapping external inputs to force and
+        torque on the sphere.
+    c_stiff : array-like or callable, optional
+        Matrix with first dimension 6 mapping degrees of freedom to elastic
+        force and torque.
+
+    Notes
+    -----
+    The six force/velocity components are ordered as translation followed by
+    rotation: ``[x, y, z, rx, ry, rz]``.
+    """
+
     def __init__(
         self,
         radius=None,
@@ -19,23 +49,37 @@ class Sphere:
         self._c_stiff_func = _convert_to_array_callable(c_stiff, "c_stiff")
 
     def radius(self, dofs: Array, design: Array) -> float:
-        """radius of the sphere"""
+        """
+        Evaluate the sphere radius.
+
+        Parameters
+        ----------
+        dofs : array-like
+            Current degrees of freedom.
+        design : array-like
+            Current design variables.
+
+        Returns
+        -------
+        float or jnp.ndarray
+            Radius at the requested configuration.
+        """
         return self._radius_func(dofs, design)
 
     def position(self, dofs: Array, design: Array, time: Array) -> jnp.ndarray:
-        """position relative to the reference point"""
+        """Evaluate the body-frame sphere-center position."""
         return self._position_func(dofs, design, time)
 
     def orientation(self, dofs: Array, design: Array, time: Array) -> jnp.ndarray:
-        """orientation vector"""
+        """Evaluate the sphere orientation as a Rodrigues vector."""
         return self._orientation_func(dofs, design, time)
 
     def c_field(self, dofs: Array, design: Array) -> jnp.ndarray:
-        """forces applied to the center"""
+        """Evaluate the matrix coupling external inputs to force and torque."""
         return self._c_field_func(dofs, design)
 
     def c_stiff(self, dofs: Array, design: Array) -> jnp.ndarray:
-        """forces applied to the center"""
+        """Evaluate the matrix coupling degrees of freedom to force and torque."""
         return self._c_stiff_func(dofs, design)
 
     def _bortz_equation(self, *args):
@@ -64,6 +108,16 @@ class Sphere:
         return jnp.where(r_sq < 1e-12, jnp.eye(3), full)
 
     def bortz_jacobian(self, *args):
+        """
+        Compute the six-component Jacobian for position and orientation.
+
+        Returns
+        -------
+        jnp.ndarray
+            Block-diagonal matrix of shape ``(6, 6)``. The translational block
+            is the identity and the rotational block is the Bortz Jacobian for
+            the sphere orientation.
+        """
         # Compute the Bortz Jacobian for the rotation vector
         B = self._bortz_equation(*args)
 
@@ -78,6 +132,16 @@ class Sphere:
         return jacobian_matrix
 
     def composition_of_velocity(self, *args):
+        """
+        Map body-reference velocity to this sphere velocity.
+
+        Returns
+        -------
+        jnp.ndarray
+            Matrix of shape ``(6, 6)`` that composes the translational and
+            angular velocity of the body reference into translational and
+            angular velocity at the sphere center.
+        """
         position = self.position(*args)
         T = jnp.array(
             [
@@ -92,6 +156,15 @@ class Sphere:
         return T
 
     def composition_of_force(self, *args):
+        """
+        Map this sphere force and torque to the body reference.
+
+        Returns
+        -------
+        jnp.ndarray
+            Matrix of shape ``(6, 6)`` used to compose force and torque about
+            the sphere center into force and torque about the body reference.
+        """
         position = self.position(*args)
         T = jnp.array(
             [

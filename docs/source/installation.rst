@@ -1,6 +1,6 @@
-===========
+============
 Installation
-===========
+============
 
 Prerequisites
 -------------
@@ -54,7 +54,7 @@ For development and testing, install the optional dependencies:
     pip install -e ".[test]"
 
 Verifying Installation
----------------------
+----------------------
 
 To verify that SoftMobility is installed correctly, you can run:
 

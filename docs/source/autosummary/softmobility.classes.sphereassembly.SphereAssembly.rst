@@ -18,7 +18,7 @@
       ~SphereAssembly.add_sphere
       ~SphereAssembly.compute_C_U
       ~SphereAssembly.compute_Jacobian_matrix
-      ~SphereAssembly.compute_Jass
+      ~SphereAssembly.compute_Jassembly
       ~SphereAssembly.compute_composition_of_forces
       ~SphereAssembly.from_file
       ~SphereAssembly.grand_c_field
