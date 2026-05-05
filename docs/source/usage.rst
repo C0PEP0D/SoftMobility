@@ -117,6 +117,7 @@ For more detailed examples, see the tutorial notebooks:
 - ``02_rigid_assembly.ipynb`` - Rigid body simulations  
 - ``03_freefall_trajectories.ipynb`` - Freefall dynamics
 - ``04_Jeffery_orbits.ipynb`` - Jeffery orbits in flow
+- ``05_one_dof_soft_body.ipynb`` - Jeffery orbits with a deformable one-DOF body *(in preparation)*
 - ``06_three_sphere_swimmer.ipynb`` - Three-sphere swimmer model
 - ``07_soft_surfer.ipynb`` - Soft surfer simulations
 

@@ -15,9 +15,12 @@ active forcing, prescribed controls, or time-dependent coefficients.
 
    from softmobility import constant_scalar, oscillating_scalar
 
+   import jax.numpy as jnp
+
    constant = constant_scalar(2.0)
    signal = oscillating_scalar(amplitude=1.0, omega=3.0, phase=0.0)
-   value = signal.value(time=0.5)
+   pos = jnp.zeros(3)
+   value = signal.value(pos, time=0.5)
 
 Fields
 ------

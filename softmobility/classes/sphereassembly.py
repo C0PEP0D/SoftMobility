@@ -136,8 +136,8 @@ class SphereAssembly:
             sphere.radius(dofs=test_dof, design=test_design)
             sphere.position(dofs=test_dof, design=test_design, time=test_time)
             sphere.orientation(dofs=test_dof, design=test_design, time=test_time)
-            sphere.c_field(dofs=test_dof, design=test_design)
-            sphere.c_stiff(dofs=test_dof, design=test_design)
+            sphere.C_H(dofs=test_dof, design=test_design)
+            sphere.C_K(dofs=test_dof, design=test_design)
 
         except ValueError as e:
             raise ValueError(f"Sphere does not have the correct number of degrees of freedom or variables: {e}")
@@ -211,21 +211,21 @@ class SphereAssembly:
         """Default design-variable values."""
         return self._design_defaults
 
-    def grand_c_field(self, dofs=None, design=None, time=None):
+    def grand_C_H(self, dofs=None, design=None, time=None):
         """
-        Returns C_field of shape (6N, Ninput) such that:
-            grand_force_torque = C_field @ inputs + C_stiff @ dofs
+        Returns C_H of shape (6N, Ninput) such that:
+            grand_force_torque = C_H @ inputs + C_K @ dofs
         """
         dofs, design, time = self._setup_params(dofs, design, time)
-        return jnp.vstack([sphere.c_field(dofs, design) for sphere in self.spheres])
+        return jnp.vstack([sphere.C_H(dofs, design) for sphere in self.spheres])
 
-    def grand_c_stiff(self, dofs=None, design=None, time=None):
+    def grand_C_K(self, dofs=None, design=None, time=None):
         """
-        Returns C_stiff of shape (6N, Ndof) such that:
-            grand_force_torque = C_field @ inputs + C_stiff @ dofs
+        Returns C_K of shape (6N, Ndof) such that:
+            grand_force_torque = C_H @ inputs + C_K @ dofs
         """
         dofs, design, time = self._setup_params(dofs, design, time)
-        return jnp.vstack([sphere.c_stiff(dofs, design) for sphere in self.spheres])
+        return jnp.vstack([sphere.C_K(dofs, design) for sphere in self.spheres])
 
     def compute_Jassembly(self, dofs=None, design=None, time=None):
         """
@@ -456,8 +456,8 @@ class SphereAssembly:
             output += f"  radius: {sphere.radius(self.dof_defaults, self.design_defaults)}\n"
             output += f"  position: {sphere.position(self.dof_defaults, self.design_defaults, [0.0])}\n"
             output += f"  orientation: {sphere.orientation(self.dof_defaults, self.design_defaults, [0.0])}\n"
-            output += f"  c_field:\n{sphere.c_field(self.dof_defaults, self.design_defaults)}\n"
-            output += f"  c_stiff:\n{sphere.c_stiff(self.dof_defaults, self.design_defaults)}\n"
+            output += f"  C_H:\n{sphere.C_H(self.dof_defaults, self.design_defaults)}\n"
+            output += f"  C_K:\n{sphere.C_K(self.dof_defaults, self.design_defaults)}\n"
 
         return output
 
@@ -639,10 +639,10 @@ class SphereAssembly:
             rad_func = _create_function(rad_exprs, dof_variables, design_variables, constants)
             pos_func = _create_function_time(pos_exprs, dof_variables, design_variables, constants, time_variable)
             ori_func = _create_function_time(ori_exprs, dof_variables, design_variables, constants, time_variable)
-            C_field_func, C_stiff_func = _create_coupling_functions(
+            C_H_func, C_K_func = _create_coupling_functions(
                 for_exprs + tor_exprs, dof_variables, design_variables, input_variables, constants
             )
-            spheres.append(Sphere(rad_func, pos_func, ori_func, C_field_func, C_stiff_func))
+            spheres.append(Sphere(rad_func, pos_func, ori_func, C_H_func, C_K_func))
 
             # Printing the characteristics of each sphere
             if verbose:
@@ -650,8 +650,8 @@ class SphereAssembly:
                 print(f"      Radius: {rad_func.expression}")
                 print(f"      Position: {pos_func.expression}")
                 print(f"      Orientation: {ori_func.expression}")
-                print(f"      Coupling matrix C_H:\n{C_field_func.expression}")
-                print(f"      Coupling matrix C_K:\n{C_stiff_func.expression}")
+                print(f"      Coupling matrix C_H:\n{C_H_func.expression}")
+                print(f"      Coupling matrix C_K:\n{C_K_func.expression}")
 
         return (
             num_dof,
@@ -807,13 +807,13 @@ def _create_coupling_functions(sp_exprs, dof_variables, design_variables, input_
             if not sp.simplify(sp.diff(expr, sym, 2)).is_zero:
                 raise ValueError(f"Expression {i} '{expr}' is nonlinear in input '{sym}'.")
 
-    # --- C_field[i, j] = d(expr_i) / d(input_j) ---
-    C_field_sym = [[sp.diff(expr, inp) for inp in input_symbols] for expr in exprs]
+    # --- C_H[i, j] = d(expr_i) / d(input_j) ---
+    C_H_sym = [[sp.diff(expr, inp) for inp in input_symbols] for expr in exprs]
 
-    # --- Subtract field contribution: new_expr = expr - C_field @ inputs ---
+    # --- Subtract field contribution: new_expr = expr - C_H @ inputs ---
     residual_sym = [
         sp.simplify(expr - sum(c * inp for c, inp in zip(row, input_symbols)))
-        for expr, row in zip(exprs, C_field_sym)
+        for expr, row in zip(exprs, C_H_sym)
     ]
 
     # --- Validate that residual has no remaining input dependence ---
@@ -822,23 +822,23 @@ def _create_coupling_functions(sp_exprs, dof_variables, design_variables, input_
             if not sp.simplify(sp.diff(res, sym)).is_zero:
                 raise ValueError(
                     f"Expression {i}: residual '{res}' still depends on input '{sym}' "
-                    f"after subtracting C_field @ inputs. Check linearity."
+                    f"after subtracting C_H @ inputs. Check linearity."
                 )
 
-    # --- C_stiff[i, j] = d(residual_i) / d(dof_j) ---
-    C_stiff_sym = [[sp.diff(res, dof) for dof in dof_symbols] for res in residual_sym]
+    # --- C_K[i, j] = d(residual_i) / d(dof_j) ---
+    C_K_sym = [[sp.diff(res, dof) for dof in dof_symbols] for res in residual_sym]
 
     # --- Lambdify ---
-    C_field_funcs = [
-        [sp.lambdify([dof_symbols, design_symbols], c, JAX_MODULES) for c in row] for row in C_field_sym
+    C_H_funcs = [
+        [sp.lambdify([dof_symbols, design_symbols], c, JAX_MODULES) for c in row] for row in C_H_sym
     ]
-    C_stiff_funcs = [
-        [sp.lambdify([dof_symbols, design_symbols], c, JAX_MODULES) for c in row] for row in C_stiff_sym
+    C_K_funcs = [
+        [sp.lambdify([dof_symbols, design_symbols], c, JAX_MODULES) for c in row] for row in C_K_sym
     ]
 
-    def C_field_func(dof_args, design_args):
-        n_rows = len(C_field_funcs)
-        n_cols = len(C_field_funcs[0]) if n_rows > 0 else 0
+    def C_H_func(dof_args, design_args):
+        n_rows = len(C_H_funcs)
+        n_cols = len(C_H_funcs[0]) if n_rows > 0 else 0
 
         if n_rows == 0 or n_cols == 0:
             return jnp.empty((n_rows, n_cols))
@@ -846,13 +846,13 @@ def _create_coupling_functions(sp_exprs, dof_variables, design_variables, input_
         return jnp.stack(
             [
                 jnp.stack([jnp.asarray(c(dof_args, design_args), dtype=float).reshape(()) for c in row])
-                for row in C_field_funcs
+                for row in C_H_funcs
             ]
         )
 
-    def C_stiff_func(dof_args, design_args):
-        n_rows = len(C_stiff_funcs)
-        n_cols = len(C_stiff_funcs[0]) if n_rows > 0 else 0
+    def C_K_func(dof_args, design_args):
+        n_rows = len(C_K_funcs)
+        n_cols = len(C_K_funcs[0]) if n_rows > 0 else 0
 
         if n_rows == 0 or n_cols == 0:
             return jnp.empty((n_rows, n_cols))
@@ -860,14 +860,14 @@ def _create_coupling_functions(sp_exprs, dof_variables, design_variables, input_
         return jnp.stack(
             [
                 jnp.stack([jnp.asarray(c(dof_args, design_args), dtype=float).reshape(()) for c in row])
-                for row in C_stiff_funcs
+                for row in C_K_funcs
             ]
         )
 
-    C_field_func.expression = [[str(c) for c in row] for row in C_field_sym]
-    C_stiff_func.expression = [[str(c) for c in row] for row in C_stiff_sym]
+    C_H_func.expression = [[str(c) for c in row] for row in C_H_sym]
+    C_K_func.expression = [[str(c) for c in row] for row in C_K_sym]
 
-    return C_field_func, C_stiff_func
+    return C_H_func, C_K_func
 
 
 def _classify_input_variables(input_variables: list[str]) -> tuple[list[str], list[str]]:

@@ -5,58 +5,41 @@ Installation
 Prerequisites
 -------------
 
-SoftMobility requires Python 3.8 or higher. It also depends on several scientific computing libraries:
+SoftMobility requires Python 3.10 or higher (dictated by the JAX dependency).
+It also depends on:
 
-- JAX (for automatic differentiation and GPU acceleration)
-- NumPy (for numerical computations)
-- SciPy (for scientific computing)
-- Matplotlib (for plotting)
-- Plotly (for interactive visualizations)
-
-Installation from PyPI
-----------------------
-
-The easiest way to install SoftMobility is using pip:
-
-.. code-block:: bash
-
-    pip install softmobility
+- JAX (automatic differentiation and JIT compilation)
+- NumPy (array operations)
+- SciPy (scientific computing)
+- Optax (gradient-based optimizers)
+- Matplotlib and Plotly (plotting)
 
 Installation from Source
 ------------------------
 
-To install from source, first clone the repository:
+The package is not yet on PyPI. Clone the repository and install in editable
+mode:
 
 .. code-block:: bash
 
     git clone https://github.com/celoy/SoftMobility.git
     cd SoftMobility
+    python -m venv .venv
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install -e .
 
-Then install in development mode:
+Development and documentation tools
+------------------------------------
 
-.. code-block:: bash
-
-    pip install -e .
-
-For development with all optional dependencies:
-
-.. code-block:: bash
-
-    pip install -e ".[dev]"
-
-Optional Dependencies
----------------------
-
-For development and testing, install the optional dependencies:
+Install the additional tools needed to run tests and build the documentation:
 
 .. code-block:: bash
 
-    pip install -e ".[test]"
+    pip install -r requirements-dev.txt
 
 Verifying Installation
 ----------------------
-
-To verify that SoftMobility is installed correctly, you can run:
 
 .. code-block:: python
 
@@ -66,9 +49,12 @@ To verify that SoftMobility is installed correctly, you can run:
 Troubleshooting
 ---------------
 
-If you encounter issues with JAX installation (especially on GPU systems), refer to the `JAX installation guide <https://github.com/google/jax#installation>`_ for platform-specific instructions.
+If you encounter issues with JAX installation (especially on GPU systems), refer
+to the `JAX installation guide <https://github.com/google/jax#installation>`_
+for platform-specific instructions.
 
-For MacOS with Apple Silicon (M1/M2), you may need to install JAX with:
+For macOS with Apple Silicon (M1/M2/M3), install the CPU build of JAX
+explicitly:
 
 .. code-block:: bash
 

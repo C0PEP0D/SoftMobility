@@ -63,5 +63,19 @@ Returned values
 contains one row per time step. Initial conditions are not prepended to the
 returned arrays; the first row is the state after the first integration step.
 
-The method is designed for JAX transformations. Keep ``n_steps`` static when
-jitting a function that calls it.
+JAX notes
+---------
+
+SoftMobility is built on JAX. A few things to keep in mind if you are new to
+JAX:
+
+- **Static shapes**: ``n_steps`` must be a Python integer (not a traced array).
+  If you wrap the rollout in ``jax.jit``, pass ``n_steps`` as a static argument
+  or fix it at definition time.
+- **No Python control flow over traced arrays**: conditionals on JAX arrays
+  inside a jitted function must use ``jax.lax.cond``, not ``if``.
+- **CPU by default**: JAX runs on CPU unless a GPU/TPU build is installed. See
+  the :doc:`installation` page for platform-specific setup.
+- **Compilation on first call**: ``jax.jit``-compiled functions are traced and
+  compiled the first time they are called with a given input signature. Expect a
+  delay on the first call; subsequent calls are fast.

@@ -21,8 +21,8 @@
       ~SphereAssembly.compute_Jassembly
       ~SphereAssembly.compute_composition_of_forces
       ~SphereAssembly.from_file
-      ~SphereAssembly.grand_c_field
-      ~SphereAssembly.grand_c_stiff
+      ~SphereAssembly.grand_C_H
+      ~SphereAssembly.grand_C_K
       ~SphereAssembly.set_design_defaults
       ~SphereAssembly.set_dof_defaults
    

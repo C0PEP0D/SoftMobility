@@ -21,10 +21,10 @@ Spheres
 ``orientation(dofs, design, time)``
     Sphere orientation as a Rodrigues vector.
 
-``c_field(dofs, design)``
+``C_H(dofs, design)``
     Coupling matrix from external inputs to sphere force and torque.
 
-``c_stiff(dofs, design)``
+``C_K(dofs, design)``
     Coupling matrix from degrees of freedom to elastic force and torque.
 
 Constants, arrays, and callables are accepted where possible. Callables must be
@@ -73,9 +73,11 @@ The same string can be passed directly to ``SphereAssembly`` or ``SoftBody``:
 
    body = SoftBody(yaml_text, verbose=False)
 
-The parser canonicalizes variables alphabetically within each group. Inspect
-``body.dof_variables``, ``body.design_variables``, and
-``body.input_variables`` before passing arrays explicitly.
+The parser canonicalizes variables **alphabetically** within each group. For
+example, ``design_names: [radius, length, k]`` results in the internal order
+``[k, length, radius]``. Always inspect ``body.dof_variables``,
+``body.design_variables``, and ``body.input_variables`` before constructing or
+interpreting arrays explicitly — do not assume the listed order is preserved.
 
 Assembly matrices
 -----------------

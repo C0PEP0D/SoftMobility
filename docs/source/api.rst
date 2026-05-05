@@ -47,7 +47,6 @@ Simulation and optimization
 
    softmobility.classes.solver.FlowBodyRollout
    softmobility.classes.solver.FlowBodyOptimizer
-   softmobility.classes.solver.FlowBodyRL
 
 Rotation utilities
 ------------------

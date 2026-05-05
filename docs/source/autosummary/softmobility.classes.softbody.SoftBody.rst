@@ -23,8 +23,8 @@
       ~SoftBody.compute_mobility_tensor
       ~SoftBody.compute_tensors
       ~SoftBody.from_file
-      ~SoftBody.grand_c_field
-      ~SoftBody.grand_c_stiff
+      ~SoftBody.grand_C_H
+      ~SoftBody.grand_C_K
       ~SoftBody.set_design_defaults
       ~SoftBody.set_dof_defaults
    
