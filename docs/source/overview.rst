@@ -8,6 +8,47 @@ computes reduced mobility tensors for Stokes-flow dynamics, integrates the body
 trajectory in a prescribed flow, and exposes the calculation to JAX
 transformations such as ``jax.jit`` and ``jax.grad``.
 
+Physical model
+--------------
+
+All flows are assumed to be in the **Stokes (creeping-flow) regime**: inertia is
+negligible and the fluid responds instantaneously to forces. In this regime the
+velocity of each sphere is linearly related to the forces and torques acting on
+it through the **hydrodynamic mobility tensor**.
+
+SoftMobility uses the **Rotne–Prager–Yamakawa (RPY) approximation** to build
+that tensor. The self-mobility of sphere *i* (radius *a*\:sub:`i`, viscosity
+*μ* = 1) is the standard Stokes result:
+
+.. math::
+
+   \boldsymbol{\mu}^{tt}_{ii} = \frac{1}{6\pi a_i}\mathbf{I}, \qquad
+   \boldsymbol{\mu}^{rr}_{ii} = \frac{1}{8\pi a_i^3}\mathbf{I}.
+
+The cross-mobility between spheres *i* and *j* separated by **r** = **x**\
+:sub:`i` − **x**\:sub:`j` (magnitude *R*, unit vector **r̂**) uses the RPY
+correction, which regularises the Oseen tensor for overlapping or nearly
+touching spheres and guarantees a positive-definite mobility matrix.
+
+The grand mobility matrix (size 6*N* × 6*N* for *N* spheres) is assembled from
+these blocks and then projected onto the reduced set of body degrees of freedom
+by a kinematic Jacobian.
+
+Orientation convention
+----------------------
+
+Body orientation is stored as a **Rodrigues vector** **p** = θ **n̂**, where
+**n̂** is the unit rotation axis and θ ∈ [0, π) is the rotation angle. The
+vector norm encodes the magnitude of the rotation:
+
+- **p** = **0** means no rotation (identity).
+- ‖\ **p**\ ‖ = π/2 is a 90° rotation about **n̂**.
+
+When numerical integration drives ‖\ **p**\ ‖ beyond π, ``rescale_orientation``
+maps it back to the equivalent vector with ‖\ **p**\ ‖ < π, avoiding
+representation singularities. The body-frame-to-lab-frame rotation matrix for a
+given Rodrigues vector is computed by ``rotation_matrix``.
+
 Conceptual model
 ----------------
 

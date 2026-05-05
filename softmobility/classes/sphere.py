@@ -20,10 +20,10 @@ class Sphere:
     orientation : array-like or callable, optional
         Rodrigues orientation vector with shape ``(3,)``, or callable
         ``orientation(dofs, design, time)``.
-    c_field : array-like or callable, optional
+    C_H : array-like or callable, optional
         Matrix with first dimension 6 mapping external inputs to force and
         torque on the sphere.
-    c_stiff : array-like or callable, optional
+    C_K : array-like or callable, optional
         Matrix with first dimension 6 mapping degrees of freedom to elastic
         force and torque.
 
@@ -38,15 +38,15 @@ class Sphere:
         radius=None,
         position=None,
         orientation=None,
-        c_field=None,
-        c_stiff=None,
+        C_H=None,
+        C_K=None,
     ):
         """Initialize a new Sphere instance with flexible input handling."""
         self._radius_func = _convert_to_scalar_callable(radius, "radius", 1.0)
         self._position_func = _convert_to_vector_callable_time(position, "position")
         self._orientation_func = _convert_to_vector_callable_time(orientation, "orientation")
-        self._c_field_func = _convert_to_array_callable(c_field, "c_field")
-        self._c_stiff_func = _convert_to_array_callable(c_stiff, "c_stiff")
+        self._C_H_func = _convert_to_array_callable(C_H, "C_H")
+        self._C_K_func = _convert_to_array_callable(C_K, "C_K")
 
     def radius(self, dofs: Array, design: Array) -> float:
         """
@@ -74,13 +74,13 @@ class Sphere:
         """Evaluate the sphere orientation as a Rodrigues vector."""
         return self._orientation_func(dofs, design, time)
 
-    def c_field(self, dofs: Array, design: Array) -> jnp.ndarray:
+    def C_H(self, dofs: Array, design: Array) -> jnp.ndarray:
         """Evaluate the matrix coupling external inputs to force and torque."""
-        return self._c_field_func(dofs, design)
+        return self._C_H_func(dofs, design)
 
-    def c_stiff(self, dofs: Array, design: Array) -> jnp.ndarray:
+    def C_K(self, dofs: Array, design: Array) -> jnp.ndarray:
         """Evaluate the matrix coupling degrees of freedom to force and torque."""
-        return self._c_stiff_func(dofs, design)
+        return self._C_K_func(dofs, design)
 
     def _bortz_equation(self, *args):
         rotation_vector = self.orientation(*args)

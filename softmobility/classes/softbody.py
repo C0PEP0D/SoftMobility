@@ -114,8 +114,8 @@ class SoftBody(SphereAssembly):
         Rgrand = jnp.linalg.inv(Mgrand)
         C_S = self._compute_composition_of_strain(dofs, design, time)
         R_S = self._compute_coupling_with_strain(dofs, design, time)
-        C_H = self.grand_c_field(dofs, design, time)
-        C_K = self.grand_c_stiff(dofs, design, time)
+        C_H = self.grand_C_H(dofs, design, time)
+        C_K = self.grand_C_K(dofs, design, time)
 
         # Compute soft mobility tensors
         Mred = jnp.linalg.inv(J.T @ Rgrand @ J)

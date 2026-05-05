@@ -14,8 +14,8 @@
    .. autosummary::
    
       ~Sphere.bortz_jacobian
-      ~Sphere.c_field
-      ~Sphere.c_stiff
+      ~Sphere.C_H
+      ~Sphere.C_K
       ~Sphere.composition_of_force
       ~Sphere.composition_of_velocity
       ~Sphere.orientation

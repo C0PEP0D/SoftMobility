@@ -36,7 +36,7 @@ includes:
 Installation
 ------------
 
-SoftMobility requires Python 3.8 or newer. For a new user, the safest path is
+SoftMobility requires Python 3.10 or newer. For a new user, the safest path is
 to work in a virtual environment:
 
 .. code-block:: bash
@@ -121,12 +121,13 @@ A complete simulation uses three pieces:
 Examples
 --------
 
-Tutorial notebooks live in ``softmobility/notebooks``:
+Tutorial notebooks live in ``softmobility/tutorials``:
 
 * ``01_tutorial_sphere_assemblies.ipynb``
 * ``02_rigid_assembly.ipynb``
 * ``03_freefall_trajectories.ipynb``
 * ``04_Jeffery_orbits.ipynb``
+* ``05_one_dof_soft_body.ipynb`` *(in preparation)*
 * ``06_three_sphere_swimmer.ipynb``
 * ``07_soft_surfer.ipynb``
 

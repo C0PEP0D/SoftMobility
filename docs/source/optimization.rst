@@ -47,9 +47,3 @@ Use ``clip_min`` and ``clip_max`` to keep design variables in a physically
 meaningful range. Use ``grad_clip`` if the model has sharp hydrodynamic or
 geometric sensitivities.
 
-Experimental reinforcement learning
-------------------------------------
-
-``FlowBodyRL`` is an experimental actor-critic-style helper. Its current API is
-less mature than ``FlowBodyOptimizer``. Prefer ``FlowBodyOptimizer`` unless you
-are developing reinforcement-learning methods around SoftMobility rollouts.

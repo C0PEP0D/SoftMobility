@@ -85,3 +85,10 @@ target/
 # Work in progress
 drafts/
 TODO.local.md
+
+# Claude
+CLAUDE.md
+.claude/
+
+# Latex
+PRFluids/

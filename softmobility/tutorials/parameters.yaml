@@ -1,0 +1,132 @@
+# ========================================================
+# Reference YAML — Assembly of Spheres with Elastic Connections
+# ========================================================
+#
+# This file demonstrates every feature of the YAML assembly format.
+# Load it with:  body = SoftBody("path/to/parameters.yaml")
+#
+# SECTIONS
+# --------
+# dof_names:    Variable prefixes that the parser treats as DOFs.
+# design_names: Variable prefixes that the parser treats as design parameters.
+# input_names:  Variable prefixes that the parser treats as external inputs.
+# defaults:     Numeric default values for DOFs, design params, and constants.
+# spheres:      One entry per sphere.  Only `spheres` is mandatory.
+#
+# VARIABLE DETECTION RULES
+# ------------------------
+# A name is recognized as a DOF if it matches:
+#   - the default prefix "dof" (e.g. dof0, dof1), OR
+#   - a prefix listed in dof_names (e.g. "x" → x0, x1, ...)
+#
+# A name is recognized as a design parameter if it matches:
+#   - the default prefix "design" (e.g. design0), OR
+#   - a prefix/name listed in design_names (e.g. "myradius")
+#
+# Any name not in dof_names, design_names, or input_names that appears in
+# `defaults` is treated as a CONSTANT: substituted numerically at parse time
+# and not exposed as a variable in the assembled functions.
+#
+# Variables with no entry in `defaults` receive a default value of 0.
+#
+# Names are parsed as regular expressions. So you should avoid overlapping 
+# prefixes (e.g. "radius" and "myradius") to prevent ambiguity.
+#
+# INPUT CLASSIFICATION (requires input_names entry)
+# -------------------------------------------------
+#   3-D FIELD — base name appears with suffixes 0, 1, 2 in expressions
+#     (e.g. gravity0, gravity1, gravity2 → base name "gravity").
+#     Components are given in the BODY frame.  The solver rotates a
+#     lab-frame Field object to body frame at each time step.
+#
+#   SCALAR — base name appears without a numeric suffix (e.g. act_torque).
+#     Provided via a Scalar object in the solver.
+#
+# CONSTRAINTS ON FORCE / TORQUE EXPRESSIONS
+# ------------------------------------------
+# - May depend on DOFs, design params, and inputs.
+# - Must be LINEAR in input variables (field components and scalars).
+#   The parser factorises them into:
+#       [F, T] = C_H(dofs, design) @ inputs + C_K(dofs, design) @ dofs
+# - radius, position, orientation must NOT contain input variables.
+# ========================================================
+
+# ----------------------------
+# Variable Prefixes (Optional)
+# ----------------------------
+dof_names:      # "x" prefix: variables x0, x1, ... are DOFs
+  - x
+
+design_names:   # design parameter names/prefixes
+  - myradius    # scalar name "myradius"
+  - distance    # scalar name "distance"
+  - spring_k    # scalar name "spring_k"
+
+input_names:    # external input names
+  - gravity     # 3-D field: gravity0, gravity1, gravity2 in expressions
+  - act_torque  # scalar input: act_torque in expressions
+
+# ----------------------------
+# Default Values
+# ----------------------------
+# Applies to DOFs, design parameters, and constants.
+# DOF defaults: list each full variable name (x0, x1, ...).
+# Design defaults: list each full name (myradius, spring_k, ...).
+# Variables omitted here default to 0.
+defaults:
+  x0: 0.1          # DOF: initial tilt angle of sphere 0 (rad)
+  x1: 0.0          # DOF: initial tilt angle in perpendicular direction (rad)
+  myradius: 0.25   # Design: radius of sphere 0; sphere 1 gets radius 1 - myradius
+  distance: 1.0    # Design: gap between the two sphere surfaces (body-frame z)
+  spring_k: 1.0    # Design: torsion spring stiffness
+  mass0:  1.0      # Constant: coupling weight for sphere 0 — substituted at parse time
+  mass1: -1.0      # Constant: coupling weight for sphere 1 — substituted at parse time
+
+# ----------------------------
+# Sphere Definitions
+# ----------------------------
+# Each sphere entry may contain:
+#   radius:      expression → scalar (no inputs, no time)
+#   position:    [x, y, z]  → body-frame center (no inputs, may use time)
+#   orientation: [rx,ry,rz] → Rodrigues vector  (no inputs, may use time)
+#   force:       [fx,fy,fz] → must be linear in inputs
+#   torque:      [tx,ty,tz] → must be linear in inputs
+# All fields are optional (default: radius=1, others=0).
+
+spheres:
+  - # Sphere 0 -------------------------------------------------------
+    radius: myradius
+    position: [0, 0, 0]
+    orientation: [x0, x1, 0]
+    # Gravity force: mass0 * g_body  (mass0 = 1.0, substituted at parse time)
+    force:  [mass0 * gravity0,  mass0 * gravity1,  mass0 * gravity2]
+    # Spring torque: restores x0, x1 toward 0; active torque offsets x0
+    torque: [-spring_k * x0 + act_torque,  -spring_k * x1,  0]
+
+  - # Sphere 1 -------------------------------------------------------
+    radius: "1 - myradius"
+    position: [0, 0, "distance + 1"]
+    orientation:
+      - "-x0 * myradius / (1 - myradius)"   # antisymmetric: conserves angular momentum
+      - "-x1 * myradius / (1 - myradius)"
+      - 0
+    force:  [mass1 * gravity0,  mass1 * gravity1,  mass1 * gravity2]
+    torque: [spring_k * x0 - act_torque,  spring_k * x1,  0]
+
+# ========================================================
+# Solver usage (Python):
+#
+#   from softmobility import SoftBody, FlowBodyRollout
+#   from softmobility import gravity_field, constant_scalar, no_flow
+#
+#   body = SoftBody("parameters.yaml")
+#   rollout = FlowBodyRollout(
+#       soft_body = body,
+#       flow      = no_flow(),
+#       input_map = {
+#           "gravity":    gravity_field(g=9.81),   # Field object
+#           "act_torque": constant_scalar(0.0),    # Scalar object
+#       },
+#   )
+#   positions, orientations, dofs = rollout.rollout(dt=0.01, n_steps=500)
+# ========================================================

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Soft Mobility &mdash; Soft Mobility 1.0.0.post9.dev0+gd762ccd documentation</title>
+  <title>Soft Mobility &mdash; Soft Mobility 1.0.0.post10.dev0+gf560a2d documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/plot_directive.css?v=7f9a90b1" />
@@ -15,7 +15,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=dc101f77"></script>
+      <script src="_static/documentation_options.js?v=b5883a76"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -91,14 +91,15 @@ model should be simulated, differentiated, and optimized with JAX.</p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#prerequisites">Prerequisites</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#installation-from-pypi">Installation from PyPI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#installation-from-source">Installation from Source</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#optional-dependencies">Optional Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#development-and-documentation-tools">Development and documentation tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#verifying-installation">Verifying Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#physical-model">Physical model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#orientation-convention">Orientation convention</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#conceptual-model">Conceptual model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#array-conventions">Array conventions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#workflow">Workflow</a></li>
@@ -121,12 +122,12 @@ model should be simulated, differentiated, and optimized with JAX.</p>
 <li class="toctree-l2"><a class="reference internal" href="simulation.html#minimal-rollout">Minimal rollout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="simulation.html#inputs-during-a-rollout">Inputs during a rollout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="simulation.html#returned-values">Returned values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html#jax-notes">JAX notes</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="optimization.html">Optimization</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="optimization.html#objective-functions">Objective functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="optimization.html#practical-guidance">Practical guidance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="optimization.html#experimental-reinforcement-learning">Experimental reinforcement learning</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
@@ -165,7 +166,6 @@ model should be simulated, differentiated, and optimized with JAX.</p>
 <li class="toctree-l2"><a class="reference internal" href="api.html#simulation-and-optimization">Simulation and optimization</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRollout.html">softmobility.classes.solver.FlowBodyRollout</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyOptimizer.html">softmobility.classes.solver.FlowBodyOptimizer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="autosummary/softmobility.classes.solver.FlowBodyRL.html">softmobility.classes.solver.FlowBodyRL</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#rotation-utilities">Rotation utilities</a><ul>
