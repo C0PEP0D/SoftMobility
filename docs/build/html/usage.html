@@ -6,18 +6,17 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage &mdash; Soft Mobility 1.0.0.post14.dev0+g09951a6 documentation</title>
+  <title>Usage &mdash; Soft Mobility 1.0.0.post16.dev0+g6d027f7 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=5b2c0467"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=f18f0745"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="_static/copybutton.js?v=f281be69"></script>
     <script src="_static/js/theme.js"></script>
@@ -100,17 +99,15 @@
 <h2>Basic Import<a class="headerlink" href="#basic-import" title="Link to this heading"></a></h2>
 <p>Start by importing the main classes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sphere</span><span class="p">,</span> <span class="n">SphereAssembly</span><span class="p">,</span> <span class="n">SoftBody</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlowBodyRollout</span><span class="p">,</span> <span class="n">FlowBodyOptimizer</span>
 </pre></div>
 </div>
 </section>
 <section id="creating-a-soft-body">
 <h2>Creating a Soft Body<a class="headerlink" href="#creating-a-soft-body" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">SoftBody</span></code> can be created from a YAML file path or from a YAML string. The
+<p><code class="docutils literal notranslate"><span class="pre">sm.SoftBody</span></code> can be created from a YAML file path or from a YAML string. The
 YAML parser detects degrees of freedom, design variables, and inputs from the
 symbols used in sphere expressions.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftBody</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
 
 <span class="n">yaml_text</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">dof_names:</span>
@@ -135,31 +132,31 @@ symbols used in sphere expressions.</p>
 <span class="s2">    torque: [0, k * x0, 0]</span>
 <span class="s2">&quot;&quot;&quot;</span>
 
-<span class="n">body</span> <span class="o">=</span> <span class="n">SoftBody</span><span class="p">(</span><span class="n">yaml_text</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">body</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">SoftBody</span><span class="p">(</span><span class="n">yaml_text</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">body</span><span class="o">.</span><span class="n">dof_variables</span><span class="p">,</span> <span class="n">body</span><span class="o">.</span><span class="n">design_variables</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="working-with-flows">
 <h2>Working with Flows<a class="headerlink" href="#working-with-flows" title="Link to this heading"></a></h2>
-<p>Define fluid flows using the Flow classes:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">shear_flow</span><span class="p">,</span> <span class="n">no_flow</span>
+<p>Define fluid flows using the <code class="docutils literal notranslate"><span class="pre">Flow</span></code> class:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
 
 <span class="c1"># Create a shear flow</span>
-<span class="n">flow</span> <span class="o">=</span> <span class="n">shear_flow</span><span class="p">(</span><span class="n">shear_rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">flow</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">shear_flow</span><span class="p">(</span><span class="n">shear_rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
 <span class="c1"># Or no flow for stationary fluid</span>
-<span class="n">flow</span> <span class="o">=</span> <span class="n">no_flow</span><span class="p">()</span>
+<span class="n">flow</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">no_flow</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
 <section id="running-simulations">
 <h2>Running Simulations<a class="headerlink" href="#running-simulations" title="Link to this heading"></a></h2>
-<p>Use <code class="docutils literal notranslate"><span class="pre">FlowBodyRollout</span></code> to simulate the body trajectory:</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">sm.FlowBodyRollout</span></code> to simulate the body trajectory:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlowBodyRollout</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
 
-<span class="n">rollout</span> <span class="o">=</span> <span class="n">FlowBodyRollout</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+<span class="n">rollout</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">FlowBodyRollout</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
 <span class="n">positions</span><span class="p">,</span> <span class="n">orientations</span><span class="p">,</span> <span class="n">dofs</span> <span class="o">=</span> <span class="n">rollout</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span>
     <span class="n">dt</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
     <span class="n">n_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
@@ -174,13 +171,13 @@ symbols used in sphere expressions.</p>
 <p>Optimization is expressed through an objective function of <code class="docutils literal notranslate"><span class="pre">(rollout,</span>
 <span class="pre">design)</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlowBodyOptimizer</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">softmobility</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">final_height</span><span class="p">(</span><span class="n">rollout</span><span class="p">,</span> <span class="n">design</span><span class="p">):</span>
     <span class="n">positions</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">rollout</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">design</span><span class="o">=</span><span class="n">design</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">positions</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
 
-<span class="n">optimizer</span> <span class="o">=</span> <span class="n">FlowBodyOptimizer</span><span class="p">(</span><span class="n">rollout</span><span class="p">,</span> <span class="n">final_height</span><span class="p">,</span> <span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">))</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">FlowBodyOptimizer</span><span class="p">(</span><span class="n">rollout</span><span class="p">,</span> <span class="n">final_height</span><span class="p">,</span> <span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">))</span>
 <span class="n">optimized_design</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
     <span class="n">init_design</span><span class="o">=</span><span class="n">body</span><span class="o">.</span><span class="n">design_defaults</span><span class="p">,</span>
     <span class="n">n_steps</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
@@ -207,8 +204,8 @@ simulation of a trajectory</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">11_sinking_rigid_body.ipynb</span></code> — sinking trajectory of a rigid body</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">12_flexible_fiber_2d.ipynb</span></code> — 2-D flexible fiber in shear and gravity
 (Delmotte et al. 2015)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">13_rotating_fiber_3d.ipynb</span></code> — 3-D filament in a rotating flow
-(Coq et al. 2008; Wiggins et al. 1998)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">13_rotating_fiber_3d.ipynb</span></code> — 3-D filament: bending and rotational
+relaxation (Coq et al. 2008; Wiggins et al. 1998)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">14_jeffery_rigid.ipynb</span></code> — Jeffery orbits of a rigid body</p></li>
 </ul>
 <p><strong>Original case studies (2X)</strong></p>

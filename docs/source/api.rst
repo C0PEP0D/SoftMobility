@@ -7,7 +7,7 @@ from the top-level package:
 
 .. code-block:: python
 
-   from softmobility import SoftBody, FlowBodyRollout, shear_flow
+   import softmobility as sm
 
 Body geometry and mobility
 --------------------------

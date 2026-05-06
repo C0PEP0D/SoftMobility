@@ -2,7 +2,7 @@
 Optimization
 ============
 
-``FlowBodyOptimizer`` performs gradient-based optimization of design variables.
+``sm.FlowBodyOptimizer`` performs gradient-based optimization of design variables.
 It uses ``jax.value_and_grad`` internally and accepts any Optax optimizer.
 
 Objective functions
@@ -19,13 +19,13 @@ For example, to maximize final vertical displacement:
 .. code-block:: python
 
    import optax
-   from softmobility import FlowBodyOptimizer
+   import softmobility as sm
 
    def final_height(rollout, design):
        positions, _, _ = rollout.rollout(dt=0.01, n_steps=200, design=design)
        return positions[-1, 2]
 
-   optimizer = FlowBodyOptimizer(
+   optimizer = sm.FlowBodyOptimizer(
        rollout,
        objective=final_height,
        optimizer=optax.adam(1e-3),

@@ -54,14 +54,24 @@ class Sphere:
         if (force is not None or torque is not None) and (C_H is not None or C_K is not None):
             raise ValueError("Specify either force/torque or C_H/C_K, not both.")
 
-        self._radius_func = _convert_to_scalar_callable(radius, "radius", 1.0)
-        self._position_func = _convert_to_vector_callable_time(position, "position")
-        self._orientation_func = _convert_to_vector_callable_time(orientation, "orientation")
-        self._force_func = _convert_to_force_callable(force, "force")
-        self._torque_func = _convert_to_force_callable(torque, "torque")
+        self._radius_func = _convert_to_callable(
+            radius, "radius", ("dofs", "design"), output_shape=(), default=1.0
+        )
+        self._position_func = _convert_to_callable(
+            position, "position", ("dofs", "design", "time"), output_shape=(3,)
+        )
+        self._orientation_func = _convert_to_callable(
+            orientation, "orientation", ("dofs", "design", "time"), output_shape=(3,)
+        )
+        self._force_func = _convert_to_callable(
+            force, "force", ("dofs", "design", "inputs"), output_shape=(3,)
+        )
+        self._torque_func = _convert_to_callable(
+            torque, "torque", ("dofs", "design", "inputs"), output_shape=(3,)
+        )
         self._has_explicit_couplings = C_H is not None or C_K is not None
-        self._C_H_func = _convert_to_array_callable(C_H, "C_H")
-        self._C_K_func = _convert_to_array_callable(C_K, "C_K")
+        self._C_H_func = _convert_to_callable(C_H, "C_H", ("dofs", "design"), output_shape=(6, None))
+        self._C_K_func = _convert_to_callable(C_K, "C_K", ("dofs", "design"), output_shape=(6, None))
 
     def radius(self, dofs: Array, design: Array) -> float:
         """Evaluate the sphere radius."""
@@ -97,8 +107,8 @@ class Sphere:
 
     def _set_coupling_functions(self, C_H, C_K):
         """Set coupling functions derived by ``SphereAssembly``."""
-        self._C_H_func = _convert_to_array_callable(C_H, "C_H")
-        self._C_K_func = _convert_to_array_callable(C_K, "C_K")
+        self._C_H_func = _convert_to_callable(C_H, "C_H", ("dofs", "design"), output_shape=(6, None))
+        self._C_K_func = _convert_to_callable(C_K, "C_K", ("dofs", "design"), output_shape=(6, None))
 
     def _bortz_equation(self, *args):
         rotation_vector = self.orientation(*args)
@@ -197,174 +207,152 @@ class Sphere:
         return T.transpose()
 
 
-# Functions to build and check callables
-def _validate_callable(func, name):
-    """Ensure the function is callable and takes exactly two arguments."""
+# Functions to build and check callables ###################################
+
+
+_NUMBER_WORDS = {1: "one", 2: "two", 3: "three", 4: "four"}
+
+
+def _validate_callable(func, name, arg_names, output_shape=None):
+    """Validate a user-supplied callable.
+
+    Parameters
+    ----------
+    func : callable
+        Function to validate.
+    name : str
+        Field name (e.g. ``"radius"``, ``"position"``) used in error messages.
+    arg_names : tuple of str
+        Names of the positional arguments the callable must accept. The
+        expected argument count is ``len(arg_names)`` and the names are
+        quoted in the error message.
+    output_shape : tuple of int or None, optional
+        Documented output shape; reserved for future use. Runtime shape
+        checks are performed by the wrapper produced in
+        :func:`_convert_to_callable`.
+    """
+    del output_shape  # documented but not used today
     if not callable(func):
         raise TypeError(f"{name} must be a callable function.")
-    if func.__code__.co_argcount != 2:
-        raise ValueError(f"{name} must accept exactly two arguments: 'dofs', 'design'.")
-
-
-def _validate_callable_time(func, name):
-    """Ensure the function is callable and takes exactly three arguments."""
-    if not callable(func):
-        raise TypeError(f"{name} must be a callable function.")
-    if func.__code__.co_argcount != 3:
-        raise ValueError(f"{name} must accept exactly three arguments: 'dofs', 'design', 'time'.")
-
-
-def _validate_force_callable(func, name):
-    """Ensure a force/torque callable takes dofs, design, and inputs."""
-    if not callable(func):
-        raise TypeError(f"{name} must be a callable function.")
-    if func.__code__.co_argcount != 3:
-        raise ValueError(f"{name} must accept exactly three arguments: 'dofs', 'design', 'inputs'.")
-
-
-def _convert_to_scalar_callable(value, name, default=1.0):
-    """Convert a scalar value or callable to a callable function returning a constant float."""
-    if value is None:
-        return lambda dofs, design: default
-    try:
-        float_value = float(value)
-        return lambda dofs, design: float_value
-    except (TypeError, ValueError):
-        pass
-
-    if callable(value):
-        _validate_callable(value, name)
-        return value
-
-    raise TypeError(f"{name} must be a callable or a scalar.")
-
-
-def _convert_to_vector_callable(value, name, default=None):
-    """Convert scalars, lists, or arrays to a callable function returning a constant value."""
-    if default is None:
-        default = jnp.array([0, 0, 0])
-    if value is None:
-        return lambda dofs, design, time: default
-    try:
-        vector_value = jnp.array(value)
-        if vector_value.shape != (3,):
-            raise ValueError(f"{name} must have shape (3,), but got {vector_value.shape}.")
-        return lambda dofs, design, time: vector_value
-    except TypeError:
-        pass
-
-    if callable(value):
-        _validate_callable(value, name)
-        return value
-
-    raise TypeError(f"{name} must be a callable, an array, or a list.")
-
-
-def _convert_to_vector_callable_time(value, name, default=None):
-    """Convert scalars, lists, or arrays to a callable function returning a constant value."""
-    if default is None:
-        default = jnp.array([0, 0, 0])
-    if value is None:
-        return lambda dofs, design, time: default
-    try:
-        vector_value = jnp.array(value)
-        if vector_value.shape != (3,):
-            raise ValueError(f"{name} must have shape (3,), but got {vector_value.shape}.")
-        return lambda dofs, design, time: vector_value
-    except TypeError:
-        pass
-
-    if callable(value):
-        _validate_callable_time(value, name)
-        _fn = value
-        return lambda dofs, design, time: jnp.asarray(_fn(dofs, design, time), dtype=float)
-
-    raise TypeError(f"{name} must be a callable, an array, or a list.")
+    n = len(arg_names)
+    if func.__code__.co_argcount != n:
+        word = _NUMBER_WORDS.get(n, str(n))
+        names_str = ", ".join(f"'{a}'" for a in arg_names)
+        raise ValueError(f"{name} must accept exactly {word} arguments: {names_str}.")
 
 
 def _contains_callable(value):
     return isinstance(value, (list, tuple)) and any(callable(component) for component in value)
 
 
-def _convert_to_force_component_callable(value, name):
-    try:
-        float_value = float(value)
-        return lambda dofs, design, inputs: float_value
-    except (TypeError, ValueError):
-        pass
-
-    if callable(value):
-        _validate_force_callable(value, name)
-        return value
-
-    raise TypeError(f"{name} must be a scalar or a callable.")
+def _shape_matches(actual, expected):
+    """Return True if ``actual`` matches ``expected`` (``None`` entries are wildcards)."""
+    if len(actual) != len(expected):
+        return False
+    return all(e is None or a == e for a, e in zip(actual, expected, strict=True))
 
 
-def _convert_to_force_callable(value, name, default=None):
-    """Convert force/torque entries into a callable returning a three-vector."""
-    if default is None:
-        default = jnp.zeros(3)
+def _format_shape(shape):
+    """Render a shape tuple, with ``None`` entries shown as ``*``."""
+    parts = ["*" if e is None else str(e) for e in shape]
+    if len(parts) == 1:
+        return f"({parts[0]},)"
+    return "(" + ",".join(parts) + ")"
+
+
+def _shape_error(name, expected, actual):
+    return ValueError(
+        f"{name} must have shape {_format_shape(expected)}, but got {tuple(actual)}."
+    )
+
+
+def _make_constant(const, n_args):
+    """Return a callable of arity ``n_args`` that always returns ``const``."""
+    if n_args == 2:
+        return lambda dofs, design: const
+    if n_args == 3:
+        return lambda dofs, design, third: const
+    raise ValueError(f"Unsupported arity: {n_args}.")
+
+
+def _convert_to_callable(value, name, arg_names, output_shape, default=None):
+    """Normalise a Sphere field into a callable matching ``arg_names`` and ``output_shape``.
+
+    Handles four input categories in order: ``None`` (constant default),
+    a user callable, a sequence of per-component callables (only when
+    ``output_shape`` is 1-D), and a scalar/array constant. Anything else
+    raises :class:`TypeError`.
+
+    Parameters
+    ----------
+    value : None, scalar, sequence, or callable
+        User-supplied input.
+    name : str
+        Field name for error messages.
+    arg_names : tuple of str
+        Argument names the produced callable will accept. The expected
+        arity is ``len(arg_names)``.
+    output_shape : tuple of int or None
+        Expected output shape. ``()`` means a 0-d scalar array; ``None``
+        entries match any size on that axis (e.g. ``(6, None)``).
+    default : optional
+        Constant value returned when ``value is None``. Defaults to
+        ``jnp.zeros(output_shape)``, with ``None`` axes collapsed to
+        size ``0``.
+    """
+    n_args = len(arg_names)
+    accept_components = len(output_shape) == 1
+
+    # 1. None → constant default (always a JAX array, including 0-d for scalar shapes)
     if value is None:
-        return lambda dofs, design, inputs: default
+        if default is None:
+            default = jnp.zeros(tuple(0 if e is None else e for e in output_shape))
+        else:
+            default = jnp.asarray(default, dtype=float)
+        return _make_constant(default, n_args)
 
+    # 2. User callable
     if callable(value):
-        _validate_force_callable(value, name)
+        _validate_callable(value, name, arg_names, output_shape)
         _fn = value
 
-        def wrapper(dofs, design, inputs):
-            vector = jnp.asarray(_fn(dofs, design, inputs), dtype=float)
-            if vector.shape != (3,):
-                raise ValueError(f"{name} must have shape (3,), but got {vector.shape}.")
-            return vector
+        def wrapper(*args):
+            out = jnp.asarray(_fn(*args), dtype=float)
+            if not _shape_matches(out.shape, output_shape):
+                raise _shape_error(name, output_shape, out.shape)
+            return out
 
         wrapper._raw = _fn
         return wrapper
 
-    if _contains_callable(value):
-        if len(value) != 3:
-            raise ValueError(f"{name} must have shape (3,), but got ({len(value)},).")
+    # 3. Per-component callables (1-D shape with at least one callable element)
+    if accept_components and _contains_callable(value):
+        if output_shape[0] is not None and len(value) != output_shape[0]:
+            raise _shape_error(name, output_shape, (len(value),))
         component_funcs = [
-            _convert_to_force_component_callable(component, f"{name}[{i}]") for i, component in enumerate(value)
+            _convert_to_callable(component, f"{name}[{i}]", arg_names, output_shape=())
+            for i, component in enumerate(value)
         ]
 
-        def wrapper(dofs, design, inputs):
+        def wrapper(*args):
             return jnp.stack(
-                [
-                    jnp.asarray(component_func(dofs, design, inputs), dtype=float).reshape(())
-                    for component_func in component_funcs
-                ]
+                [jnp.asarray(f(*args), dtype=float).reshape(()) for f in component_funcs]
             )
 
         return wrapper
 
+    # 4. Constant scalar / array
     try:
-        vector_value = jnp.asarray(value, dtype=float)
-        if vector_value.shape != (3,):
-            raise ValueError(f"{name} must have shape (3,), but got {vector_value.shape}.")
-        return lambda dofs, design, inputs: vector_value
-    except TypeError:
-        pass
+        const = jnp.asarray(value, dtype=float)
+    except (TypeError, ValueError):
+        # Not coercible — fall through to rejection.
+        const = None
+    if const is not None:
+        if not _shape_matches(const.shape, output_shape):
+            raise _shape_error(name, output_shape, const.shape)
+        return _make_constant(const, n_args)
 
+    # 5. Reject
+    if output_shape == ():
+        raise TypeError(f"{name} must be a callable or a scalar.")
     raise TypeError(f"{name} must be a callable, an array, or a list.")
-
-
-def _convert_to_array_callable(value, name, default=None):
-    """Validate that value is a callable returning a (6, Ninput) array."""
-    if default is None:
-        default = jnp.zeros((6, 0))
-    if value is None:
-        return lambda dofs, design: default
-    try:
-        array_value = jnp.array(value)
-        if array_value.shape[0] != 6:
-            raise ValueError(f"{name} must have shape (6,*), but got {array_value.shape}.")
-        return lambda dofs, design: array_value
-
-    except TypeError:
-        pass
-
-    if callable(value):
-        _validate_callable(value, name)
-        return value
-
-    raise TypeError(f"{name} must be a callable or an array.")

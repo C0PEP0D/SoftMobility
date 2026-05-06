@@ -12,7 +12,7 @@ It also depends on:
 - NumPy (array operations)
 - SciPy (scientific computing)
 - Optax (gradient-based optimizers)
-- Matplotlib and Plotly (plotting)
+- Plotly (plotting; used by tutorials and rendered figures)
 
 Installation from Source
 ------------------------
