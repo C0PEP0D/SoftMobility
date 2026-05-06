@@ -22,6 +22,7 @@ docs/source/overview.rst
 docs/source/release-history.rst
 docs/source/simulation.rst
 docs/source/usage.rst
+docs/source/autosummary/softmobility.classes.flexiblefiber.FlexibleFiber.rst
 docs/source/autosummary/softmobility.classes.inputs.Field.rst
 docs/source/autosummary/softmobility.classes.inputs.Flow.rst
 docs/source/autosummary/softmobility.classes.inputs.Scalar.rst
@@ -51,6 +52,7 @@ soft_mobility.egg-info/top_level.txt
 softmobility/__init__.py
 softmobility/_version.py
 softmobility/classes/__init__.py
+softmobility/classes/flexiblefiber.py
 softmobility/classes/inputs.py
 softmobility/classes/softbody.py
 softmobility/classes/solver.py
@@ -64,5 +66,6 @@ softmobility/tests/test_class_inputs.py
 softmobility/tests/test_class_softbody.py
 softmobility/tests/test_class_sphere.py
 softmobility/tests/test_class_sphereassembly.py
+softmobility/tests/test_flexible_fiber.py
 softmobility/tests/test_rigid_assemblies.py
 softmobility/tutorials/__init__.py

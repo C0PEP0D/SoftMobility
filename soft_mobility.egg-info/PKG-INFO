@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: soft-mobility
-Version: 1.0.0.post10.dev0+gf560a2d
+Version: 1.0.0.post12.dev0+g831369c
 Summary: Python package to compute the mobility of a soft body in Stokes flows.
 Home-page: https://github.com/celoy/SoftMobility
 Author: Christophe Eloy

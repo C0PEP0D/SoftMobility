@@ -13,7 +13,7 @@ from .softbody import SoftBody
 
 class FlexibleFiber(SoftBody):
     """
-    Chain of identical beads with rigid bonds and a linear bending elasticity.
+    Chain of identical beads representing a flexible fiber with bending elasticity.
 
     Implements the Joint Model of Delmotte et al. 2015 (Fig. 3, Eqs. 2–4) in
     the SoftMobility framework. Bead positions are derived from bead

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage &mdash; Soft Mobility 1.0.0.post11.dev0+g4a52967 documentation</title>
+  <title>Usage &mdash; Soft Mobility 1.0.0.post12.dev0+g831369c documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
@@ -15,9 +15,9 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=9c7bffba"></script>
-      <script src="_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/documentation_options.js?v=43f6f297"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="_static/copybutton.js?v=f281be69"></script>
     <script src="_static/js/theme.js"></script>
@@ -191,15 +191,31 @@ symbols used in sphere expressions.</p>
 </section>
 <section id="example-notebooks">
 <h2>Example Notebooks<a class="headerlink" href="#example-notebooks" title="Link to this heading"></a></h2>
-<p>For more detailed examples, see the tutorial notebooks:</p>
+<p>The tutorials are grouped into three layers. Numbering reflects the layer
+(0X = library introduction, 1X = validation against published results,
+2X = original case studies).</p>
+<p><strong>Library introduction (0X)</strong></p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">01_tutorial_sphere_assemblies.ipynb</span></code> - Basic sphere assembly usage</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">02_rigid_assembly.ipynb</span></code> - Rigid body simulations</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">03_freefall_trajectories.ipynb</span></code> - Freefall dynamics</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">04_Jeffery_orbits.ipynb</span></code> - Jeffery orbits in flow</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">05_one_dof_soft_body.ipynb</span></code> - Jeffery orbits with a deformable one-DOF body <em>(in preparation)</em></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">06_three_sphere_swimmer.ipynb</span></code> - Three-sphere swimmer model</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">07_soft_surfer.ipynb</span></code> - Soft surfer simulations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">01_assembly_creation.ipynb</span></code> — methods to create a sphere assembly</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">02_rigid_mobility.ipynb</span></code> — mobility properties of a rigid sphere assembly</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">03_soft_mobility_simulation.ipynb</span></code> — soft mobility tensors and
+simulation of a trajectory</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">04_optimization.ipynb</span></code> — optimization principles</p></li>
+</ul>
+<p><strong>Validation cases (1X)</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">11_sinking_rigid_body.ipynb</span></code> — sinking trajectory of a rigid body</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">12_flexible_fiber_2d.ipynb</span></code> — 2-D flexible fiber in shear and gravity
+(Delmotte et al. 2015)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">13_rotating_fiber_3d.ipynb</span></code> — 3-D filament in a rotating flow
+(Coq et al. 2008; Wiggins et al. 1998)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">14_jeffery_rigid.ipynb</span></code> — Jeffery orbits of a rigid body</p></li>
+</ul>
+<p><strong>Original case studies (2X)</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">21_jeffery_soft.ipynb</span></code> — Jeffery orbit of a one-DOF deformable body</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">22_three_sphere_swimmer.ipynb</span></code> — three-sphere swimmer optimization</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">23_soft_surfer.ipynb</span></code> — soft surfer in Taylor–Green vortices</p></li>
 </ul>
 </section>
 <section id="api-reference">
