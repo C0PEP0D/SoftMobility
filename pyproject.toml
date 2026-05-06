@@ -1,6 +1,19 @@
 [tool.ruff]
 line-length = 115
-extend-exclude = [".claude"]
+# Restrict ruff to user-maintained sources: the library, tests, and notebook
+# tutorials. Anything outside these directories (versioneer.py, _version.py,
+# drafts/, docs/, ...) is skipped.
+include = [
+    "softmobility/classes/**/*.py",
+    "softmobility/tests/**/*.py",
+    "softmobility/tutorials/**/*.py",
+    "softmobility/tutorials/**/*.ipynb",
+]
+extend-exclude = [
+    ".claude",
+    # Tutorial 11 is a known work-in-progress; skip until it is rewritten.
+    "softmobility/tutorials/11_sinking_rigid_body.ipynb",
+]
 
 [tool.ruff.lint]
 select = [
