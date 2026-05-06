@@ -72,13 +72,16 @@ Ready to contribute? Here's how to set up `soft-mobility` for local development.
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass ruff and the tests, including testing other Python versions with tox::
+5. When you're done making changes, check that your changes pass ruff, the
+   tests, and the docs build::
 
-    $ ruff check .
-    $ python setup.py test
-    $ tox
+    $ ruff check
+    $ pytest
+    $ make -C docs/ html
 
-   To get ruff and tox, just pip install them into your virtualenv.
+   ``ruff`` and ``pytest`` are pulled in by ``requirements-dev.txt``. Multi-
+   Python testing is handled by the GitHub Actions matrix on every push and
+   pull request, so there is no need to run a local equivalent.
 
 6. Commit your changes and push your branch to GitHub::
 
