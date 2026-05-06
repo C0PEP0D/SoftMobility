@@ -9,12 +9,12 @@ Classes
 """
 
 from functools import partial
+
 import jax
 import jax.numpy as jnp
-from jax import lax
 import optax
 
-from softmobility import SoftBody, Flow, Field, Scalar
+from softmobility import Field, Flow, Scalar, SoftBody
 
 # =============================================================================
 # FlowBodyRollout
@@ -68,8 +68,10 @@ class FlowBodyRollout:
     Notes
     -----
     - The rollout is pure-functional and stateless, making it compatible with JAX transformations.
-    - Inputs (fields and scalars) are validated during initialization to ensure compatibility with the soft body and flow.
-    - The velocity method computes the soft body's linear velocity, angular velocity, and dof derivatives in the lab frame.
+    - Inputs (fields and scalars) are validated during initialization to ensure compatibility with
+      the soft body and flow.
+    - The velocity method computes the soft body's linear velocity, angular velocity, and dof
+      derivatives in the lab frame.
     """
 
     def __init__(

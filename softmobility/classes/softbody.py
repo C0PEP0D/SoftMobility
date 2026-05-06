@@ -1,11 +1,13 @@
 """SoftBody class."""
 
-from collections import namedtuple
 import warnings
-import numpy as np
-import jax.numpy as jnp
+from collections import namedtuple
+
 import jax
+import jax.numpy as jnp
+import numpy as np
 from jax import lax
+
 from .sphere import Sphere
 from .sphereassembly import SphereAssembly
 

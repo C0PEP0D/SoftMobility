@@ -239,8 +239,10 @@ def _convert_to_scalar_callable(value, name, default=1.0):
     raise TypeError(f"{name} must be a callable or a scalar.")
 
 
-def _convert_to_vector_callable(value, name, default=jnp.array([0, 0, 0])):
+def _convert_to_vector_callable(value, name, default=None):
     """Convert scalars, lists, or arrays to a callable function returning a constant value."""
+    if default is None:
+        default = jnp.array([0, 0, 0])
     if value is None:
         return lambda dofs, design, time: default
     try:
@@ -258,8 +260,10 @@ def _convert_to_vector_callable(value, name, default=jnp.array([0, 0, 0])):
     raise TypeError(f"{name} must be a callable, an array, or a list.")
 
 
-def _convert_to_vector_callable_time(value, name, default=jnp.array([0, 0, 0])):
+def _convert_to_vector_callable_time(value, name, default=None):
     """Convert scalars, lists, or arrays to a callable function returning a constant value."""
+    if default is None:
+        default = jnp.array([0, 0, 0])
     if value is None:
         return lambda dofs, design, time: default
     try:
@@ -296,8 +300,10 @@ def _convert_to_force_component_callable(value, name):
     raise TypeError(f"{name} must be a scalar or a callable.")
 
 
-def _convert_to_force_callable(value, name, default=jnp.zeros(3)):
+def _convert_to_force_callable(value, name, default=None):
     """Convert force/torque entries into a callable returning a three-vector."""
+    if default is None:
+        default = jnp.zeros(3)
     if value is None:
         return lambda dofs, design, inputs: default
 
@@ -342,8 +348,10 @@ def _convert_to_force_callable(value, name, default=jnp.zeros(3)):
     raise TypeError(f"{name} must be a callable, an array, or a list.")
 
 
-def _convert_to_array_callable(value, name, default=jnp.zeros((6, 0))):
+def _convert_to_array_callable(value, name, default=None):
     """Validate that value is a callable returning a (6, Ninput) array."""
+    if default is None:
+        default = jnp.zeros((6, 0))
     if value is None:
         return lambda dofs, design: default
     try:

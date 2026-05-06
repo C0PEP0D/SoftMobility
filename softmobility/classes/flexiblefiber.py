@@ -7,8 +7,8 @@ import warnings
 import jax
 import jax.numpy as jnp
 
-from .sphere import Sphere
 from .softbody import SoftBody
+from .sphere import Sphere
 
 
 class FlexibleFiber(SoftBody):

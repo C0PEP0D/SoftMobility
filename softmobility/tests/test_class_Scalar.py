@@ -1,13 +1,14 @@
-import pytest
 import jax
 import jax.numpy as jnp
 import numpy as np
+
 from softmobility.classes.inputs import Scalar
 
 
 def test_no_params():
     # Test function with no params
-    func = lambda pos, time: 0.5 * jnp.sin(2 * time)
+    def func(pos, time):
+        return 0.5 * jnp.sin(2 * time)
     scalar = Scalar(func)
     pos = jnp.array([1.0, 2.0, 3.0])
     time = 1.0
@@ -18,7 +19,8 @@ def test_no_params():
 
 def test_params_float():
     # Test with float param
-    func = lambda pos, time, p: p[0] * jnp.sin(2 * time)
+    def func(pos, time, p):
+        return p[0] * jnp.sin(2 * time)
     scalar = Scalar(func, params=1.0, param_names="magnitude")
     pos = jnp.array([1.0, 2.0, 3.0])
     time = 1.0
@@ -28,7 +30,8 @@ def test_params_float():
 
 def test_params_array():
     # Test with np.array param
-    func = lambda pos, time, p: p[0] * jnp.sin(2 * time)
+    def func(pos, time, p):
+        return p[0] * jnp.sin(2 * time)
     scalar = Scalar(func, params=np.array([1.0]), param_names="magnitude")
     pos = jnp.array([1.0, 2.0, 3.0])
     time = 1.0
@@ -38,7 +41,8 @@ def test_params_array():
 
 def test_params_list_of_arrays():
     # Test with list of arrays
-    func = lambda pos, time, p: p[0] * jnp.sin(2 * time) + p[1] * jnp.cos(2 * time)
+    def func(pos, time, p):
+        return p[0] * jnp.sin(2 * time) + p[1] * jnp.cos(2 * time)
     scalar = Scalar(
         func,
         params=[np.array([1.0]), np.array([0.5])],
@@ -52,7 +56,8 @@ def test_params_list_of_arrays():
 
 def test_update_params_by_name():
     # Test updating params by name
-    func = lambda pos, time, p: p[0] * jnp.sin(2 * time)
+    def func(pos, time, p):
+        return p[0] * jnp.sin(2 * time)
     scalar = Scalar(func, params=1.0, param_names="magnitude")
     pos = jnp.array([1.0, 2.0, 3.0])
     time = 1.0
@@ -63,7 +68,8 @@ def test_update_params_by_name():
 
 def test_update_params_full_list():
     # Test updating params with a full list
-    func = lambda pos, time, p: p[0] * jnp.sin(2 * time) + p[1] * jnp.cos(2 * time)
+    def func(pos, time, p):
+        return p[0] * jnp.sin(2 * time) + p[1] * jnp.cos(2 * time)
     scalar = Scalar(
         func,
         params=[np.array([1.0]), np.array([0.5])],
@@ -78,14 +84,16 @@ def test_update_params_full_list():
 
 def test_get_param():
     # Test get_param method
-    func = lambda pos, time, p: p * jnp.sin(2 * time)
+    def func(pos, time, p):
+        return p * jnp.sin(2 * time)
     scalar = Scalar(func, params=1.0, param_names="magnitude")
     assert scalar.get_param("magnitude") == 1.0
 
 
 def test_jittable():
     # Test jittability
-    func = lambda pos, time: jnp.sin(2 * time)
+    def func(pos, time):
+        return jnp.sin(2 * time)
     scalar = Scalar(func)
     jitted_scalar = jax.jit(scalar._func)
     pos = jnp.array([1.0, 2.0, 3.0])
@@ -96,7 +104,8 @@ def test_jittable():
 
 def test_differentiable():
     # Test differentiability
-    func = lambda pos, time, p: p * jnp.sin(2 * time)
+    def func(pos, time, p):
+        return p * jnp.sin(2 * time)
     scalar = Scalar(func, params=1.0, param_names="magnitude")
     pos = jnp.array([1.0, 2.0, 3.0])
     time = 1.0
