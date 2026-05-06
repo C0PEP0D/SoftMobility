@@ -14,3 +14,19 @@ select = [
 
 [tool.ruff.format]
 # defaults are black-compatible — no config needed unless you want to deviate
+
+[tool.coverage.run]
+source = ["softmobility"]
+branch = true
+
+[tool.coverage.report]
+omit = [
+    "*_version.py",
+    "versioneer.py",
+]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

@@ -111,15 +111,32 @@ design)``:
 Example Notebooks
 -----------------
 
-For more detailed examples, see the tutorial notebooks:
+The tutorials are grouped into three layers. Numbering reflects the layer
+(0X = library introduction, 1X = validation against published results,
+2X = original case studies).
 
-- ``01_tutorial_sphere_assemblies.ipynb`` - Basic sphere assembly usage
-- ``02_rigid_assembly.ipynb`` - Rigid body simulations  
-- ``03_freefall_trajectories.ipynb`` - Freefall dynamics
-- ``04_Jeffery_orbits.ipynb`` - Jeffery orbits in flow
-- ``05_one_dof_soft_body.ipynb`` - Jeffery orbits with a deformable one-DOF body *(in preparation)*
-- ``06_three_sphere_swimmer.ipynb`` - Three-sphere swimmer model
-- ``07_soft_surfer.ipynb`` - Soft surfer simulations
+**Library introduction (0X)**
+
+- ``01_assembly_creation.ipynb`` — methods to create a sphere assembly
+- ``02_rigid_mobility.ipynb`` — mobility properties of a rigid sphere assembly
+- ``03_soft_mobility_simulation.ipynb`` — soft mobility tensors and
+  simulation of a trajectory
+- ``04_optimization.ipynb`` — optimization principles
+
+**Validation cases (1X)**
+
+- ``11_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
+- ``12_flexible_fiber_2d.ipynb`` — 2-D flexible fiber in shear and gravity
+  (Delmotte et al. 2015)
+- ``13_rotating_fiber_3d.ipynb`` — 3-D filament in a rotating flow
+  (Coq et al. 2008; Wiggins et al. 1998)
+- ``14_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid body
+
+**Original case studies (2X)**
+
+- ``21_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
+- ``22_three_sphere_swimmer.ipynb`` — three-sphere swimmer optimization
+- ``23_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
 
 API Reference
 -------------
