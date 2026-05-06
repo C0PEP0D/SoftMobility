@@ -15,6 +15,7 @@
    
       ~SphereAssembly.add_design
       ~SphereAssembly.add_dof
+      ~SphereAssembly.add_input
       ~SphereAssembly.add_sphere
       ~SphereAssembly.compute_C_U
       ~SphereAssembly.compute_Jacobian_matrix

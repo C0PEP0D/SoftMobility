@@ -15,6 +15,7 @@
    
       ~SoftBody.add_design
       ~SoftBody.add_dof
+      ~SoftBody.add_input
       ~SoftBody.add_sphere
       ~SoftBody.compute_C_U
       ~SoftBody.compute_Jacobian_matrix
@@ -27,6 +28,7 @@
       ~SoftBody.grand_C_K
       ~SoftBody.set_design_defaults
       ~SoftBody.set_dof_defaults
+      ~SoftBody.validate_no_overlap
    
    
 

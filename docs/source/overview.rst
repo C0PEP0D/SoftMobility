@@ -16,9 +16,9 @@ negligible and the fluid responds instantaneously to forces. In this regime the
 velocity of each sphere is linearly related to the forces and torques acting on
 it through the **hydrodynamic mobility tensor**.
 
-SoftMobility uses the **Rotne–Prager–Yamakawa (RPY) approximation** to build
-that tensor. The self-mobility of sphere *i* (radius *a*\:sub:`i`, viscosity
-*μ* = 1) is the standard Stokes result:
+SoftMobility uses the **far-field Rotne–Prager–Yamakawa (RPY) approximation**
+to build that tensor. The self-mobility of sphere *i* (radius *a*\:sub:`i`,
+viscosity *μ* = 1) is the standard Stokes result:
 
 .. math::
 
@@ -27,8 +27,10 @@ that tensor. The self-mobility of sphere *i* (radius *a*\:sub:`i`, viscosity
 
 The cross-mobility between spheres *i* and *j* separated by **r** = **x**\
 :sub:`i` − **x**\:sub:`j` (magnitude *R*, unit vector **r̂**) uses the RPY
-correction, which regularises the Oseen tensor for overlapping or nearly
-touching spheres and guarantees a positive-definite mobility matrix.
+far-field formulas. **Spheres must not overlap**: the implementation assumes
+*R > a*\ :sub:`i` *+ a*\ :sub:`j` and produces unphysical results otherwise.
+Use :py:meth:`softmobility.SoftBody.validate_no_overlap` to check the
+geometry before simulation.
 
 The grand mobility matrix (size 6*N* × 6*N* for *N* spheres) is assembled from
 these blocks and then projected onto the reduced set of body degrees of freedom
@@ -111,3 +113,27 @@ The usual workflow is:
 3. Create fields, scalar controls, and background flows.
 4. Run ``FlowBodyRollout.rollout`` to obtain trajectories.
 5. Optionally optimize design variables with ``FlowBodyOptimizer``.
+
+Flexible fibers
+---------------
+
+For chains of identical beads with rigid bonds and a linear bending
+elasticity, use :class:`softmobility.FlexibleFiber`. It implements the Joint
+Model of Delmotte et al. 2015 (Fig. 3, Eqs. 2–4): bead positions are
+parameterised by bead orientations through the recurrence
+``r_{i+1} = r_i + (a + εg)(p_i + p_{i+1})``, so the rigid-bond constraint is
+satisfied by construction (no Lagrange multipliers). Bending elasticity is
+the discrete biharmonic of the orientation DOFs, and gravity is registered
+automatically as a 3-D field input. Both planar (``planar=True``, one angle
+per bead) and full 3-D (Rodrigues vector per bead) variants are available.
+
+.. code-block:: python
+
+   from softmobility import FlexibleFiber, gravity_field, no_flow, FlowBodyRollout
+
+   fiber = FlexibleFiber(n_beads=20, radius=0.5, bending_rigidity=1.0, mass=0.1)
+   rollout = FlowBodyRollout(
+       soft_body=fiber,
+       flow=no_flow(),
+       input_map={"gravity": gravity_field(g=9.81)},
+   )
