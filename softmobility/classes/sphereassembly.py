@@ -4,6 +4,7 @@ import re
 from io import StringIO
 import os
 import yaml
+import numpy as np
 import jax
 import jax.numpy as jnp
 import sympy as sp
@@ -119,6 +120,7 @@ class SphereAssembly:
             self._design_defaults,
             self.spheres,
         ) = self._parse_parameter_file(parameters_source, verbose)
+        self._refresh_derived_couplings()
 
     @classmethod
     def from_file(cls, parameters_source: str, verbose=True):
@@ -127,6 +129,9 @@ class SphereAssembly:
 
     def add_sphere(self, sphere: Sphere):
         """Add a Sphere object to the assembly."""
+        if not sphere._has_explicit_couplings:
+            self._set_sphere_couplings_from_force(sphere, self.Nspheres)
+
         # Check that the sphere has the correct number of degrees of freedom and parameters
         try:
             test_dof = jnp.zeros(self.Ndof)
@@ -136,8 +141,13 @@ class SphereAssembly:
             sphere.radius(dofs=test_dof, design=test_design)
             sphere.position(dofs=test_dof, design=test_design, time=test_time)
             sphere.orientation(dofs=test_dof, design=test_design, time=test_time)
-            sphere.C_H(dofs=test_dof, design=test_design)
-            sphere.C_K(dofs=test_dof, design=test_design)
+            C_H = sphere.C_H(dofs=test_dof, design=test_design)
+            C_K = sphere.C_K(dofs=test_dof, design=test_design)
+
+            if C_H.shape != (6, self.Ninput):
+                raise ValueError(f"C_H must have shape (6, {self.Ninput}), but got {C_H.shape}.")
+            if C_K.shape != (6, self.Ndof):
+                raise ValueError(f"C_K must have shape (6, {self.Ndof}), but got {C_K.shape}.")
 
         except ValueError as e:
             raise ValueError(f"Sphere does not have the correct number of degrees of freedom or variables: {e}")
@@ -153,6 +163,7 @@ class SphereAssembly:
         self._dof_variables.append(name)
         self._Ndof += 1
         self._dof_defaults = jnp.append(self._dof_defaults, default)
+        self._refresh_derived_couplings()
         print(f"NEW degrees of freedom\n {self.dof_variables} \nwith default values\n {self.dof_defaults}")
 
     def add_design(self, name: str, default: float = 0.0):
@@ -163,7 +174,32 @@ class SphereAssembly:
         self._design_variables.append(name)
         self._Ndesign += 1
         self._design_defaults = jnp.append(self._design_defaults, default)
+        self._refresh_derived_couplings()
         print(f"NEW design parameters\n {self.design_variables} \nwith default values\n {self.design_defaults}")
+
+    def add_input(self, name: str, kind: str = "scalar"):
+        """Add a scalar input or a three-component field input."""
+        if not name:
+            raise ValueError("Input name must be non-empty.")
+        if kind not in {"scalar", "field"}:
+            raise ValueError("Input kind must be 'scalar' or 'field'.")
+
+        new_variables = [name] if kind == "scalar" else [f"{name}{i}" for i in range(3)]
+        existing = set(self._input_variables)
+        duplicates = [var for var in new_variables if var in existing]
+        if duplicates:
+            raise ValueError(f"Input variable(s) already exist: {duplicates}")
+
+        if kind == "field":
+            field_variables = [var for var in self._input_variables if var[-1].isdigit()]
+            scalar_variables = [var for var in self._input_variables if not var[-1].isdigit()]
+            self._input_variables = field_variables + new_variables + scalar_variables
+        else:
+            self._input_variables.extend(new_variables)
+        self._Ninput += len(new_variables)
+        self._input_defaults = jnp.zeros(self._Ninput)
+        self._refresh_derived_couplings()
+        print(f"NEW input parameters\n {self.input_variables}")
 
     # Read-only properties for fundamental attributes
     @property
@@ -227,17 +263,72 @@ class SphereAssembly:
         dofs, design, time = self._setup_params(dofs, design, time)
         return jnp.vstack([sphere.C_K(dofs, design) for sphere in self.spheres])
 
+    def _refresh_derived_couplings(self):
+        """Refresh coupling functions for spheres defined by force/torque."""
+        for i, sphere in enumerate(self.spheres):
+            if not sphere._has_explicit_couplings:
+                self._set_sphere_couplings_from_force(sphere, i)
+
+    def _set_sphere_couplings_from_force(self, sphere: Sphere, sphere_index=None):
+        """Derive C_H and C_K from the sphere's six-component force callable."""
+        ninput = self.Ninput
+        ndof = self.Ndof
+        inputs_zero = jnp.zeros(ninput)
+        dofs_ref = jnp.asarray(self.dof_defaults, dtype=float)
+        design_ref = jnp.asarray(self.design_defaults, dtype=float)
+
+        _validate_six_component_force_linearity(
+            sphere,
+            dofs_ref,
+            design_ref,
+            inputs_zero,
+            sphere_index=sphere_index,
+        )
+
+        def C_H_func(dofs, design):
+            if ninput == 0:
+                return jnp.zeros((6, 0))
+            try:
+                return jax.jacfwd(
+                    lambda inputs: sphere.six_component_force(dofs, design, inputs)
+                )(jnp.zeros(ninput))
+            except Exception:
+                _dofs_np = np.asarray(dofs, dtype=float)
+                _design_np = np.asarray(design, dtype=float)
+                return _numerical_jacobian(
+                    lambda inputs: _six_component_force_np64(sphere, _dofs_np, _design_np, inputs),
+                    np.zeros(ninput),
+                )
+
+        def C_K_func(dofs, design):
+            if ndof == 0:
+                return jnp.zeros((6, 0))
+            try:
+                return jax.jacfwd(
+                    lambda q: sphere.six_component_force(q, design, jnp.zeros(ninput))
+                )(dofs)
+            except Exception:
+                _design_np = np.asarray(design, dtype=float)
+                return _numerical_jacobian(
+                    lambda q: _six_component_force_np64(sphere, q, _design_np, np.zeros(ninput)),
+                    np.asarray(dofs, dtype=float),
+                )
+
+        C_H_func.expression = "d(six_component_force) / d(inputs)"
+        C_K_func.expression = "d(six_component_force(dofs, design, 0)) / d(dofs)"
+        sphere._set_coupling_functions(C_H_func, C_K_func)
+
     def compute_Jassembly(self, dofs=None, design=None, time=None):
         """
-        Computes Jass, which is defined by V = Jass . dotQ, with V the grand velocity in the body's frame and dotQ the time derivative of the dofs.
-        We use: V = B . dotX = B . J_X . dotQ, suh that Jass = B . J_X
+        Computes J_sph, which is defined by V = J_sph . dotQ, with V the grand velocity in the body's frame and dotQ the time derivative of the dofs.
+        We use: V = B . dotX = B . J_X . dotQ, suh that J_sph = B . J_X
 
         Args:
             dofs (jnp.ndarray, optional): Degrees of freedom. Defaults to None.
             design (jnp.ndarray, optional): Design Parameters. Defaults to None.
 
         Returns:
-            jnp_array: Jass
+            jnp_array: J_sph
         """
         dofs, design, time = self._setup_params(dofs, design, time)
 
@@ -261,10 +352,10 @@ class SphereAssembly:
             ]
         )
 
-        Jassembly = B @ J_X
+        J_sph = B @ J_X
         v_act = B @ v
 
-        return Jassembly, v_act
+        return J_sph, v_act
 
     def compute_C_U(self, dofs=None, design=None, time=None):
         """
@@ -548,8 +639,7 @@ class SphereAssembly:
                     input_set.update(pat.findall(expr))
 
             for expr in sphere_exprs:
-                expr_symbols = {str(s) for s in sp.sympify(expr).free_symbols}
-                all_detected_symbols.update(expr_symbols)
+                all_detected_symbols.update(_free_symbol_names(expr))
 
         # Transform variable sets into lists and sort them alphabetically
         dof_variables = sorted(list(dof_set))
@@ -639,10 +729,13 @@ class SphereAssembly:
             rad_func = _create_function(rad_exprs, dof_variables, design_variables, constants)
             pos_func = _create_function_time(pos_exprs, dof_variables, design_variables, constants, time_variable)
             ori_func = _create_function_time(ori_exprs, dof_variables, design_variables, constants, time_variable)
-            C_H_func, C_K_func = _create_coupling_functions(
-                for_exprs + tor_exprs, dof_variables, design_variables, input_variables, constants
+            force_func = _create_input_function(
+                for_exprs, dof_variables, design_variables, input_variables, constants
             )
-            spheres.append(Sphere(rad_func, pos_func, ori_func, C_H_func, C_K_func))
+            torque_func = _create_input_function(
+                tor_exprs, dof_variables, design_variables, input_variables, constants
+            )
+            spheres.append(Sphere(rad_func, pos_func, ori_func, force=force_func, torque=torque_func))
 
             # Printing the characteristics of each sphere
             if verbose:
@@ -650,8 +743,8 @@ class SphereAssembly:
                 print(f"      Radius: {rad_func.expression}")
                 print(f"      Position: {pos_func.expression}")
                 print(f"      Orientation: {ori_func.expression}")
-                print(f"      Coupling matrix C_H:\n{C_H_func.expression}")
-                print(f"      Coupling matrix C_K:\n{C_K_func.expression}")
+                print(f"      Force: {force_func.expression}")
+                print(f"      Torque: {torque_func.expression}")
 
         return (
             num_dof,
@@ -687,6 +780,51 @@ JAX_MODULES = {
 }
 
 
+# Caches for SymPy parsing.  Large assemblies often re-parse the same handful of
+# expression strings ("0", "radius", "k * x0", …); without caching the cost
+# scales linearly in N × (#expressions per sphere).  Keys are plain tuples of
+# strings so they are cheap to hash.
+_sympify_cache: dict = {}
+_lambdify_cache: dict = {}
+
+
+def _cached_sympify_subs(expr_str: str, constants: dict) -> sp.Expr:
+    """Return ``sp.sympify(expr_str).subs(constants)`` with memoisation."""
+    key = (expr_str, tuple(sorted(constants.items())))
+    cached = _sympify_cache.get(key)
+    if cached is None:
+        cached = sp.sympify(expr_str).subs(constants)
+        _sympify_cache[key] = cached
+    return cached
+
+
+def _free_symbol_names(expr_str: str) -> set:
+    """Return free-symbol names of ``expr_str`` with memoisation (no substitution)."""
+    key = (expr_str, ())
+    cached = _sympify_cache.get(key)
+    if cached is None:
+        cached = sp.sympify(expr_str)
+        _sympify_cache[key] = cached
+    return {str(s) for s in cached.free_symbols}
+
+
+def _cached_lambdify(sp_expr: sp.Expr, var_groups: tuple, modules=JAX_MODULES):
+    """Memoised ``sp.lambdify(var_groups, sp_expr, modules)``.
+
+    ``var_groups`` is a tuple of tuples of symbol names — e.g.
+    ``(("x0",), ("k",), ("time",))`` — describing the grouped argument
+    structure of the lambdified function.
+    """
+    key = (str(sp_expr), var_groups)
+    cached = _lambdify_cache.get(key)
+    if cached is not None:
+        return cached
+    symbol_groups = [[sp.symbols(name) for name in group] for group in var_groups]
+    func = sp.lambdify(symbol_groups, sp_expr, modules)
+    _lambdify_cache[key] = func
+    return func
+
+
 def _create_function(sp_exprs, dofs, design, constants):
     """
     Create a function that takes dofs and yaml_data as input and returns the evaluated symbolic expressions sp_exprs.
@@ -705,36 +843,29 @@ def _create_function(sp_exprs, dofs, design, constants):
     callable
         A function that takes dofs and yaml_data as input and returns the evaluated expression.
     """
-    dof_symbols = [sp.symbols(t) for t in dofs]
-    design_symbols = [sp.symbols(p) for p in design]
+    var_groups = (tuple(dofs), tuple(design))
 
     if isinstance(sp_exprs, str):
-        # Parse the expression using sympy
-        sp_expr = sp.sympify(sp_exprs)
-        sp_expr = sp_expr.subs(constants)
+        sp_expr = _cached_sympify_subs(sp_exprs, constants)
 
-        # Convert expression to a JAX function or raise ValueError
         try:
-            jax_expr = sp.lambdify([dof_symbols, design_symbols], sp_expr, JAX_MODULES)
+            jax_expr = _cached_lambdify(sp_expr, var_groups)
         except Exception as e:
             raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
-        # Callable build out of the JAX function
         def wrapper(dof_args, design_args):
             result = jax_expr(dof_args, design_args)
             return jnp.asarray(result, dtype=float).reshape(())
 
-        wrapper.expression = str(sp_expr)  # str(jax_expr(*dofs, *yaml_data))
+        wrapper.expression = str(sp_expr)
         return wrapper
     else:
-        # Parse the expressions using sympy
-        sp_exprs = [sp.sympify(expr).subs(constants) for expr in sp_exprs]
+        sp_exprs = [_cached_sympify_subs(expr, constants) for expr in sp_exprs]
         jax_exprs = []
 
-        # Convert each expression to a JAX function and append it to the list of functions
         for sp_expr in sp_exprs:
             try:
-                jax_exprs.append(sp.lambdify([dof_symbols, design_symbols], sp_expr, JAX_MODULES))
+                jax_exprs.append(_cached_lambdify(sp_expr, var_groups))
             except Exception as e:
                 raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
@@ -748,37 +879,29 @@ def _create_function(sp_exprs, dofs, design, constants):
 
 
 def _create_function_time(sp_exprs, dofs, design, constants, time):
-    dof_symbols = [sp.symbols(d) for d in dofs]
-    design_symbols = [sp.symbols(d) for d in design]
-    time_symbols = [sp.symbols(t) for t in time]
+    var_groups = (tuple(dofs), tuple(design), tuple(time))
 
     if isinstance(sp_exprs, str):
-        # Parse the expression using sympy
-        sp_expr = sp.sympify(sp_exprs)
-        sp_expr = sp_expr.subs(constants)
+        sp_expr = _cached_sympify_subs(sp_exprs, constants)
 
-        # Convert expression to a JAX function or raise ValueError
         try:
-            jax_expr = sp.lambdify([dof_symbols, design_symbols, time_symbols], sp_expr, JAX_MODULES)
+            jax_expr = _cached_lambdify(sp_expr, var_groups)
         except Exception as e:
             raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
-        # Callable build out of the JAX function
         def wrapper(dof_args, design_args, time_args):
             result = jax_expr(dof_args, design_args, time_args)
             return jnp.asarray(result, dtype=float).reshape(())
 
-        wrapper.expression = str(sp_expr)  # str(jax_expr(*dofs, *yaml_data))
+        wrapper.expression = str(sp_expr)
         return wrapper
     else:
-        # Parse the expressions using sympy
-        sp_exprs = [sp.sympify(expr).subs(constants) for expr in sp_exprs]
+        sp_exprs = [_cached_sympify_subs(expr, constants) for expr in sp_exprs]
         jax_exprs = []
 
-        # Convert each expression to a JAX function and append it to the list of functions
         for sp_expr in sp_exprs:
             try:
-                jax_exprs.append(sp.lambdify([dof_symbols, design_symbols, time_symbols], sp_expr, JAX_MODULES))
+                jax_exprs.append(_cached_lambdify(sp_expr, var_groups))
             except Exception as e:
                 raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
@@ -794,80 +917,137 @@ def _create_function_time(sp_exprs, dofs, design, constants, time):
         return wrapper
 
 
-def _create_coupling_functions(sp_exprs, dof_variables, design_variables, input_variables, constants):
-    dof_symbols = [sp.Symbol(v) for v in dof_variables]
-    design_symbols = [sp.Symbol(v) for v in design_variables]
-    input_symbols = [sp.Symbol(v) for v in input_variables]
+def _create_input_function(sp_exprs, dofs, design, input_variables, constants):
+    """Create a callable that evaluates expressions using dofs, design, and inputs."""
+    var_groups = (tuple(dofs), tuple(design), tuple(input_variables))
 
-    exprs = [sp.sympify(e).subs(constants) for e in sp_exprs]
+    if isinstance(sp_exprs, str):
+        sp_expr = _cached_sympify_subs(sp_exprs, constants)
+        try:
+            jax_expr = _cached_lambdify(sp_expr, var_groups)
+        except Exception as e:
+            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
-    # --- Validate linearity in inputs ---
-    for i, expr in enumerate(exprs):
-        for sym in input_symbols:
-            if not sp.simplify(sp.diff(expr, sym, 2)).is_zero:
-                raise ValueError(f"Expression {i} '{expr}' is nonlinear in input '{sym}'.")
+        def wrapper(dof_args, design_args, input_args):
+            result = jax_expr(dof_args, design_args, input_args)
+            return jnp.asarray(result, dtype=float).reshape(())
 
-    # --- C_H[i, j] = d(expr_i) / d(input_j) ---
-    C_H_sym = [[sp.diff(expr, inp) for inp in input_symbols] for expr in exprs]
+        wrapper.expression = str(sp_expr)
+        return wrapper
 
-    # --- Subtract field contribution: new_expr = expr - C_H @ inputs ---
-    residual_sym = [
-        sp.simplify(expr - sum(c * inp for c, inp in zip(row, input_symbols)))
-        for expr, row in zip(exprs, C_H_sym)
-    ]
+    sp_exprs = [_cached_sympify_subs(expr, constants) for expr in sp_exprs]
+    jax_exprs = []
 
-    # --- Validate that residual has no remaining input dependence ---
-    for i, res in enumerate(residual_sym):
-        for sym in input_symbols:
-            if not sp.simplify(sp.diff(res, sym)).is_zero:
-                raise ValueError(
-                    f"Expression {i}: residual '{res}' still depends on input '{sym}' "
-                    f"after subtracting C_H @ inputs. Check linearity."
-                )
+    for sp_expr in sp_exprs:
+        try:
+            jax_exprs.append(_cached_lambdify(sp_expr, var_groups))
+        except Exception as e:
+            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
 
-    # --- C_K[i, j] = d(residual_i) / d(dof_j) ---
-    C_K_sym = [[sp.diff(res, dof) for dof in dof_symbols] for res in residual_sym]
-
-    # --- Lambdify ---
-    C_H_funcs = [
-        [sp.lambdify([dof_symbols, design_symbols], c, JAX_MODULES) for c in row] for row in C_H_sym
-    ]
-    C_K_funcs = [
-        [sp.lambdify([dof_symbols, design_symbols], c, JAX_MODULES) for c in row] for row in C_K_sym
-    ]
-
-    def C_H_func(dof_args, design_args):
-        n_rows = len(C_H_funcs)
-        n_cols = len(C_H_funcs[0]) if n_rows > 0 else 0
-
-        if n_rows == 0 or n_cols == 0:
-            return jnp.empty((n_rows, n_cols))
-
+    def wrapper(dof_args, design_args, input_args):
         return jnp.stack(
             [
-                jnp.stack([jnp.asarray(c(dof_args, design_args), dtype=float).reshape(()) for c in row])
-                for row in C_H_funcs
+                jnp.asarray(jax_expr(dof_args, design_args, input_args), dtype=float).reshape(())
+                for jax_expr in jax_exprs
             ]
         )
 
-    def C_K_func(dof_args, design_args):
-        n_rows = len(C_K_funcs)
-        n_cols = len(C_K_funcs[0]) if n_rows > 0 else 0
+    wrapper.expression = [str(sp_expr) for sp_expr in sp_exprs]
+    return wrapper
 
-        if n_rows == 0 or n_cols == 0:
-            return jnp.empty((n_rows, n_cols))
 
-        return jnp.stack(
-            [
-                jnp.stack([jnp.asarray(c(dof_args, design_args), dtype=float).reshape(()) for c in row])
-                for row in C_K_funcs
-            ]
-        )
+def _six_component_force_np64(sphere, dofs, design, inputs):
+    """Evaluate force+torque returning numpy float64, bypassing JAX float32 coercion.
 
-    C_H_func.expression = [[str(c) for c in row] for row in C_H_sym]
-    C_K_func.expression = [[str(c) for c in row] for row in C_K_sym]
+    Uses the raw user callable stored on the force/torque function when available,
+    so float64 precision is preserved end-to-end for numerical differentiation.
+    """
+    def _eval_raw(func, *args):
+        raw = getattr(func, "_raw", None)
+        if raw is not None:
+            return np.asarray(raw(*args), dtype=np.float64)
+        return np.asarray(func(*args), dtype=np.float64)
 
-    return C_H_func, C_K_func
+    f = _eval_raw(sphere._force_func, dofs, design, inputs)
+    t = _eval_raw(sphere._torque_func, dofs, design, inputs)
+    return np.concatenate([f, t])
+
+
+def _numerical_jacobian(func, x, eps: float = 1e-7) -> jnp.ndarray:
+    """Central-difference Jacobian. Calls func with concrete numpy arrays."""
+    x_np = np.asarray(x, dtype=float)
+    n = x_np.shape[0]
+    f0 = np.asarray(func(x_np), dtype=float)
+    m = f0.shape[0]
+    if n == 0:
+        return jnp.zeros((m, 0))
+    cols = []
+    for i in range(n):
+        xp, xm = x_np.copy(), x_np.copy()
+        xp[i] += eps
+        xm[i] -= eps
+        cols.append((np.asarray(func(xp), dtype=float) - np.asarray(func(xm), dtype=float)) / (2.0 * eps))
+    return jnp.asarray(np.column_stack(cols))
+
+
+def _validate_six_component_force_linearity(
+    sphere: Sphere,
+    dofs,
+    design,
+    inputs_zero,
+    sphere_index=None,
+    atol=1e-5,
+    rtol=1e-5,
+):
+    """Validate the shape and sampled input-linearity of a six-component force.
+
+    Tolerances are sized for JAX's default float32 (≈ 1e-7 relative) plus the
+    finite-difference epsilon used in :func:`_numerical_jacobian` (≈ 1e-7),
+    which can compound to a few×1e-7. ``atol``/``rtol`` are therefore set to
+    ``1e-5`` — still much tighter than any genuine nonlinearity of practical
+    interest.
+    """
+    ninput = inputs_zero.shape[0]
+    prefix = f"Sphere {sphere_index}: " if sphere_index is not None else ""
+    dofs_np = np.asarray(dofs, dtype=float)
+    design_np = np.asarray(design, dtype=float)
+
+    def force_for_inputs(inputs):
+        value = _six_component_force_np64(sphere, dofs_np, design_np, np.asarray(inputs, dtype=float))
+        if value.shape != (6,):
+            raise ValueError(f"{prefix}six_component_force must have shape (6,), but got {value.shape}.")
+        return value
+
+    base = force_for_inputs(np.asarray(inputs_zero, dtype=float))
+    if ninput == 0:
+        return
+
+    test_inputs = [np.ones(ninput), np.arange(1, ninput + 1, dtype=float) / max(ninput, 1)]
+
+    try:
+        # Exact check via forward-mode AD (works for JAX-native callables).
+        def jax_force(inputs):
+            return jnp.asarray(sphere.six_component_force(dofs_np, design_np, inputs), dtype=float)
+
+        C_H_jax = jax.jacfwd(jax_force)(jnp.zeros(ninput))
+        for test_input in test_inputs:
+            second = jax.jacfwd(jax.jacfwd(jax_force))(jnp.asarray(test_input))
+            if not bool(jnp.allclose(second, jnp.zeros_like(second), atol=atol, rtol=rtol)):
+                raise ValueError(f"{prefix}force/torque must be linear in inputs to derive C_H.")
+            expected = base + np.asarray(C_H_jax) @ test_input
+            actual = force_for_inputs(test_input)
+            if not np.allclose(actual, expected, atol=atol, rtol=rtol):
+                raise ValueError(f"{prefix}force/torque must be linear in inputs to derive C_H.")
+    except ValueError:
+        raise
+    except Exception:
+        # Callable uses non-JAX ops; check linearity numerically.
+        C_H_num = np.asarray(_numerical_jacobian(force_for_inputs, np.zeros(ninput)))
+        for test_input in test_inputs:
+            expected = base + C_H_num @ test_input
+            actual = force_for_inputs(test_input)
+            if not np.allclose(actual, expected, atol=atol, rtol=rtol):
+                raise ValueError(f"{prefix}force/torque must be linear in inputs to derive C_H.")
 
 
 def _classify_input_variables(input_variables: list[str]) -> tuple[list[str], list[str]]:
@@ -970,7 +1150,7 @@ def _validate_inputs(sphere_data: list, input_variables: list[str], constants: d
         }
         for field_name, exprs in geometry_exprs.items():
             for expr_str in exprs:
-                expr = sp.sympify(expr_str).subs(constants)
+                expr = _cached_sympify_subs(expr_str, constants)
                 used_inputs = [s for s in input_symbols if s in expr.free_symbols]
                 if used_inputs:
                     raise ValueError(
@@ -986,7 +1166,7 @@ def _validate_inputs(sphere_data: list, input_variables: list[str], constants: d
         }
         for field_name, exprs in load_exprs.items():
             for expr_str in exprs:
-                expr = sp.sympify(expr_str).subs(constants)
+                expr = _cached_sympify_subs(expr_str, constants)
                 for sym in input_symbols:
                     if sym not in expr.free_symbols:
                         continue

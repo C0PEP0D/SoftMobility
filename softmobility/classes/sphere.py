@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jax import lax, Array
+from jax import Array
 
 
 class Sphere:
@@ -20,6 +20,13 @@ class Sphere:
     orientation : array-like or callable, optional
         Rodrigues orientation vector with shape ``(3,)``, or callable
         ``orientation(dofs, design, time)``.
+    force : array-like or callable, optional
+        Force on the sphere with shape ``(3,)``. It may be constant, a callable
+        ``force(dofs, design, inputs)``, or a three-component sequence whose
+        entries are constants or scalar callables.
+    torque : array-like or callable, optional
+        Torque on the sphere with shape ``(3,)``. It accepts the same forms as
+        ``force``.
     C_H : array-like or callable, optional
         Matrix with first dimension 6 mapping external inputs to force and
         torque on the sphere.
@@ -38,32 +45,26 @@ class Sphere:
         radius=None,
         position=None,
         orientation=None,
+        force=None,
+        torque=None,
         C_H=None,
         C_K=None,
     ):
         """Initialize a new Sphere instance with flexible input handling."""
+        if (force is not None or torque is not None) and (C_H is not None or C_K is not None):
+            raise ValueError("Specify either force/torque or C_H/C_K, not both.")
+
         self._radius_func = _convert_to_scalar_callable(radius, "radius", 1.0)
         self._position_func = _convert_to_vector_callable_time(position, "position")
         self._orientation_func = _convert_to_vector_callable_time(orientation, "orientation")
+        self._force_func = _convert_to_force_callable(force, "force")
+        self._torque_func = _convert_to_force_callable(torque, "torque")
+        self._has_explicit_couplings = C_H is not None or C_K is not None
         self._C_H_func = _convert_to_array_callable(C_H, "C_H")
         self._C_K_func = _convert_to_array_callable(C_K, "C_K")
 
     def radius(self, dofs: Array, design: Array) -> float:
-        """
-        Evaluate the sphere radius.
-
-        Parameters
-        ----------
-        dofs : array-like
-            Current degrees of freedom.
-        design : array-like
-            Current design variables.
-
-        Returns
-        -------
-        float or jnp.ndarray
-            Radius at the requested configuration.
-        """
+        """Evaluate the sphere radius."""
         return self._radius_func(dofs, design)
 
     def position(self, dofs: Array, design: Array, time: Array) -> jnp.ndarray:
@@ -74,6 +75,18 @@ class Sphere:
         """Evaluate the sphere orientation as a Rodrigues vector."""
         return self._orientation_func(dofs, design, time)
 
+    def force(self, dofs: Array, design: Array, inputs: Array) -> jnp.ndarray:
+        """Evaluate the three-component force on the sphere."""
+        return self._force_func(dofs, design, inputs)
+
+    def torque(self, dofs: Array, design: Array, inputs: Array) -> jnp.ndarray:
+        """Evaluate the three-component torque on the sphere."""
+        return self._torque_func(dofs, design, inputs)
+
+    def six_component_force(self, dofs: Array, design: Array, inputs: Array) -> jnp.ndarray:
+        """Evaluate ``[force_x, force_y, force_z, torque_x, torque_y, torque_z]``."""
+        return jnp.concatenate([self.force(dofs, design, inputs), self.torque(dofs, design, inputs)])
+
     def C_H(self, dofs: Array, design: Array) -> jnp.ndarray:
         """Evaluate the matrix coupling external inputs to force and torque."""
         return self._C_H_func(dofs, design)
@@ -81,6 +94,11 @@ class Sphere:
     def C_K(self, dofs: Array, design: Array) -> jnp.ndarray:
         """Evaluate the matrix coupling degrees of freedom to force and torque."""
         return self._C_K_func(dofs, design)
+
+    def _set_coupling_functions(self, C_H, C_K):
+        """Set coupling functions derived by ``SphereAssembly``."""
+        self._C_H_func = _convert_to_array_callable(C_H, "C_H")
+        self._C_K_func = _convert_to_array_callable(C_K, "C_K")
 
     def _bortz_equation(self, *args):
         rotation_vector = self.orientation(*args)
@@ -196,6 +214,14 @@ def _validate_callable_time(func, name):
         raise ValueError(f"{name} must accept exactly three arguments: 'dofs', 'design', 'time'.")
 
 
+def _validate_force_callable(func, name):
+    """Ensure a force/torque callable takes dofs, design, and inputs."""
+    if not callable(func):
+        raise TypeError(f"{name} must be a callable function.")
+    if func.__code__.co_argcount != 3:
+        raise ValueError(f"{name} must accept exactly three arguments: 'dofs', 'design', 'inputs'.")
+
+
 def _convert_to_scalar_callable(value, name, default=1.0):
     """Convert a scalar value or callable to a callable function returning a constant float."""
     if value is None:
@@ -246,7 +272,72 @@ def _convert_to_vector_callable_time(value, name, default=jnp.array([0, 0, 0])):
 
     if callable(value):
         _validate_callable_time(value, name)
+        _fn = value
+        return lambda dofs, design, time: jnp.asarray(_fn(dofs, design, time), dtype=float)
+
+    raise TypeError(f"{name} must be a callable, an array, or a list.")
+
+
+def _contains_callable(value):
+    return isinstance(value, (list, tuple)) and any(callable(component) for component in value)
+
+
+def _convert_to_force_component_callable(value, name):
+    try:
+        float_value = float(value)
+        return lambda dofs, design, inputs: float_value
+    except (TypeError, ValueError):
+        pass
+
+    if callable(value):
+        _validate_force_callable(value, name)
         return value
+
+    raise TypeError(f"{name} must be a scalar or a callable.")
+
+
+def _convert_to_force_callable(value, name, default=jnp.zeros(3)):
+    """Convert force/torque entries into a callable returning a three-vector."""
+    if value is None:
+        return lambda dofs, design, inputs: default
+
+    if callable(value):
+        _validate_force_callable(value, name)
+        _fn = value
+
+        def wrapper(dofs, design, inputs):
+            vector = jnp.asarray(_fn(dofs, design, inputs), dtype=float)
+            if vector.shape != (3,):
+                raise ValueError(f"{name} must have shape (3,), but got {vector.shape}.")
+            return vector
+
+        wrapper._raw = _fn
+        return wrapper
+
+    if _contains_callable(value):
+        if len(value) != 3:
+            raise ValueError(f"{name} must have shape (3,), but got ({len(value)},).")
+        component_funcs = [
+            _convert_to_force_component_callable(component, f"{name}[{i}]") for i, component in enumerate(value)
+        ]
+
+        def wrapper(dofs, design, inputs):
+            return jnp.stack(
+                [
+                    jnp.asarray(component_func(dofs, design, inputs), dtype=float).reshape(())
+                    for component_func in component_funcs
+                ]
+            )
+
+        return wrapper
+
+    try:
+        vector_value = jnp.asarray(value, dtype=float)
+        if vector_value.shape != (3,):
+            raise ValueError(f"{name} must have shape (3,), but got {vector_value.shape}.")
+        return lambda dofs, design, inputs: vector_value
+    except TypeError:
+        pass
 
     raise TypeError(f"{name} must be a callable, an array, or a list.")
 

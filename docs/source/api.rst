@@ -18,6 +18,7 @@ Body geometry and mobility
    softmobility.classes.sphere.Sphere
    softmobility.classes.sphereassembly.SphereAssembly
    softmobility.classes.softbody.SoftBody
+   softmobility.classes.flexiblefiber.FlexibleFiber
 
 Inputs and flows
 ----------------

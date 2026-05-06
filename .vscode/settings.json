@@ -6,5 +6,12 @@
   "python-envs.pythonProjects": [],
   "[yaml]": { "editor.formatOnSave": false },
   "[markdown]": { "editor.formatOnSave": false },
-  "[json]": { "editor.defaultFormatter": "vscode.json-language-features" }
+  "[json]": { "editor.defaultFormatter": "vscode.json-language-features" },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  }
 }

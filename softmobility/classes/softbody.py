@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 import warnings
+import numpy as np
 import jax.numpy as jnp
 import jax
 from jax import lax
@@ -11,21 +12,79 @@ from .sphereassembly import SphereAssembly
 SoftMobilityTensors = namedtuple("SoftMobilityTensors", ["M", "M_K", "M_H", "C_E", "P", "p_act"])
 
 
+# Pure module-level functions for far-field GRPY mobility tensors ##############
+# These operate on plain arrays (no Sphere objects) so they are vmappable.
+
+def _grpy_self_block(r_i: float) -> jnp.ndarray:
+    """Self-mobility 6×6 block for a sphere of radius ``r_i``."""
+    mu_tt = (1.0 / (6.0 * jnp.pi * r_i)) * jnp.eye(3)
+    mu_rr = (1.0 / (8.0 * jnp.pi * r_i**3)) * jnp.eye(3)
+    zeros = jnp.zeros((3, 3))
+    return jnp.block([[mu_tt, zeros], [zeros, mu_rr]])
+
+
+def _grpy_off_diag_block(
+    pos_i: jnp.ndarray, r_i: float, pos_j: jnp.ndarray, r_j: float
+) -> jnp.ndarray:
+    """Far-field GRPY 6×6 block for a non-overlapping sphere pair (i ≠ j).
+
+    Parameters
+    ----------
+    pos_i, pos_j : jnp.ndarray, shape (3,)
+        Centre positions of spheres i and j.
+    r_i, r_j : float
+        Radii of spheres i and j.
+
+    Returns
+    -------
+    jnp.ndarray, shape (6, 6)
+        Block ``[[mu_tt, mu_tr], [mu_rt, mu_rr]]``.
+    """
+    rvec = pos_i - pos_j
+    R = jnp.linalg.norm(rvec)
+    Rhat = rvec / R
+
+    # Translation–translation (Rotne–Prager)
+    eye_pf = (1.0 + (r_i**2 + r_j**2) / (3.0 * R**2)) / (8.0 * jnp.pi * R)
+    hat_pf = (1.0 - (r_i**2 + r_j**2) / R**2) / (8.0 * jnp.pi * R)
+    mu_tt = eye_pf * jnp.eye(3) + hat_pf * jnp.outer(Rhat, Rhat)
+
+    # Rotation–rotation
+    mu_rr = (
+        (-1.0 / (16.0 * jnp.pi * R**3)) * jnp.eye(3)
+        + (3.0 / (16.0 * jnp.pi * R**3)) * jnp.outer(Rhat, Rhat)
+    )
+
+    # Rotation–translation and translation–rotation (cross-product matrix form)
+    pf_rt = 1.0 / (8.0 * jnp.pi * R**2)
+    mu_rt = pf_rt * jnp.cross(-jnp.eye(3), Rhat)
+    # mu_tr(i,j) = mu_rt(j,i)^T  where Rhat_ji = -Rhat_ij
+    mu_tr = pf_rt * jnp.cross(-jnp.eye(3), -Rhat).T
+
+    return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
+
+
+###############################################################################
+
+
 class SoftBody(SphereAssembly):
     """
     SoftBody (simulation of deformable bodies in fluid flow).
 
-    Extends ``SphereAssembly`` to model soft bodies with mobility tensors and hydrodynamic interactions.
-    Supports computation of mobility matrices, coupling tensors, and forces for soft body dynamics.
-    Compatible with JAX for automatic differentiation and just-in-time compilation.
+    Extends ``SphereAssembly`` to model soft bodies with mobility tensors and
+    hydrodynamic interactions.  Supports computation of mobility matrices,
+    coupling tensors, and forces for soft body dynamics.  Compatible with JAX
+    for automatic differentiation and just-in-time compilation.
 
     Parameters
     ----------
     parameters_source : str, optional
-        Path to a YAML file containing assembly parameters (spheres, dofs, design variables, etc.).
-        If provided, the assembly is initialized from this file.
+        Path to a YAML file containing assembly parameters (spheres, dofs,
+        design variables, etc.).  If provided, the assembly is initialized
+        from this file.
     verbose : bool, default=True
-        If True, prints debug and progress information during initialization and computation.
+        If True, prints debug and progress information during initialization
+        and computation.
 
     Attributes
     ----------
@@ -33,9 +92,10 @@ class SoftBody(SphereAssembly):
         A named tuple containing the mobility tensors:
 
         - M : jnp.ndarray
-            Grand mobility matrix (to be multiplied by grand forces [F1, T1, F2, T2...]).
+            Grand mobility matrix (to be multiplied by grand forces
+            [F1, T1, F2, T2...]).
         - M_K : jnp.ndarray
-            Elastic mobility matrix (to be multiplied by degrees of freedom dofs).
+            Elastic mobility matrix (to be multiplied by degrees of freedom).
         - M_H : jnp.ndarray
             Input mobility matrix (coupling with 3D and scalar fields).
         - C_E : jnp.ndarray
@@ -47,21 +107,25 @@ class SoftBody(SphereAssembly):
     --------
     Initialize a soft body from a YAML file:
 
-    >>> soft_body = SoftBody.from_file("path/to/parameters.yaml")
+    >>> soft_body = SoftBody("path/to/parameters.yaml")
 
     Compute mobility tensors:
 
-    >>> tensors = soft_body.compute_tensors(dofs, design)
+    >>> tensors = soft_body.compute_tensors()
 
     Notes
     -----
-    - Inherits all functionality from ``SphereAssembly``, including sphere management and degree of freedom handling.
-    - Mobility tensors are computed using symbolic expressions for efficiency and accuracy.
-    - Compatible with JAX transformations (``jax.jit``, ``jax.grad``, ``jax.vmap``).
+    - The grand mobility tensor is computed using the far-field Rotne–
+      Prager–Yamakawa (GRPY) approximation. Spheres must **not** overlap;
+      call :meth:`validate_no_overlap` to verify the geometry before
+      simulation.
+    - Inherits all functionality from ``SphereAssembly``, including sphere
+      management and degree of freedom handling.
+    - Compatible with JAX transformations
+      (``jax.jit``, ``jax.grad``, ``jax.vmap``).
     """
 
     def __init__(self, *args, **kwargs):
-        # Call the __init__ method of the parent class (SphereAssembly)
         super().__init__(*args, **kwargs)
         self._validate_default_geometry()
         self.compute_fast_tensors = jax.jit(self.compute_tensors)
@@ -70,43 +134,40 @@ class SoftBody(SphereAssembly):
         """
         Compute the full mobility problem for a given system configuration.
 
-        This method calculates the mobility matrices, coupling tensors, and velocity projection
-        needed to describe the system's dynamic response to external forces.
+        This method calculates the mobility matrices, coupling tensors, and
+        velocity projection needed to describe the system's dynamic response
+        to external forces.
 
         Parameters
         ----------
         dofs : list or array, optional
-            Degrees of freedom of the soft plankton.
-        params : list or array, optional
-            Parameters defining the soft plankton characteristics.
+            Degrees of freedom. Defaults to ``dof_defaults``.
+        design : list or array, optional
+            Design variables. Defaults to ``design_defaults``.
+        time : float or array, optional
+            Time variable. Defaults to ``0.0``.
 
         Returns
         -------
         SoftMobilityTensors
             A named tuple containing:
-            - M (jax.numpy.ndarray): Mobility matrix for forces/torques expressed at the center of spheres.
-            - M_K (jax.numpy.ndarray): Mobility matrix with degrees.
-            - M_H (jax.numpy.ndarray): Mobility matrix with inputs (3D and scalar fields).
-            - C_E (jax.numpy.ndarray): Coupling matrix with strain.
-            - P (jax.numpy.ndarray): Projection matrix.
+
+            - M : grand mobility matrix.
+            - M_K : elastic mobility (dofs coupling).
+            - M_H : input mobility (field/scalar coupling).
+            - C_E : strain coupling matrix.
+            - P : projection matrix.
+            - p_act : active velocity contribution.
 
         Examples
         --------
-        Unpacking using a tuple:
-
-        >>> M, _, V, *_ = soft_plankton.compute_mobility_problem(dofs=[0, 1])
-        >>> print(M, V)
-
-        Unpacking using the named tuple (preferred method):
-
-        >>> matrices = soft_plankton.compute_mobility_problem()
-        >>> print(matrices.M, matrices.V)
+        >>> M, _, V, *_ = soft_body.compute_tensors(dofs=[0, 1])
 
         Notes
         -----
-        - This function leverages JAX for automatic differentiation and efficient computation.
+        Use ``compute_fast_tensors`` for repeated calls — it is a
+        ``jax.jit``-compiled version of this method.
         """
-        # Handling dofs and params, passing default value if None are given
         dofs, design, time = self._setup_params(dofs, design, time)
 
         J, v_act = self.compute_Jacobian_matrix(dofs, design, time)
@@ -117,7 +178,6 @@ class SoftBody(SphereAssembly):
         C_H = self.grand_C_H(dofs, design, time)
         C_K = self.grand_C_K(dofs, design, time)
 
-        # Compute soft mobility tensors
         Mred = jnp.linalg.inv(J.T @ Rgrand @ J)
         M = Mred @ J.T
         P = M @ Rgrand
@@ -128,9 +188,16 @@ class SoftBody(SphereAssembly):
 
         return SoftMobilityTensors(M=M, M_K=M_K, M_H=M_H, C_E=C_E, P=P, p_act=p_act)
 
-    def compute_mobility_tensor(self, dofs=None, design=None, time=None):
+    def compute_mobility_tensor(self, dofs=None, design=None, time=None) -> jnp.ndarray:
         """
         Compute the grand hydrodynamic mobility tensor.
+
+        Uses the far-field Rotne–Prager–Yamakawa (GRPY) approximation.
+        Spheres must not overlap; see :meth:`validate_no_overlap`.
+
+        The computation is vectorised with ``jax.vmap``: JAX compiles a
+        single pairwise block function and maps it over all N² sphere pairs,
+        giving O(1) compile time (in N) and O(N²) arithmetic cost.
 
         Parameters
         ----------
@@ -143,89 +210,70 @@ class SoftBody(SphereAssembly):
 
         Returns
         -------
-        jnp.ndarray
-            Grand mobility matrix of shape ``(6*Nspheres, 6*Nspheres)`` that
-            maps force and torque on each sphere to translational and angular
-            velocities.
+        jnp.ndarray, shape ``(6*N, 6*N)``
+            Grand mobility matrix mapping force/torque on each sphere to
+            translational and angular velocities.
         """
         dofs, design, time = self._setup_params(dofs, design, time)
+        N = self.Nspheres
 
-        # Function to compute diagonal blocks (i == j)
-        def compute_diag_block(i):
-            mu_tt = self._compute_mu_tt_ii(self.spheres[i], dofs, design, time)
-            mu_rr = self._compute_mu_rr_ii(self.spheres[i], dofs, design, time)
-            mu_rt = jnp.zeros((3, 3))
-            mu_tr = jnp.zeros((3, 3))
-            return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
+        # Gather geometry as JAX arrays (Python-side, at trace time)
+        positions = jnp.stack([s.position(dofs, design, time) for s in self.spheres])  # (N, 3)
+        radii = jnp.stack([jnp.asarray(s.radius(dofs, design)) for s in self.spheres])  # (N,)
 
-        # Function to compute off-diagonal blocks (i ≠ j)
-        def compute_off_diag_block(i, j):
-            mu_tt = self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, design, time)
-            mu_rr = self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, design, time)
-            mu_rt = self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, design, time)
-            mu_tr = self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, design, time).T
-            return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
-
-        # Function to select correct block using lax.cond
-        def compute_block(i, j):
+        def block_fn(pos_i, r_i, pos_j, r_j):
+            """6×6 GRPY block for one pair; handles diagonal (i==j) via lax.cond."""
             return lax.cond(
-                i == j, lambda _: compute_diag_block(i), lambda _: compute_off_diag_block(i, j), operand=None
+                jnp.linalg.norm(pos_i - pos_j) < 1e-9,
+                lambda _: _grpy_self_block(r_i),
+                lambda _: _grpy_off_diag_block(pos_i, r_i, pos_j, r_j),
+                None,
             )
 
-        # Assemble full mobility matrix
-        M = jnp.block([[compute_block(i, j) for j in range(self.Nspheres)] for i in range(self.Nspheres)])
+        # Double-vmap over i (outer) and j (inner) → (N, N, 6, 6)
+        compute_row = jax.vmap(block_fn, in_axes=(None, None, 0, 0))
+        compute_all = jax.vmap(compute_row, in_axes=(0, 0, None, None))
+        blocks = compute_all(positions, radii, positions, radii)
 
-        return M
+        # (N, N, 6, 6) → (6N, 6N): interleave sphere and component axes
+        return blocks.transpose(0, 2, 1, 3).reshape(6 * N, 6 * N)
 
-    def _compute_mobility_tensor_alt(self, dofs=None, design=None, time=None):
+    def validate_no_overlap(self, dofs=None, design=None, time=None) -> None:
+        """
+        Check that no pair of spheres overlaps at the given configuration.
+
+        Parameters
+        ----------
+        dofs : array-like, optional
+            Degrees of freedom. Defaults to ``dof_defaults``.
+        design : array-like, optional
+            Design variables. Defaults to ``design_defaults``.
+        time : float or array-like, optional
+            Time. Defaults to ``0.0``.
+
+        Raises
+        ------
+        ValueError
+            If any pair (i, j) has centre-to-centre distance ≤ r_i + r_j.
+        """
         dofs, design, time = self._setup_params(dofs, design, time)
-        # Define the blocks functions
-        mu_tt = jnp.block(
-            [
-                [
-                    self._compute_mu_tt_ij(self.spheres[i], self.spheres[j], dofs, design, time)
-                    for j in range(self.Nspheres)
-                ]
-                for i in range(self.Nspheres)
-            ]
-        )
-        mu_rr = jnp.block(
-            [
-                [
-                    self._compute_mu_rr_ij(self.spheres[i], self.spheres[j], dofs, design, time)
-                    for j in range(self.Nspheres)
-                ]
-                for i in range(self.Nspheres)
-            ]
-        )
-        mu_rt = jnp.block(
-            [
-                [
-                    self._compute_mu_rt_ij(self.spheres[i], self.spheres[j], dofs, design, time)
-                    for j in range(self.Nspheres)
-                ]
-                for i in range(self.Nspheres)
-            ]
-        )
-        mu_tr = jnp.block(
-            [
-                [
-                    self._compute_mu_rt_ij(self.spheres[j], self.spheres[i], dofs, design, time).T
-                    for j in range(self.Nspheres)
-                ]
-                for i in range(self.Nspheres)
-            ]
-        )
-        # Assemble the blocks into a full matrix
-        M = jnp.block(jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]]))
-
-        return M
+        positions = [np.asarray(s.position(dofs, design, time), dtype=float) for s in self.spheres]
+        radii = [float(s.radius(dofs, design)) for s in self.spheres]
+        for i in range(self.Nspheres):
+            for j in range(i + 1, self.Nspheres):
+                Rij = float(np.linalg.norm(positions[i] - positions[j]))
+                ri_rj = radii[i] + radii[j]
+                if Rij <= ri_rj:
+                    raise ValueError(
+                        f"Spheres {i} and {j} overlap: separation {Rij:.4f} ≤ "
+                        f"sum of radii {ri_rj:.4f}. "
+                        "GRPY mobility requires non-overlapping spheres."
+                    )
 
     def _compute_composition_of_strain(self, *args):
         C_S = jnp.block(
             [[self._individual_composition_of_strain(self.spheres[i], *args)] for i in range(self.Nspheres)]
         )
-
         return C_S
 
     def _compute_coupling_with_strain(self, *args):
@@ -237,259 +285,57 @@ class SoftBody(SphereAssembly):
             ]
         )
 
-        # Initialize tensor for each sphere
         tensor_blocks = []
-
-        # Compute the sum of mutd and murd blocks for each sphere
         for i in range(self.Nspheres):
-            # Initialize a 6x3x3 tensor with zeros
             tensor_block = jnp.zeros((6, 3, 3))
-
-            # Iterate over all spheres, including i itself
             for j in range(self.Nspheres):
                 if i == j:
-                    # For the same sphere, no interaction terms
                     Gij = jnp.zeros((6, 3, 3))
                 else:
-                    # For distinct spheres, compute mutd and murd
                     mutd = self._compute_mu_td_ij(self.spheres[i], self.spheres[j], *args)
                     murd = self._compute_mu_rd_ij(self.spheres[i], self.spheres[j], *args)
                     Gij = jnp.concatenate(arrays=[mutd, murd], axis=0)
-
-                # Sum over j
                 tensor_block += Gij
-
-            # Append the computed block for the current sphere
             tensor_blocks.append(tensor_block)
 
-        # Stack all blocks into a final 6 * Nspheres x 3 x 3 tensor
         ge = jnp.concatenate(tensor_blocks, axis=0)
-
-        # Perform tensor contraction with Svecmat (if needed)
-        rs = jnp.einsum("ijk,jkl->il", ge, svecmat)  # Adjust contraction as needed
-
+        rs = jnp.einsum("ijk,jkl->il", ge, svecmat)
         return rs
 
-    # Functions to compute the GRPY tensors #######################################
-    def _1sphere_grpy_quantities(self, sphere: Sphere, dofs=None, design=None, time=None):
-        dofs, design, time = self._setup_params(dofs, design, time)
-
-        return sphere.radius(dofs, design)
+    # GRPY tensor helpers (far-field only) ####################################
 
     def _2spheres_grpy_quantities(self, sphere_i: Sphere, sphere_j: Sphere, dofs=None, design=None, time=None):
         dofs, design, time = self._setup_params(dofs, design, time)
 
-        position_i = sphere_i.position(dofs, design, time)
-        position_j = sphere_j.position(dofs, design, time)
-        radius_i = sphere_i.radius(dofs, design)
-        radius_j = sphere_j.radius(dofs, design)
-        posi = jnp.array(position_i)
-        posj = jnp.array(position_j)
+        posi = jnp.asarray(sphere_i.position(dofs, design, time))
+        posj = jnp.asarray(sphere_j.position(dofs, design, time))
+        ai = sphere_i.radius(dofs, design)
+        aj = sphere_j.radius(dofs, design)
         rvector = posi - posj
-        rnorm = jnp.linalg.norm(rvector) + 1e-12  # avoid division by zero
+        rnorm = jnp.linalg.norm(rvector) + 1e-12
         runit = rvector / rnorm
 
-        return rnorm, runit, radius_i, radius_j
+        return rnorm, runit, ai, aj
 
-    def _compute_mu_tt_ii(self, sphere, *args):
-        a_i = self._1sphere_grpy_quantities(sphere, *args)
-        matrix = 1 / (6 * jnp.pi * a_i) * jnp.eye(3)
-
-        return matrix
-
-    def _compute_mu_rr_ii(self, sphere, *args):
-        a_i = self._1sphere_grpy_quantities(sphere, *args)
-        matrix = 1 / (8 * jnp.pi * a_i**3) * jnp.eye(3)
-
-        return matrix
-
-    def _compute_mu_tt_ij(self, sphere_i, sphere_j, *args):
+    def _compute_mu_td_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
+        """Far-field translation–deformation mobility (3×3×3 tensor)."""
         Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
 
-        a_inf = jnp.minimum(ai, aj)
-        a_sup = jnp.maximum(ai, aj)
+        hat1_pf = (5.0 * aj / 6.0) * (-2.0 * (5.0 * ai**2 * aj**2 + 3.0 * aj**4)) / (5.0 * Rij**4)
+        hat3_pf = (5.0 * aj / 6.0) * aj**2 * (5.0 * ai**2 + 3.0 * aj**2 - 3.0 * Rij**2) / Rij**4
 
-        # Use JAX `lax.cond()` for branching logic
-        def case_far(_):
-            """Case when Rij > ai + aj"""
-            eye_prefactor = (1 + (ai**2 + aj**2) / (3 * Rij**2)) / (8 * jnp.pi * Rij)
-            hat_prefactor = (1 - (ai**2 + aj**2) / Rij**2) / (8 * jnp.pi * Rij)
-            return eye_prefactor, hat_prefactor
-
-        def case_medium(_):
-            """Case when a_sup - a_inf < Rij <= ai + aj"""
-            eye_prefactor = (
-                (16 * Rij**3 * (ai + aj) - ((ai - aj) ** 2 + 3 * Rij**2) ** 2) / (32 * Rij**3)
-            ) / (6 * jnp.pi * ai * aj)
-            hat_prefactor = (3 * ((ai - aj) ** 2 - Rij**2) ** 2 / (32 * Rij**3)) / (6 * jnp.pi * ai * aj)
-            return eye_prefactor, hat_prefactor
-
-        def case_near(_):
-            """Case when Rij <= a_sup - a_inf"""
-            return 1 / (6 * jnp.pi * a_sup), 0.0
-
-        # Nested conditions
-        eye_prefactor, hat_prefactor = lax.cond(
-            Rij > ai + aj, case_far, lambda _: lax.cond(Rij > a_sup - a_inf, case_medium, case_near, None), None
+        matrix = (
+            hat1_pf * jnp.outer(jnp.eye(3), Rij_hat).reshape(3, 3, 3)
+            + hat3_pf * jnp.outer(Rij_hat, jnp.outer(Rij_hat, Rij_hat)).reshape(3, 3, 3)
         )
-
-        # Compute the 3x3 mobility tensor
-        matrix = eye_prefactor * jnp.eye(3) + hat_prefactor * jnp.outer(Rij_hat, Rij_hat)
-
         return matrix
 
-    def _compute_mu_rr_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args):
+    def _compute_mu_rd_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
+        """Far-field rotation–deformation mobility (3×3×3 tensor)."""
         Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
 
-        a_inf = jnp.minimum(ai, aj)
-        a_sup = jnp.maximum(ai, aj)
-
-        # Use JAX `lax.cond()` for branching logic
-        def case_far(_):
-            """Case when Rij > ai + aj"""
-            eye_prefactor = -1.0 / (16 * jnp.pi * Rij**3)
-            hat_prefactor = 3.0 / (16 * jnp.pi * Rij**3)
-            return eye_prefactor, hat_prefactor
-
-        def case_medium(_):
-            """Case when a_sup - a_inf < Rij <= ai + aj"""
-            calA = (
-                +5.0 * Rij**6
-                - 27 * Rij**4 * (ai**2 + aj**2)
-                + 32 * Rij**3 * (ai**3 + aj**3)
-                - 9.0 * Rij**2 * (ai**2 - aj**2) ** 2
-                - (ai - aj) ** 4 * (ai**2 + 4 * aj * ai + aj**2)
-            ) / (64 * Rij**3)
-            calB = (3.0 * ((ai - aj) ** 2 - Rij**2) ** 2 * (ai**2 + 4 * aj * ai + aj**2 - Rij**2)) / (64 * Rij**3)
-            eye_prefactor = calA / (8 * jnp.pi * ai**3 * aj**3)
-            hat_prefactor = calB / (8 * jnp.pi * ai**3 * aj**3)
-            return eye_prefactor, hat_prefactor
-
-        def case_near(_):
-            """Case when Rij <= a_sup - a_inf"""
-            eye_prefactor = 1.0 / (8 * jnp.pi * a_sup**3)
-            hat_prefactor = 0.0
-            return eye_prefactor, hat_prefactor
-
-        # Nested conditions
-        eye_prefactor, hat_prefactor = lax.cond(
-            Rij > ai + aj, case_far, lambda _: lax.cond(Rij > a_sup - a_inf, case_medium, case_near, None), None
-        )
-
-        # Compute the 3x3 matrix
-        matrix = eye_prefactor * jnp.eye(3) + hat_prefactor * jnp.outer(Rij_hat, Rij_hat)
-
-        return matrix
-
-    def _compute_mu_rt_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args):
-        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
-
-        a_inf = jnp.minimum(ai, aj)
-        a_sup = jnp.maximum(ai, aj)
-
-        # Use JAX `lax.cond()` for branching logic
-        def case_far(_):
-            """Case when Rij > ai + aj"""
-            prefactor = 1 / (8 * jnp.pi * Rij**2)
-            return prefactor
-
-        def case_medium(_):
-            """Case when a_sup - a_inf < Rij <= ai + aj"""
-            prefactor = (
-                ((ai - aj + Rij) ** 2 * (aj**2 + 2 * aj * (ai + Rij) - 3 * (ai - Rij) ** 2))
-                / (8 * Rij**2)
-                / (16 * jnp.pi * ai**3 * aj)
-            )
-            return prefactor
-
-        def case_near(_):
-            """Case when Rij <= a_sup - a_inf"""
-            prefactor = jnp.heaviside(ai - aj, 0) * Rij / (8 * jnp.pi * Rij**2)
-            return prefactor
-
-        # Nested conditions
-        prefactor = lax.cond(
-            Rij > ai + aj, case_far, lambda _: lax.cond(Rij > a_sup - a_inf, case_medium, case_near, None), None
-        )
-
-        # Compute the 3x3 matrix
-        matrix = prefactor * jnp.cross(-jnp.eye(3), Rij_hat)
-
-        return matrix
-
-    def _compute_mu_td_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args):
-        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
-
-        a_inf = jnp.minimum(ai, aj)
-        a_sup = jnp.maximum(ai, aj)
-
-        # Use JAX `lax.cond()` for branching logic
-        def case_far(_):
-            """Case when Rij > ai + aj"""
-            hat1_prefactor = (5.0 * aj / 6) * (-2 * (5 * ai**2 * aj**2 + 3 * aj**4)) / (5 * Rij**4)
-            hat3_prefactor = (5.0 * aj / 6) * aj**2 * (5 * ai**2 + 3 * aj**2 - 3 * Rij**2) / (Rij**4)
-            return hat1_prefactor, hat3_prefactor
-
-        def case_medium(_):
-            """Case when a_sup - a_inf < Rij <= ai + aj"""
-            calC = (
-                +10.0 * Rij**6 - 24 * Rij**5 * ai - 15 * Rij**4 * (aj**2 - ai**2) + (aj - ai) ** 5 * (ai + 5 * aj)
-            ) / (40 * ai * aj * Rij**4)
-            calD = (((ai - aj) ** 2 - Rij**2) ** 2 * ((ai - aj) * (ai + 5 * aj) - Rij**2)) / (
-                16.0 * ai * aj * Rij**4
-            )
-            hat1_prefactor = (5.0 * aj / 6) * calC
-            hat3_prefactor = (5.0 * aj / 6) * calD
-            return hat1_prefactor, hat3_prefactor
-
-        def case_near(_):
-            """Case when Rij <= a_sup - a_inf"""
-            hat1_prefactor = -jnp.heaviside(aj - ai, 0.0) * Rij
-            hat3_prefactor = 0.0
-            return hat1_prefactor, hat3_prefactor
-
-        # Nested conditions
-        hat1_prefactor, hat3_prefactor = lax.cond(
-            Rij > ai + aj, case_far, lambda _: lax.cond(Rij > a_sup - a_inf, case_medium, case_near, None), None
-        )
-
-        # Compute the 3x3x3 tensor
-        matrix = hat1_prefactor * jnp.outer(jnp.eye(3), Rij_hat).reshape(3, 3, 3) + hat3_prefactor * jnp.outer(
-            Rij_hat, jnp.outer(Rij_hat, Rij_hat)
-        ).reshape(3, 3, 3)
-
-        return matrix
-
-    def _compute_mu_rd_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args):
-        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
-
-        a_inf = jnp.minimum(ai, aj)
-        a_sup = jnp.maximum(ai, aj)
-
-        # Use JAX `lax.cond()` for branching logic
-        def case_far(_):
-            """Case when Rij > ai + aj"""
-            prefactor = -(5.0 / 2) * (aj / Rij) ** 3
-            return prefactor
-
-        def case_medium(_):
-            calB = (3.0 * ((ai - aj) ** 2 - Rij**2) ** 2 * (ai**2 + 4 * aj * ai + aj**2 - Rij**2)) / (64 * Rij**3)
-            prefactor = -5 * calB / (3 * ai**3)
-            return prefactor
-
-        def case_near(_):
-            """Case when Rij <= a_sup - a_inf"""
-            prefactor = 0.0
-            return prefactor
-
-        # Nested conditions
-        prefactor = lax.cond(
-            Rij > ai + aj, case_far, lambda _: lax.cond(Rij > a_sup - a_inf, case_medium, case_near, None), None
-        )
-
-        # Compute the 3x3 matrix
+        prefactor = -(5.0 / 2.0) * (aj / Rij) ** 3
         matrix = prefactor * jnp.outer(jnp.cross(-jnp.eye(3), Rij_hat), Rij_hat).reshape(3, 3, 3)
-
         return matrix
 
     def _individual_composition_of_strain(self, sphere: Sphere, dofs=None, design=None, time=None):

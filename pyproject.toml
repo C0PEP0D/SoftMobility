@@ -1,17 +1,16 @@
-[tool.black]
+[tool.ruff]
 line-length = 115
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
+extend-exclude = [".claude"]
 
-)/
-'''
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort (import sorting)
+    "UP",  # pyupgrade (modernize syntax for your Python version)
+    "B",   # flake8-bugbear (common bug patterns)
+]
+
+[tool.ruff.format]
+# defaults are black-compatible — no config needed unless you want to deviate

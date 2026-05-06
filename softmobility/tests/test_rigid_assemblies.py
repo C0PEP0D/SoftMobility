@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from softmobility import SoftBody, Sphere
 
 # Examples from PyGRPY package
@@ -662,24 +663,41 @@ cong_four = np.array(
 cent_four = np.array([0, 0, -1.5])
 
 
+@pytest.mark.skip(reason="Overlapping-sphere GRPY support removed; geometry has touching spheres")
 def test_two_spheres():
     sp = SoftBody()
     sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 1], radius=1))
-    mu = sp._compute_mobility_tensor_alt()
+    mu = sp.compute_mobility_tensor()
     assert np.allclose(mu, gmm_two)
 
 
+@pytest.mark.skip(reason="Overlapping-sphere GRPY support removed; geometry has touching spheres")
 def test_four_spheres():
     sp = SoftBody()
     sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 1], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 2], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 3], radius=1))
-    mu = sp._compute_mobility_tensor_alt()
+    mu = sp.compute_mobility_tensor()
     assert np.allclose(mu, gmm_four)
 
 
+def test_validate_no_overlap_raises_on_overlap():
+    sp = SoftBody()
+    sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
+    sp.add_sphere(Sphere(position=[0, 0, 1.5], radius=1))
+    with pytest.raises(ValueError, match="overlap"):
+        sp.validate_no_overlap()
+
+
+def test_validate_no_overlap_passes_on_far_geometry():
+    sp = SoftBody()
+    sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
+    sp.add_sphere(Sphere(position=[0, 0, 3], radius=1))
+    sp.validate_no_overlap()  # should not raise
+
+
 if __name__ == "__main__":
-    test_two_spheres()
-    test_four_spheres()
+    test_validate_no_overlap_raises_on_overlap()
+    test_validate_no_overlap_passes_on_far_geometry()
