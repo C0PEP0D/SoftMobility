@@ -1,7 +1,7 @@
 """Parametric inputs (3D and scalar fields) for softmobility."""
 
-import jax.numpy as jnp
 import jax
+import jax.numpy as jnp
 
 # =============================================================================
 # Parent class
@@ -186,7 +186,7 @@ class Scalar(_ParametricBase):
             raise TypeError(f"Scalar expects a callable, got {type(func).__name__}.")
         self._func = func
 
-    def value(self, pos=jnp.zeros(3), time=0.0):
+    def value(self, pos=None, time=0.0):
         """
         Evaluate the scalar at a given position and time.
 
@@ -210,6 +210,8 @@ class Scalar(_ParametricBase):
         --------
         >>> v = force.value(jnp.array([0., 0., 0.]), time=1.0)
         """
+        if pos is None:
+            pos = jnp.zeros(3)
         pos = jnp.asarray(pos, dtype=float)
         if self._params is not None:
             result = self._func(pos, time, self._params)
@@ -222,7 +224,8 @@ class Scalar(_ParametricBase):
             return "Scalar(no params)"
         if self.param_names is not None:
             pairs = ", ".join(
-                f"{k}={v.tolist() if v.size > 1 else float(v):.4g}" for k, v in zip(self.param_names, self._params)
+                f"{k}={v.tolist() if v.size > 1 else float(v):.4g}"
+                for k, v in zip(self.param_names, self._params, strict=False)
             )
             return f"Scalar({pairs})"
         return f"Scalar(params={[p.tolist() for p in self._params]})"
@@ -302,7 +305,7 @@ class Field(_ParametricBase):
             raise TypeError(f"Field expects a callable, got {type(func).__name__}.")
         self._func = func
 
-    def vector(self, pos=jnp.zeros(3), time=0.0):
+    def vector(self, pos=None, time=0.0):
         """
         Evaluate the field at a given position and time.
 
@@ -326,6 +329,8 @@ class Field(_ParametricBase):
         --------
         >>> v = myfiel.vector(jnp.array([0., 0., 0.]), time=1.0)
         """
+        if pos is None:
+            pos = jnp.zeros(3)
         pos = jnp.asarray(pos, dtype=float)
         result = (
             jnp.asarray(self._func(pos, time, self._params), dtype=float)
@@ -341,7 +346,8 @@ class Field(_ParametricBase):
             return "Field(no params)"
         if self.param_names is not None:
             pairs = ", ".join(
-                f"{k}={v.tolist() if v.size > 1 else float(v):.4g}" for k, v in zip(self.param_names, self._params)
+                f"{k}={v.tolist() if v.size > 1 else float(v):.4g}"
+                for k, v in zip(self.param_names, self._params, strict=False)
             )
             return f"Field({pairs})"
         return f"Field(params={[p.tolist() for p in self._params]})"
@@ -414,7 +420,7 @@ class Flow(_ParametricBase):
             raise TypeError(f"Flow expects a callable, got {type(func).__name__}.")
         self._func = func
 
-    def velocity(self, pos=jnp.zeros(3), time=0.0):
+    def velocity(self, pos=None, time=0.0):
         """
         Evaluate the flow velocity at a given position and time.
 
@@ -436,6 +442,8 @@ class Flow(_ParametricBase):
         --------
         >>> v = shear.velocity(jnp.array([0., 0., 0.]), time=1.0)
         """
+        if pos is None:
+            pos = jnp.zeros(3)
         pos = jnp.asarray(pos, dtype=float)
         result = (
             jnp.asarray(self._func(pos, time, self._params), dtype=float)
@@ -446,7 +454,7 @@ class Flow(_ParametricBase):
             raise ValueError(f"Flow must return a (3,) array, got shape {result.shape}.")
         return result
 
-    def gradient(self, pos=jnp.zeros(3), time=0.0):
+    def gradient(self, pos=None, time=0.0):
         """
         Evaluate the Jacobian (gradient) of the flow velocity field at a given position and time.
 
@@ -468,6 +476,8 @@ class Flow(_ParametricBase):
         --------
         >>> grad_u = shear.gradient(jnp.array([1., 2., 3.]), time=1.0)
         """
+        if pos is None:
+            pos = jnp.zeros(3)
         pos = jnp.asarray(pos, dtype=float)
         fn = (
             (lambda p: self._func(p, time, self._params))
@@ -476,7 +486,7 @@ class Flow(_ParametricBase):
         )
         return jax.jacfwd(fn)(pos)
 
-    def omega_rate_of_strain(self, pos=jnp.zeros(3), time=0.0):
+    def omega_rate_of_strain(self, pos=None, time=0.0):
         """
         Evaluate the vorticity vector and rate-of-strain tensor.
 
@@ -511,7 +521,8 @@ class Flow(_ParametricBase):
             return "Flow(no params)"
         if self.param_names is not None:
             pairs = ", ".join(
-                f"{k}={v.tolist() if v.size > 1 else float(v):.4g}" for k, v in zip(self.param_names, self._params)
+                f"{k}={v.tolist() if v.size > 1 else float(v):.4g}"
+                for k, v in zip(self.param_names, self._params, strict=False)
             )
             return f"Flow({pairs})"
         return f"Flow(params={[p.tolist() for p in self._params]})"

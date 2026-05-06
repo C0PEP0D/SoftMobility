@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from softmobility import SoftBody, Sphere
 
 # Examples from PyGRPY package

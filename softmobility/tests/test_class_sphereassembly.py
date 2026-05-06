@@ -1,6 +1,7 @@
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 import pytest
+
 from softmobility import Sphere, SphereAssembly
 
 CALLABLE_COUPLING_YAML = """

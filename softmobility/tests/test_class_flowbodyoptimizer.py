@@ -1,9 +1,9 @@
 # tests/test_class_flowbodyoptimizer.py
-import jax
 import jax.numpy as jnp
 import optax
-from softmobility import SoftBody, no_flow, gravity_field, constant_scalar
-from softmobility.classes.solver import FlowBodyRollout, FlowBodyOptimizer
+
+from softmobility import SoftBody, constant_scalar, gravity_field, no_flow
+from softmobility.classes.solver import FlowBodyOptimizer, FlowBodyRollout
 
 # --- Setup ---
 YAML = """

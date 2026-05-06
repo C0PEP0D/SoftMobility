@@ -1,27 +1,27 @@
-import pytest
 import jax
 import jax.numpy as jnp
-import numpy as np
-from softmobility import SoftBody, no_flow, gravity_field, constant_scalar
+import pytest
+
+from softmobility import SoftBody, constant_scalar, gravity_field, no_flow
 from softmobility.classes.solver import FlowBodyRollout
 
 # --- Setup: plain module-level instances ---
 YAML = """
 input_names: [gravity, active_force]
 
-# Spheres 
+# Spheres
 spheres:
   - # Sphere 0 #################
-    radius: 1                       
-    position: [-1, 0, 0]  
-    force: [gravity0, 0 , 0]           
+    radius: 1
+    position: [-1, 0, 0]
+    force: [gravity0, 0 , 0]
     torque: [0, 0, active_force]
 
   - # Sphere 1 #################
-    radius: 1                 
-    position: [1, 0, 0]   
-    orientation: [0, 0, dof]    
-    force: [-gravity0, 0 , 0]           
+    radius: 1
+    position: [1, 0, 0]
+    orientation: [0, 0, dof]
+    force: [-gravity0, 0 , 0]
     torque: [0, 0, -active_force]
 """
 

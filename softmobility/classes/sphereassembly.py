@@ -1,26 +1,31 @@
 """Assembly of spheres used to define a soft body."""
 
+import os
 import re
 from io import StringIO
-import os
-import yaml
-import numpy as np
+
 import jax
 import jax.numpy as jnp
+import numpy as np
 import sympy as sp
+import yaml
 
 from .sphere import Sphere
 
 
 class SphereAssembly:
     """
-    The class `SphereAssembly` represents an assembly of rigid spheres connected by springs used to define a soft body.
+    The class `SphereAssembly` represents an assembly of rigid spheres connected by springs used to
+    define a soft body.
 
     There are three set of variables:
 
-    - Degrees of freedom (`dofs`): variables that define the deformation of the assembly (e.g. lengths of springs)
-    - Design variables (`design`): parameters that define the morphology of the assembly and that can be optimized (e.g. radius, stiffness)
-    - Input variables (`input`): parameters that define the input fields, either 3D-fields (e.g. gravity, magnetic field) or scalars (e.g. internal active force)
+    - Degrees of freedom (`dofs`): variables that define the deformation of the assembly (e.g. lengths
+      of springs)
+    - Design variables (`design`): parameters that define the morphology of the assembly and that can
+      be optimized (e.g. radius, stiffness)
+    - Input variables (`input`): parameters that define the input fields, either 3D-fields (e.g. gravity,
+      magnetic field) or scalars (e.g. internal active force)
 
     Supports initialization from a YAML parameters file or incremental construction via methods.
     Enables symbolic and numerical computation of coupling matrices, Jacobians, and forces.
@@ -150,7 +155,9 @@ class SphereAssembly:
                 raise ValueError(f"C_K must have shape (6, {self.Ndof}), but got {C_K.shape}.")
 
         except ValueError as e:
-            raise ValueError(f"Sphere does not have the correct number of degrees of freedom or variables: {e}")
+            raise ValueError(
+                f"Sphere does not have the correct number of degrees of freedom or variables: {e}"
+            ) from e
 
         self.spheres.append(sphere)
         self._Nspheres += 1  # Update sphere count
@@ -320,7 +327,8 @@ class SphereAssembly:
 
     def compute_Jassembly(self, dofs=None, design=None, time=None):
         """
-        Computes J_sph, which is defined by V = J_sph . dotQ, with V the grand velocity in the body's frame and dotQ the time derivative of the dofs.
+        Computes J_sph, which is defined by V = J_sph . dotQ, with V the grand velocity in the body's
+        frame and dotQ the time derivative of the dofs.
         We use: V = B . dotX = B . J_X . dotQ, suh that J_sph = B . J_X
 
         Args:
@@ -359,7 +367,8 @@ class SphereAssembly:
 
     def compute_C_U(self, dofs=None, design=None, time=None):
         """
-        Computes C_U, such that v = V + C_U .v_0, with V and v the grand velocity in the body and lab frame, and v_0 the six-component velocity of the body reference in the lab frame
+        Computes C_U, such that v = V + C_U .v_0, with V and v the grand velocity in the body and lab
+        frame, and v_0 the six-component velocity of the body reference in the lab frame
 
         Args:
             dofs (jnp.ndarray, optional): Degrees of freedom. Defaults to None.
@@ -430,12 +439,13 @@ class SphereAssembly:
         Sets new default values for the degrees of freedom (dofs).
 
         Args:
-            new_dofs (array-like, optional): New default values for all dofs. Must match the number of dofs.
-            new_dict (dict, optional): Dictionary mapping dof variable names to new default values.
-            verbose (bool, optional): If True, prints old and new default dof values. Defaults to True.
+            new_dofs (array-like, optional): New default values; length must match Ndof.
+            new_dict (dict, optional): Mapping of DOF variable names to new default values.
+            verbose (bool, optional): If True, prints old and new defaults. Defaults to True.
 
         Raises:
-            ValueError: If new_dofs cannot be cast to a JAX array, has incorrect shape, or if a variable name in new_dict is invalid.
+            ValueError: If ``new_dofs`` has an invalid shape, or a name in ``new_dict``
+                is not a known DOF.
         """
         if verbose:
             print("OLD default dof values:", self.dof_variables, self.dof_defaults)
@@ -460,8 +470,8 @@ class SphereAssembly:
                 try:
                     idx = self.dof_variables.index(key)
                     new_value = float(value)
-                except (ValueError, IndexError):
-                    raise ValueError(f"Invalid value for variable '{key}': {value}")
+                except (ValueError, IndexError) as exc:
+                    raise ValueError(f"Invalid value for variable '{key}': {value}") from exc
 
                 # Update the corresponding index in dof_defaults
                 self._dof_defaults = self._dof_defaults.at[idx].set(new_value)
@@ -473,12 +483,13 @@ class SphereAssembly:
         Sets new default values for the design variables.
 
         Args:
-            new_design (array-like, optional): New default values for all design variables. Must match the number of design variables.
-            new_dict (dict, optional): Dictionary mapping design variable names to new default values.
-            verbose (bool, optional): If True, prints old and new default design values. Defaults to True.
+            new_design (array-like, optional): New default values; length must match Ndesign.
+            new_dict (dict, optional): Mapping of design variable names to new default values.
+            verbose (bool, optional): If True, prints old and new defaults. Defaults to True.
 
         Raises:
-            ValueError: If new_design cannot be cast to a JAX array, has incorrect shape, or if a variable name in new_dict is invalid.
+            ValueError: If ``new_design`` has an invalid shape, or a name in ``new_dict``
+                is not a known design variable.
         """
         if verbose:
             print("OLD default param values:", self.design_variables, self.design_defaults)
@@ -503,8 +514,8 @@ class SphereAssembly:
                 try:
                     idx = self.design_variables.index(key)
                     new_value = float(value)
-                except (ValueError, IndexError):
-                    raise ValueError(f"Invalid value for variable '{key}': {value}")
+                except (ValueError, IndexError) as exc:
+                    raise ValueError(f"Invalid value for variable '{key}': {value}") from exc
 
                 # Update the corresponding index in design_defaults
                 self._design_defaults = self._design_defaults.at[idx].set(new_value)
@@ -525,7 +536,10 @@ class SphereAssembly:
         return jnp.concatenate(coords)
 
     def __str__(self):
-        return f"Assembly with {self.Nspheres} spheres, {self.Ndof} degrees of freedom, and {self.Ndesign} fixed parameters"
+        return (
+            f"Assembly with {self.Nspheres} spheres, {self.Ndof} degrees of freedom, "
+            f"and {self.Ndesign} fixed parameters"
+        )
 
     def __repr__(self):
         """Print default values and details of sphere assembly."""
@@ -573,7 +587,7 @@ class SphereAssembly:
             if parameters_source.lower().endswith((".yaml", ".yml")):
                 if not os.path.exists(parameters_source):
                     raise FileNotFoundError(f"File not found: {parameters_source}")
-                with open(parameters_source, "r") as f:
+                with open(parameters_source) as f:
                     yaml_data = yaml.safe_load(f)
                     if verbose:
                         print(f"Parsing parameter file: {parameters_source}")
@@ -584,7 +598,7 @@ class SphereAssembly:
                 raise ValueError("Invalid YAML format: Expected a dictionary at the root level.")
 
         except (FileNotFoundError, yaml.YAMLError, ValueError) as e:
-            raise ValueError(f"Error loading parameters: {e}")
+            raise ValueError(f"Error loading parameters: {e}") from e
 
         # Extract sphere data
         sphere_data = yaml_data["spheres"]
@@ -656,9 +670,10 @@ class SphereAssembly:
 
         # printing variables found
         if verbose:
-            print(
-                f"  Found variables: {', '.join(dof_variables) + ', ' if dof_variables else ''}{', '.join(design_variables) + ', ' if design_variables else ''}{', '.join(input_variables)}"
-            )
+            dof_part = ", ".join(dof_variables) + ", " if dof_variables else ""
+            design_part = ", ".join(design_variables) + ", " if design_variables else ""
+            input_part = ", ".join(input_variables)
+            print(f"  Found variables: {dof_part}{design_part}{input_part}")
             if field3d_bases:
                 print(f"  3D field inputs:  {field3d_bases}")
             if scalar_names:
@@ -827,7 +842,8 @@ def _cached_lambdify(sp_expr: sp.Expr, var_groups: tuple, modules=JAX_MODULES):
 
 def _create_function(sp_exprs, dofs, design, constants):
     """
-    Create a function that takes dofs and yaml_data as input and returns the evaluated symbolic expressions sp_exprs.
+    Create a function that takes dofs and yaml_data as input and returns the evaluated symbolic
+    expressions sp_exprs.
 
     Parameters
     ----------
@@ -851,7 +867,7 @@ def _create_function(sp_exprs, dofs, design, constants):
         try:
             jax_expr = _cached_lambdify(sp_expr, var_groups)
         except Exception as e:
-            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
+            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}") from e
 
         def wrapper(dof_args, design_args):
             result = jax_expr(dof_args, design_args)
@@ -867,7 +883,7 @@ def _create_function(sp_exprs, dofs, design, constants):
             try:
                 jax_exprs.append(_cached_lambdify(sp_expr, var_groups))
             except Exception as e:
-                raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
+                raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}") from e
 
         def wrapper(dof_args, design_args):
             return jnp.stack(
@@ -887,7 +903,7 @@ def _create_function_time(sp_exprs, dofs, design, constants, time):
         try:
             jax_expr = _cached_lambdify(sp_expr, var_groups)
         except Exception as e:
-            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
+            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}") from e
 
         def wrapper(dof_args, design_args, time_args):
             result = jax_expr(dof_args, design_args, time_args)
@@ -903,7 +919,7 @@ def _create_function_time(sp_exprs, dofs, design, constants, time):
             try:
                 jax_exprs.append(_cached_lambdify(sp_expr, var_groups))
             except Exception as e:
-                raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
+                raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}") from e
 
         def wrapper(dof_args, design_args, time_args):
             return jnp.stack(
@@ -926,7 +942,7 @@ def _create_input_function(sp_exprs, dofs, design, input_variables, constants):
         try:
             jax_expr = _cached_lambdify(sp_expr, var_groups)
         except Exception as e:
-            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
+            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}") from e
 
         def wrapper(dof_args, design_args, input_args):
             result = jax_expr(dof_args, design_args, input_args)
@@ -942,7 +958,7 @@ def _create_input_function(sp_exprs, dofs, design, input_variables, constants):
         try:
             jax_exprs.append(_cached_lambdify(sp_expr, var_groups))
         except Exception as e:
-            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}")
+            raise ValueError(f"Error converting expression {sp_expr} with sympy.lambdify: {e}") from e
 
     def wrapper(dof_args, design_args, input_args):
         return jnp.stack(
@@ -1047,7 +1063,7 @@ def _validate_six_component_force_linearity(
             expected = base + C_H_num @ test_input
             actual = force_for_inputs(test_input)
             if not np.allclose(actual, expected, atol=atol, rtol=rtol):
-                raise ValueError(f"{prefix}force/torque must be linear in inputs to derive C_H.")
+                raise ValueError(f"{prefix}force/torque must be linear in inputs to derive C_H.") from None
 
 
 def _classify_input_variables(input_variables: list[str]) -> tuple[list[str], list[str]]:
