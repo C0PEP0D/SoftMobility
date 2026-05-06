@@ -101,18 +101,18 @@ The main array shapes are:
      - Field components followed by scalar inputs.
    * - ``positions``
      - ``(n_steps, 3)``
-     - Trajectory returned by ``FlowBodyRollout.rollout``.
+     - Trajectory returned by ``sm.FlowBodyRollout.rollout``.
 
 Workflow
 --------
 
 The usual workflow is:
 
-1. Define the geometry with ``SphereAssembly`` or a YAML description.
-2. Promote the assembly to ``SoftBody`` to compute hydrodynamic mobility.
+1. Define the geometry with ``sm.SphereAssembly`` or a YAML description.
+2. Promote the assembly to ``sm.SoftBody`` to compute hydrodynamic mobility.
 3. Create fields, scalar controls, and background flows.
-4. Run ``FlowBodyRollout.rollout`` to obtain trajectories.
-5. Optionally optimize design variables with ``FlowBodyOptimizer``.
+4. Run ``sm.FlowBodyRollout.rollout`` to obtain trajectories.
+5. Optionally optimize design variables with ``sm.FlowBodyOptimizer``.
 
 Flexible fibers
 ---------------
@@ -129,11 +129,11 @@ per bead) and full 3-D (Rodrigues vector per bead) variants are available.
 
 .. code-block:: python
 
-   from softmobility import FlexibleFiber, gravity_field, no_flow, FlowBodyRollout
+   import softmobility as sm
 
-   fiber = FlexibleFiber(n_beads=20, radius=0.5, bending_rigidity=1.0, mass=0.1)
-   rollout = FlowBodyRollout(
+   fiber = sm.FlexibleFiber(n_beads=20, radius=0.5, bending_rigidity=1.0, mass=0.1)
+   rollout = sm.FlowBodyRollout(
        soft_body=fiber,
-       flow=no_flow(),
-       input_map={"gravity": gravity_field(g=9.81)},
+       flow=sm.no_flow(),
+       input_map={"gravity": sm.gravity_field(g=9.81)},
    )

@@ -2,7 +2,7 @@
 Simulation
 ==========
 
-``FlowBodyRollout`` integrates a ``SoftBody`` in a background ``Flow``. It is
+``sm.FlowBodyRollout`` integrates a ``sm.SoftBody`` in a background ``sm.Flow``. It is
 pure-functional: the rollout method returns trajectory arrays and does not
 mutate the body, flow, or input objects.
 
@@ -12,7 +12,7 @@ Minimal rollout
 .. code-block:: python
 
    import jax.numpy as jnp
-   from softmobility import SoftBody, FlowBodyRollout, no_flow
+   import softmobility as sm
 
    yaml_text = """
    dof_names: [x]
@@ -33,8 +33,8 @@ Minimal rollout
        torque: [0, k * x0, 0]
    """
 
-   body = SoftBody(yaml_text, verbose=False)
-   rollout = FlowBodyRollout(body, no_flow())
+   body = sm.SoftBody(yaml_text, verbose=False)
+   rollout = sm.FlowBodyRollout(body, sm.no_flow())
 
    positions, orientations, dofs = rollout.rollout(
        dt=0.01,
@@ -51,10 +51,10 @@ the base input names detected in the geometry:
 
 .. code-block:: python
 
-   from softmobility import FlowBodyRollout, gravity_field, no_flow
+   import softmobility as sm
 
-   input_map = {"gravity": gravity_field(g=9.81)}
-   rollout = FlowBodyRollout(body, no_flow(), input_map=input_map)
+   input_map = {"gravity": sm.gravity_field(g=9.81)}
+   rollout = sm.FlowBodyRollout(body, sm.no_flow(), input_map=input_map)
 
 Returned values
 ---------------

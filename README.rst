@@ -17,21 +17,56 @@ The package is installed as ``soft-mobility`` and imported as
 Documentation
 -------------
 
-The Sphinx documentation is in ``docs/source`` and can be built locally:
-
-.. code-block:: bash
-
-   sphinx-build -b html docs/source docs/build/html
-
-Then open ``docs/build/html/index.html`` in a browser. The documentation
-includes:
+The Sphinx sources live in ``docs/source``. The HTML build is produced under
+``docs/build/html`` (gitignored). The documentation covers:
 
 * an overview of the physical and numerical conventions,
 * geometry and YAML model definitions,
 * scalar, field, and flow inputs,
 * rollout simulation,
 * design optimization,
-* the full API reference.
+* the full API reference (auto-generated from docstrings).
+
+Build it locally
+~~~~~~~~~~~~~~~~
+
+First install the development tools that include Sphinx and its extensions
+(``sphinx``, ``sphinx_rtd_theme``, ``sphinx-copybutton``, ``numpydoc``,
+``ipython``):
+
+.. code-block:: bash
+
+   pip install -r requirements-dev.txt
+
+Then build the HTML pages from the repository root. The two equivalent
+commands below produce the same output in ``docs/build/html``:
+
+.. code-block:: bash
+
+   # using the Makefile (preferred — also available: ``make -C docs clean``)
+   make -C docs html
+
+   # or invoking sphinx-build directly
+   sphinx-build -b html docs/source docs/build/html
+
+Open the result in a browser:
+
+.. code-block:: bash
+
+   open docs/build/html/index.html        # macOS
+   xdg-open docs/build/html/index.html    # Linux
+
+To match the GitHub Actions ``docs.yml`` workflow exactly — which treats
+warnings as errors and fails on broken cross-references — clean first and
+pass ``-W``:
+
+.. code-block:: bash
+
+   make -C docs clean
+   sphinx-build -W -b html docs/source docs/build/html
+
+Run this last command before opening a pull request that touches docstrings
+or ``docs/source/*.rst`` so CI surprises are caught locally.
 
 Installation
 ------------
@@ -68,10 +103,10 @@ Start with the built-in input and flow objects:
 .. code-block:: python
 
    import jax.numpy as jnp
-   from softmobility import gravity_field, shear_flow
+   import softmobility as sm
 
-   gravity = gravity_field(g=9.81)
-   flow = shear_flow(shear_rate=1.0)
+   gravity = sm.gravity_field(g=9.81)
+   flow = sm.shear_flow(shear_rate=1.0)
 
    pos = jnp.array([0.0, 2.0, 0.0])
    print(gravity.vector(pos))      # [0, 0, -9.81]
@@ -80,14 +115,14 @@ Start with the built-in input and flow objects:
 
 A complete simulation uses three pieces:
 
-1. ``SoftBody`` for the deformable sphere assembly.
-2. ``Flow`` and optional ``Field`` or ``Scalar`` inputs.
-3. ``FlowBodyRollout`` to integrate the body trajectory.
+1. ``sm.SoftBody`` for the deformable sphere assembly.
+2. ``sm.Flow`` and optional ``sm.Field`` or ``sm.Scalar`` inputs.
+3. ``sm.FlowBodyRollout`` to integrate the body trajectory.
 
 .. code-block:: python
 
    import jax.numpy as jnp
-   from softmobility import SoftBody, FlowBodyRollout, no_flow
+   import softmobility as sm
 
    yaml_text = """
    dof_names: [x]
@@ -108,8 +143,8 @@ A complete simulation uses three pieces:
        torque: [0, k * x0, 0]
    """
 
-   body = SoftBody(yaml_text, verbose=False)
-   rollout = FlowBodyRollout(body, no_flow())
+   body = sm.SoftBody(yaml_text, verbose=False)
+   rollout = sm.FlowBodyRollout(body, sm.no_flow())
 
    positions, orientations, dofs = rollout.rollout(
        dt=0.01,
@@ -121,18 +156,37 @@ A complete simulation uses three pieces:
 Examples
 --------
 
-Tutorial notebooks live in ``softmobility/tutorials``:
+Tutorial notebooks live in ``softmobility/tutorials`` and are grouped into
+three layers; the numbering reflects the layer
+(0X = library introduction, 1X = validation against published results,
+2X = original case studies).
 
-* ``01_tutorial_sphere_assemblies.ipynb``
-* ``02_rigid_assembly.ipynb``
-* ``03_freefall_trajectories.ipynb``
-* ``04_Jeffery_orbits.ipynb``
-* ``05_one_dof_soft_body.ipynb`` *(in preparation)*
-* ``06_three_sphere_swimmer.ipynb``
-* ``07_soft_surfer.ipynb``
+**Library introduction (0X)**
 
-For new users, start with the sphere assembly tutorial before moving to
-rollouts or optimization.
+* ``01_assembly_creation.ipynb`` — methods to create a sphere assembly
+* ``02_rigid_mobility.ipynb`` — mobility properties of a rigid sphere assembly
+* ``03_soft_mobility_simulation.ipynb`` — soft mobility tensors and
+  simulation of a trajectory
+* ``04_optimization.ipynb`` — optimization principles
+
+**Validation cases (1X)**
+
+* ``11_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
+  *(work in progress)*
+* ``12_flexible_fiber_2d.ipynb`` — 2-D flexible fiber in shear and gravity
+  (Delmotte et al. 2015)
+* ``13_rotating_fiber_3d.ipynb`` — 3-D filament: bending and rotational
+  relaxation (Coq et al. 2008; Wiggins et al. 1998)
+* ``14_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid body
+
+**Original case studies (2X)**
+
+* ``21_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
+* ``22_three_sphere_swimmer.ipynb`` — three-sphere swimmer optimization
+* ``23_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
+
+New users should start with ``01_assembly_creation`` and work through the
+0X group before moving to validation cases or original studies.
 
 Testing
 -------
@@ -143,11 +197,7 @@ Run the test suite with:
 
    pytest
 
-Build the documentation with warnings treated as errors:
-
-.. code-block:: bash
-
-   sphinx-build -W -b html docs/source docs/build/html
+For documentation builds, see the *Build it locally* subsection above.
 
 Contributing
 ------------

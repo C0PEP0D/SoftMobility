@@ -13,19 +13,17 @@ Start by importing the main classes:
 .. code-block:: python
 
     import softmobility as sm
-    from softmobility import Sphere, SphereAssembly, SoftBody
-    from softmobility import FlowBodyRollout, FlowBodyOptimizer
 
 Creating a Soft Body
 --------------------
 
-``SoftBody`` can be created from a YAML file path or from a YAML string. The
+``sm.SoftBody`` can be created from a YAML file path or from a YAML string. The
 YAML parser detects degrees of freedom, design variables, and inputs from the
 symbols used in sphere expressions.
 
 .. code-block:: python
 
-    from softmobility import SoftBody
+    import softmobility as sm
 
     yaml_text = """
     dof_names:
@@ -50,35 +48,35 @@ symbols used in sphere expressions.
         torque: [0, k * x0, 0]
     """
 
-    body = SoftBody(yaml_text, verbose=False)
+    body = sm.SoftBody(yaml_text, verbose=False)
     print(body.dof_variables, body.design_variables)
 
 Working with Flows
 ------------------
 
-Define fluid flows using the Flow classes:
+Define fluid flows using the ``Flow`` class:
 
 .. code-block:: python
 
-    from softmobility import shear_flow, no_flow
+    import softmobility as sm
     
     # Create a shear flow
-    flow = shear_flow(shear_rate=1.0)
+    flow = sm.shear_flow(shear_rate=1.0)
     
     # Or no flow for stationary fluid
-    flow = no_flow()
+    flow = sm.no_flow()
 
 Running Simulations
 -------------------
 
-Use ``FlowBodyRollout`` to simulate the body trajectory:
+Use ``sm.FlowBodyRollout`` to simulate the body trajectory:
 
 .. code-block:: python
 
     import jax.numpy as jnp
-    from softmobility import FlowBodyRollout
+    import softmobility as sm
 
-    rollout = FlowBodyRollout(body, flow)
+    rollout = sm.FlowBodyRollout(body, flow)
     positions, orientations, dofs = rollout.rollout(
         dt=0.01,
         n_steps=100,
@@ -95,13 +93,13 @@ design)``:
 .. code-block:: python
 
     import optax
-    from softmobility import FlowBodyOptimizer
+    import softmobility as sm
 
     def final_height(rollout, design):
         positions, _, _ = rollout.rollout(dt=0.01, n_steps=100, design=design)
         return positions[-1, 2]
 
-    optimizer = FlowBodyOptimizer(rollout, final_height, optax.adam(1e-3))
+    optimizer = sm.FlowBodyOptimizer(rollout, final_height, optax.adam(1e-3))
     optimized_design = optimizer.run(
         init_design=body.design_defaults,
         n_steps=200,
@@ -128,8 +126,8 @@ The tutorials are grouped into three layers. Numbering reflects the layer
 - ``11_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
 - ``12_flexible_fiber_2d.ipynb`` — 2-D flexible fiber in shear and gravity
   (Delmotte et al. 2015)
-- ``13_rotating_fiber_3d.ipynb`` — 3-D filament in a rotating flow
-  (Coq et al. 2008; Wiggins et al. 1998)
+- ``13_rotating_fiber_3d.ipynb`` — 3-D filament: bending and rotational
+  relaxation (Coq et al. 2008; Wiggins et al. 1998)
 - ``14_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid body
 
 **Original case studies (2X)**
