@@ -455,37 +455,102 @@ def add_sphere(
     ))
 
 
+def _cylinder_mesh(
+    start,
+    end,
+    radius: float,
+    color: str,
+    *,
+    n_sides: int = 16,
+) -> go.Mesh3d:
+    """Return a thin closed cylinder from ``start`` to ``end`` as a
+    triangulated ``Mesh3d`` trace.  Used for axis bars so they share the
+    same depth/transparency rendering pass as ``Surface``/``Mesh3d``
+    spheres — i.e. the bar is properly occluded by transparent geometry
+    in front of it.
+    """
+    start = np.asarray(start, dtype=float)
+    end = np.asarray(end, dtype=float)
+    axis = end - start
+    axis_len = np.linalg.norm(axis)
+    direction = axis / axis_len
+
+    # Two perpendicular unit vectors for the cross-section.
+    ref = np.array([1.0, 0.0, 0.0]) if abs(direction[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+    u1 = np.cross(ref, direction)
+    u1 = u1 / np.linalg.norm(u1)
+    u2 = np.cross(direction, u1)
+
+    theta = np.linspace(0.0, 2 * np.pi, n_sides, endpoint=False)
+    cos_t = np.cos(theta)
+    sin_t = np.sin(theta)
+    ring_offset = radius * (cos_t[:, None] * u1 + sin_t[:, None] * u2)  # (n_sides, 3)
+
+    ring_lo = start + ring_offset
+    ring_hi = end + ring_offset
+
+    verts = np.vstack([ring_lo, ring_hi])  # 2 * n_sides
+    n = n_sides
+
+    # Side triangles: each quad split into two triangles.
+    i_idx, j_idx, k_idx = [], [], []
+    for s in range(n_sides):
+        s_next = (s + 1) % n_sides
+        # quad (s_lo, s_next_lo, s_next_hi, s_hi) → tri1 (s_lo, s_next_lo, s_next_hi)
+        i_idx.append(s)
+        j_idx.append(s_next)
+        k_idx.append(s_next + n)
+        # tri2 (s_lo, s_next_hi, s_hi)
+        i_idx.append(s)
+        j_idx.append(s_next + n)
+        k_idx.append(s + n)
+
+    return go.Mesh3d(
+        x=verts[:, 0], y=verts[:, 1], z=verts[:, 2],
+        i=i_idx, j=j_idx, k=k_idx,
+        color=color, opacity=1.0,
+        flatshading=True,
+        lighting=dict(ambient=1.0, diffuse=0.0, specular=0.0,
+                       roughness=1.0, fresnel=0.0),
+        showlegend=False, hoverinfo="skip",
+    )
+
+
 def add_body_axes(
     fig: go.Figure,
     length: float,
     *,
     origin=(0.0, 0.0, 0.0),
     color: str | None = None,
-    line_width: float = 4.0,
+    cyl_radius: float | None = None,
     head_size: float | None = None,
     labels: tuple[str, str, str] = ("E1", "E2", "E3"),
-    show_labels: bool = True,
+    show_labels: bool = False,
     label_offset: float = 0.6,
     label_textposition: str = "top center",
     label_name_prefix: str = "axis_label_",
 ) -> None:
     """Add three body-frame axis arrows from ``origin`` along E1/E2/E3.
 
-    Each axis is a solid line capped by a cone arrowhead (Plotly ``Cone``
-    trace).  Optionally annotates the tip with the axis label.
+    Each axis is rendered as a thin :class:`Mesh3d` cylinder (so it
+    interacts correctly with transparent geometry) capped with a
+    :class:`Cone` arrowhead.  Labels are off by default; opt in with
+    ``show_labels=True`` or use :func:`add_label` for finer control.
 
     Parameters
     ----------
     length : float
-        Length of each line (excluding the cone head).
+        Length of each axis (excluding the cone head).
     origin : array-like, default (0, 0, 0)
         Common starting point of the three arrows.
     color : str, optional
-        Colour for the lines and cones.  Defaults to ``COLORS["black"]``.
+        Colour for the cylinders and cones.  Defaults to ``COLORS["black"]``.
+    cyl_radius : float, optional
+        Cylinder radius in data units.  Defaults to ``0.012 * length``.
     head_size : float, optional
         Cone size in data units.  Defaults to ``0.15 * length``.
-    show_labels : bool, default True
-        Whether to draw the E1/E2/E3 labels.
+    show_labels : bool, default False
+        Whether to draw E1/E2/E3 labels at the cone tips.
     label_offset : float, default 0.6
         Extra distance past the cone tip, expressed as a multiple of
         ``head_size``, where each label is placed.
@@ -495,30 +560,25 @@ def add_body_axes(
         ``"middle right"``, ``"bottom left"``, ``"bottom center"``,
         ``"bottom right"``).
     label_name_prefix : str, default ``"axis_label_"``
-        Each label trace is named ``f"{prefix}{label}"`` so it can later
-        be located, removed, or moved with :func:`remove_label` /
-        :func:`displace_label`.
+        When ``show_labels`` is True, each label trace is named
+        ``f"{prefix}{label}"`` so it can later be located, removed, or
+        moved with :func:`remove_label` / :func:`displace_label`.
     """
     color = color or COLORS["black"]
+    cyl_radius = cyl_radius if cyl_radius is not None else 0.012 * length
     head_size = head_size if head_size is not None else 0.15 * length
     origin = np.asarray(origin, dtype=float)
     directions = np.eye(3)
     for direction, label in zip(directions, labels, strict=True):
         tip = origin + length * direction
-        fig.add_trace(go.Scatter3d(
-            x=[origin[0], tip[0]],
-            y=[origin[1], tip[1]],
-            z=[origin[2], tip[2]],
-            mode="lines",
-            line=dict(color=color, width=line_width),
-            showlegend=False, hoverinfo="skip",
-        ))
+        fig.add_trace(_cylinder_mesh(origin, tip, cyl_radius, color))
         fig.add_trace(go.Cone(
             x=[tip[0]], y=[tip[1]], z=[tip[2]],
             u=[direction[0]], v=[direction[1]], w=[direction[2]],
             colorscale=[[0, color], [1, color]],
             showscale=False, sizemode="absolute", sizeref=head_size,
             anchor="tail", showlegend=False, hoverinfo="skip",
+            lighting=dict(ambient=1.0, diffuse=0.0, specular=0.0),
         ))
         if show_labels:
             tip_label = origin + (length + label_offset * head_size) * direction
