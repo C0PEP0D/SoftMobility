@@ -112,7 +112,7 @@ def test_3D_C_H_is_mass_times_identity_on_force():
 
 def test_mobility_tensor_symmetric():
     body = FlexibleFiber(n_beads=10)
-    M = body.compute_mobility_tensor()
+    M = body.compute_grand_mobility()
     assert M.shape == (60, 60)
     assert jnp.all(jnp.isfinite(M))
     assert jnp.allclose(M, M.T, atol=1e-7)

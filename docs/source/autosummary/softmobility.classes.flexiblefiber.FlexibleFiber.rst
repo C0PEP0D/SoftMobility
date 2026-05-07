@@ -21,7 +21,8 @@
       ~FlexibleFiber.compute_Jacobian_matrix
       ~FlexibleFiber.compute_Jassembly
       ~FlexibleFiber.compute_composition_of_forces
-      ~FlexibleFiber.compute_mobility_tensor
+      ~FlexibleFiber.compute_grand_mobility
+      ~FlexibleFiber.compute_rigid_mobility
       ~FlexibleFiber.compute_tensors
       ~FlexibleFiber.from_file
       ~FlexibleFiber.grand_C_H

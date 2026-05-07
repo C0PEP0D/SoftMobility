@@ -11,62 +11,7 @@ from jax import lax
 from .sphere import Sphere
 from .sphereassembly import SphereAssembly
 
-SoftMobilityTensors = namedtuple("SoftMobilityTensors", ["M", "M_K", "M_H", "C_E", "P", "p_act"])
-
-
-# Pure module-level functions for far-field GRPY mobility tensors ##############
-# These operate on plain arrays (no Sphere objects) so they are vmappable.
-
-def _grpy_self_block(r_i: float) -> jnp.ndarray:
-    """Self-mobility 6×6 block for a sphere of radius ``r_i``."""
-    mu_tt = (1.0 / (6.0 * jnp.pi * r_i)) * jnp.eye(3)
-    mu_rr = (1.0 / (8.0 * jnp.pi * r_i**3)) * jnp.eye(3)
-    zeros = jnp.zeros((3, 3))
-    return jnp.block([[mu_tt, zeros], [zeros, mu_rr]])
-
-
-def _grpy_off_diag_block(
-    pos_i: jnp.ndarray, r_i: float, pos_j: jnp.ndarray, r_j: float
-) -> jnp.ndarray:
-    """Far-field GRPY 6×6 block for a non-overlapping sphere pair (i ≠ j).
-
-    Parameters
-    ----------
-    pos_i, pos_j : jnp.ndarray, shape (3,)
-        Centre positions of spheres i and j.
-    r_i, r_j : float
-        Radii of spheres i and j.
-
-    Returns
-    -------
-    jnp.ndarray, shape (6, 6)
-        Block ``[[mu_tt, mu_tr], [mu_rt, mu_rr]]``.
-    """
-    rvec = pos_i - pos_j
-    R = jnp.linalg.norm(rvec)
-    Rhat = rvec / R
-
-    # Translation–translation (Rotne–Prager)
-    eye_pf = (1.0 + (r_i**2 + r_j**2) / (3.0 * R**2)) / (8.0 * jnp.pi * R)
-    hat_pf = (1.0 - (r_i**2 + r_j**2) / R**2) / (8.0 * jnp.pi * R)
-    mu_tt = eye_pf * jnp.eye(3) + hat_pf * jnp.outer(Rhat, Rhat)
-
-    # Rotation–rotation
-    mu_rr = (
-        (-1.0 / (16.0 * jnp.pi * R**3)) * jnp.eye(3)
-        + (3.0 / (16.0 * jnp.pi * R**3)) * jnp.outer(Rhat, Rhat)
-    )
-
-    # Rotation–translation and translation–rotation (cross-product matrix form)
-    pf_rt = 1.0 / (8.0 * jnp.pi * R**2)
-    mu_rt = pf_rt * jnp.cross(-jnp.eye(3), Rhat)
-    # mu_tr(i,j) = mu_rt(j,i)^T  where Rhat_ji = -Rhat_ij
-    mu_tr = pf_rt * jnp.cross(-jnp.eye(3), -Rhat).T
-
-    return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
-
-
-###############################################################################
+SoftMobilityTensors = namedtuple("SoftMobilityTensors", ["M", "Mred", "M_K", "M_H", "C_E", "Pi", "p_act"])
 
 
 class SoftBody(SphereAssembly):
@@ -102,8 +47,8 @@ class SoftBody(SphereAssembly):
             Input mobility matrix (coupling with 3D and scalar fields).
         - C_E : jnp.ndarray
             Elastic coupling matrix.
-        - P : jnp.ndarray
-            Projection matrix.
+        - Pi : jnp.ndarray
+            Projection matrix :math:`\\boldsymbol{\\Pi}`.
 
     Examples
     --------
@@ -154,11 +99,18 @@ class SoftBody(SphereAssembly):
         SoftMobilityTensors
             A named tuple containing:
 
-            - M : grand mobility matrix.
+            - M : grand mobility tensor ``Mred @ J.T``, shape ``(6+Ndof, 6N)``.
+            - Mred : reduced mobility matrix, shape ``(6+Ndof, 6+Ndof)``.
+              Maps generalized forces (force/torque at :math:`O` and internal
+              forces conjugate to the DOFs) to generalized velocities
+              :math:`(\\mathbf{U}, \\boldsymbol{\\Omega}, \\dot{q})`.
+              For a rigid body (``Ndof = 0``) the first :math:`6 \times 6`
+              block is the effective mobility; use :meth:`compute_rigid_mobility`
+              to obtain it directly.
             - M_K : elastic mobility (dofs coupling).
             - M_H : input mobility (field/scalar coupling).
             - C_E : strain coupling matrix.
-            - P : projection matrix.
+            - Pi : projection matrix :math:`\\boldsymbol{\\Pi}`.
             - p_act : active velocity contribution.
 
         Examples
@@ -173,7 +125,7 @@ class SoftBody(SphereAssembly):
         dofs, design, time = self._setup_params(dofs, design, time)
 
         J, v_act = self.compute_Jacobian_matrix(dofs, design, time)
-        Mgrand = self.compute_mobility_tensor(dofs, design, time)
+        Mgrand = self.compute_grand_mobility(dofs, design, time)
         Rgrand = jnp.linalg.inv(Mgrand)
         C_S = self._compute_composition_of_strain(dofs, design, time)
         R_S = self._compute_coupling_with_strain(dofs, design, time)
@@ -182,15 +134,51 @@ class SoftBody(SphereAssembly):
 
         Mred = jnp.linalg.inv(J.T @ Rgrand @ J)
         M = Mred @ J.T
-        P = M @ Rgrand
-        C_E = P @ C_S + M @ R_S
+        Pi = M @ Rgrand
+        C_E = Pi @ C_S + M @ R_S
         M_K = M @ C_K
         M_H = M @ C_H
-        p_act = -P @ v_act.squeeze()
+        p_act = -Pi @ v_act.squeeze()
 
-        return SoftMobilityTensors(M=M, M_K=M_K, M_H=M_H, C_E=C_E, P=P, p_act=p_act)
+        return SoftMobilityTensors(M=M, Mred=Mred, M_K=M_K, M_H=M_H, C_E=C_E, Pi=Pi, p_act=p_act)
 
-    def compute_mobility_tensor(self, dofs=None, design=None, time=None) -> jnp.ndarray:
+    def compute_rigid_mobility(self, dofs=None, design=None, time=None) -> jnp.ndarray:
+        """
+        Compute the rigid-body equivalent mobility matrix.
+
+        Returns the 6×6 effective mobility of the assembly treated as a
+        perfectly rigid body: all spring stiffnesses are taken to infinity and
+        all degrees of freedom are frozen.  Only the six rigid-body modes
+        (three translations, three rotations of the reference point) are
+        retained.
+
+        This is equivalent to ``compute_tensors().Mred`` when the body has no
+        degrees of freedom, and gives the rigid-body limit for soft bodies.
+
+        Parameters
+        ----------
+        dofs : array-like, optional
+            Degrees of freedom used to evaluate bead positions. Defaults to
+            ``dof_defaults``.
+        design : array-like, optional
+            Design variables. Defaults to ``design_defaults``.
+        time : float or array-like, optional
+            Time used for time-dependent geometry.
+
+        Returns
+        -------
+        jnp.ndarray, shape ``(6, 6)``
+            Symmetric positive-definite mobility matrix relating a force/torque
+            applied at the assembly reference point to its translational and
+            rotational velocity.
+        """
+        dofs, design, time = self._setup_params(dofs, design, time)
+        Mgrand = self.compute_grand_mobility(dofs, design, time)
+        Rgrand = jnp.linalg.inv(Mgrand)
+        C_U = self.compute_C_U(dofs, design, time)
+        return jnp.linalg.inv(C_U.T @ Rgrand @ C_U)
+
+    def compute_grand_mobility(self, dofs=None, design=None, time=None) -> jnp.ndarray:
         """
         Compute the grand hydrodynamic mobility tensor.
 
@@ -326,10 +314,9 @@ class SoftBody(SphereAssembly):
         hat1_pf = (5.0 * aj / 6.0) * (-2.0 * (5.0 * ai**2 * aj**2 + 3.0 * aj**4)) / (5.0 * Rij**4)
         hat3_pf = (5.0 * aj / 6.0) * aj**2 * (5.0 * ai**2 + 3.0 * aj**2 - 3.0 * Rij**2) / Rij**4
 
-        matrix = (
-            hat1_pf * jnp.outer(jnp.eye(3), Rij_hat).reshape(3, 3, 3)
-            + hat3_pf * jnp.outer(Rij_hat, jnp.outer(Rij_hat, Rij_hat)).reshape(3, 3, 3)
-        )
+        matrix = hat1_pf * jnp.outer(jnp.eye(3), Rij_hat).reshape(3, 3, 3) + hat3_pf * jnp.outer(
+            Rij_hat, jnp.outer(Rij_hat, Rij_hat)
+        ).reshape(3, 3, 3)
         return matrix
 
     def _compute_mu_rd_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
@@ -391,3 +378,51 @@ class SoftBody(SphereAssembly):
                 UserWarning,
                 stacklevel=2,
             )
+
+
+# Pure module-level functions for far-field GRPY mobility tensors ##############
+# These operate on plain arrays (no Sphere objects) so they are vmappable.
+
+
+def _grpy_self_block(r_i: float) -> jnp.ndarray:
+    """Self-mobility 6×6 block for a sphere of radius ``r_i``."""
+    mu_tt = (1.0 / (6.0 * jnp.pi * r_i)) * jnp.eye(3)
+    mu_rr = (1.0 / (8.0 * jnp.pi * r_i**3)) * jnp.eye(3)
+    zeros = jnp.zeros((3, 3))
+    return jnp.block([[mu_tt, zeros], [zeros, mu_rr]])
+
+
+def _grpy_off_diag_block(pos_i: jnp.ndarray, r_i: float, pos_j: jnp.ndarray, r_j: float) -> jnp.ndarray:
+    """Far-field GRPY 6×6 block for a non-overlapping sphere pair (i ≠ j).
+
+    Parameters
+    ----------
+    pos_i, pos_j : jnp.ndarray, shape (3,)
+        Centre positions of spheres i and j.
+    r_i, r_j : float
+        Radii of spheres i and j.
+
+    Returns
+    -------
+    jnp.ndarray, shape (6, 6)
+        Block ``[[mu_tt, mu_tr], [mu_rt, mu_rr]]``.
+    """
+    rvec = pos_i - pos_j
+    R = jnp.linalg.norm(rvec)
+    Rhat = rvec / R
+
+    # Translation–translation (Rotne–Prager)
+    eye_pf = (1.0 + (r_i**2 + r_j**2) / (3.0 * R**2)) / (8.0 * jnp.pi * R)
+    hat_pf = (1.0 - (r_i**2 + r_j**2) / R**2) / (8.0 * jnp.pi * R)
+    mu_tt = eye_pf * jnp.eye(3) + hat_pf * jnp.outer(Rhat, Rhat)
+
+    # Rotation–rotation
+    mu_rr = (-1.0 / (16.0 * jnp.pi * R**3)) * jnp.eye(3) + (3.0 / (16.0 * jnp.pi * R**3)) * jnp.outer(Rhat, Rhat)
+
+    # Rotation–translation and translation–rotation (cross-product matrix form)
+    pf_rt = 1.0 / (8.0 * jnp.pi * R**2)
+    mu_rt = pf_rt * jnp.cross(-jnp.eye(3), Rhat)
+    # mu_tr(i,j) = mu_rt(j,i)^T  where Rhat_ji = -Rhat_ij
+    mu_tr = pf_rt * jnp.cross(-jnp.eye(3), -Rhat).T
+
+    return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])

@@ -63,6 +63,28 @@ Returned values
 contains one row per time step. Initial conditions are not prepended to the
 returned arrays; the first row is the state after the first integration step.
 
+Time-integration scheme
+-----------------------
+
+``rollout.rollout`` accepts a ``scheme`` keyword argument selecting the
+time-stepper:
+
+- ``"rk4"`` (default) — classical 4-stage Runge–Kutta with the Bortz
+  operator recomputed at every stage. Converges as :math:`O(dt^4)`.
+- ``"rk2"`` — explicit midpoint method with the Bortz operator recomputed
+  at the predicted half-step. Converges as :math:`O(dt^2)`.
+
+RK4 costs roughly twice as much per step as RK2 but is typically orders of
+magnitude more accurate at any non-trivial tolerance, so it is the
+recommended default. Pass ``scheme="rk2"`` only if you need the cheaper
+per-step cost and your tolerance is loose.
+
+.. code-block:: python
+
+   positions, orientations, dofs = rollout.rollout(
+       dt=0.01, n_steps=100, scheme="rk2",   # opt-in to the cheaper scheme
+   )
+
 JAX notes
 ---------
 

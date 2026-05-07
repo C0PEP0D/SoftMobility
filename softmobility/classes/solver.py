@@ -107,32 +107,94 @@ class FlowBodyRollout:
 
         return v_lab, omega, dot_dofs
 
-    def _step(self, carry, t, design, dt):
-        """Time stepping the soft mobility equation, lax.scan compatible"""
+    def _step_rk2(self, carry, t, design, dt):
+        """Classical midpoint (RK2) step, ``lax.scan`` compatible.
+
+        The Bortz operator is recomputed at the Euler-predicted mid-step
+        orientation, which is required for the orientation update to be
+        truly second-order accurate.
+        """
         position, orientation, dofs = carry
         time = t * dt
-        bortz = compute_bortz_operator(orientation)
 
         def vel(pos, ori, dof, time):
             return self._velocity(design, pos, ori, dof, time)
 
+        bortz0 = compute_bortz_operator(orientation)
         v1, w1, d1 = vel(position, orientation, dofs, time)
 
+        ori_mid = orientation + 0.5 * dt * bortz0 @ w1
+        bortz_mid = compute_bortz_operator(ori_mid)
+
         v2, w2, d2 = vel(
-            position + dt * v1 / 2,
-            orientation + dt * bortz @ w1 / 2,
-            dofs + dt * d1 / 2,
-            time + dt / 2,
+            position + 0.5 * dt * v1,
+            ori_mid,
+            dofs + 0.5 * dt * d1,
+            time + 0.5 * dt,
         )
 
-        pos_new = position + dt * (v1 + v2) / 2
-        ori_new = orientation + dt * bortz @ (w1 + w2) / 2
+        pos_new = position + dt * v2
+        ori_new = orientation + dt * bortz_mid @ w2
         ori_new = rescale_orientation(ori_new)
-        dof_new = dofs + dt * (d1 + d2) / 2
+        dof_new = dofs + dt * d2
 
         return (pos_new, ori_new, dof_new), (pos_new, ori_new, dof_new)
 
-    def rollout(self, dt, n_steps, init_position=None, init_orientation=None, init_dofs=None, design=None):
+    # Backward-compatible alias for the default scheme.
+    _step = _step_rk2
+
+    def _step_rk4(self, carry, t, design, dt):
+        """Classical 4-stage Runge–Kutta step, ``lax.scan`` compatible.
+
+        Recomputes the Bortz operator at every stage so the orientation update
+        is truly fourth-order accurate.
+        """
+        position, orientation, dofs = carry
+        time = t * dt
+
+        def deriv(pos, ori, dof, t):
+            v, w, dd = self._velocity(design, pos, ori, dof, t)
+            return v, compute_bortz_operator(ori) @ w, dd
+
+        v1, do1, dd1 = deriv(position, orientation, dofs, time)
+        v2, do2, dd2 = deriv(
+            position + 0.5 * dt * v1,
+            orientation + 0.5 * dt * do1,
+            dofs + 0.5 * dt * dd1,
+            time + 0.5 * dt,
+        )
+        v3, do3, dd3 = deriv(
+            position + 0.5 * dt * v2,
+            orientation + 0.5 * dt * do2,
+            dofs + 0.5 * dt * dd2,
+            time + 0.5 * dt,
+        )
+        v4, do4, dd4 = deriv(
+            position + dt * v3,
+            orientation + dt * do3,
+            dofs + dt * dd3,
+            time + dt,
+        )
+
+        pos_new = position + dt / 6.0 * (v1 + 2 * v2 + 2 * v3 + v4)
+        ori_new = orientation + dt / 6.0 * (do1 + 2 * do2 + 2 * do3 + do4)
+        ori_new = rescale_orientation(ori_new)
+        dof_new = dofs + dt / 6.0 * (dd1 + 2 * dd2 + 2 * dd3 + dd4)
+
+        return (pos_new, ori_new, dof_new), (pos_new, ori_new, dof_new)
+
+    _SCHEMES = {"rk2": _step_rk2, "rk4": _step_rk4}
+
+    def rollout(
+        self,
+        dt,
+        n_steps,
+        init_position=None,
+        init_orientation=None,
+        init_dofs=None,
+        design=None,
+        scheme="rk4",
+    ):
         """
         Simulate the advection and deformation of the soft body over n_steps.
 
@@ -154,6 +216,14 @@ class FlowBodyRollout:
             Initial degrees of freedom. If None, uses the soft body's default values.
         design : jnp.ndarray or list, optional
             Design parameters. If None, uses the soft body's default values.
+        scheme : {"rk4", "rk2"}, default "rk4"
+            Time-integration scheme. ``"rk4"`` (default) is a four-stage
+            classical Runge–Kutta with the Bortz operator recomputed at every
+            stage and converges as ``O(dt^4)``. ``"rk2"`` is the explicit
+            midpoint method (with Bortz recomputed at the predicted mid-step)
+            and converges as ``O(dt^2)``. RK4 costs roughly 2× per step but
+            is typically orders of magnitude more accurate at any
+            non-trivial tolerance, so it is the recommended default.
 
         Returns
         -------
@@ -184,9 +254,16 @@ class FlowBodyRollout:
         )
         dt = jnp.asarray(dt, dtype=float)
 
+        try:
+            step_fn = self._SCHEMES[scheme]
+        except KeyError as exc:
+            raise ValueError(
+                f"Unknown integration scheme {scheme!r}; choose from {sorted(self._SCHEMES)}"
+            ) from exc
+
         carry = (init_position, init_orientation, init_dofs)
         _, (positions, orientations, dofs) = jax.lax.scan(
-            partial(self._step, design=design, dt=dt), carry, jnp.arange(n_steps)
+            partial(step_fn, self, design=design, dt=dt), carry, jnp.arange(n_steps)
         )
         return positions, orientations, dofs
 
