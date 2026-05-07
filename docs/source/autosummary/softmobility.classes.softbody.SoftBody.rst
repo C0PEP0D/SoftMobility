@@ -21,7 +21,8 @@
       ~SoftBody.compute_Jacobian_matrix
       ~SoftBody.compute_Jassembly
       ~SoftBody.compute_composition_of_forces
-      ~SoftBody.compute_mobility_tensor
+      ~SoftBody.compute_grand_mobility
+      ~SoftBody.compute_rigid_mobility
       ~SoftBody.compute_tensors
       ~SoftBody.from_file
       ~SoftBody.grand_C_H

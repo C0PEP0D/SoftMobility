@@ -6,7 +6,7 @@ from softmobility import SoftBody, Sphere
 
 def test_mobility_matrices():
     sp = SoftBody("./softmobility/tests/parameters.yaml")
-    M = sp.compute_mobility_tensor()
+    M = sp.compute_grand_mobility()
     Mexpected = jnp.array(
         [
             [0.21220659, 0.0, 0.0, 0.0, 0.0, 0.0, 0.04807806, 0.0, 0.0, 0.0, -0.03978874, 0.0],
@@ -32,7 +32,7 @@ def test_mobility_tensor_symmetric_for_chain():
     sp = SoftBody()
     for k in range(5):
         sp.add_sphere(Sphere(radius=0.4, position=[float(k), 0.0, 0.0]))
-    M = sp.compute_mobility_tensor()
+    M = sp.compute_grand_mobility()
     assert M.shape == (30, 30)
     assert jnp.allclose(M, M.T, atol=1e-7)
     assert jnp.all(jnp.isfinite(M))
@@ -45,8 +45,8 @@ def test_jit_mobility_tensor_matches_eager():
     sp = SoftBody()
     for k in range(4):
         sp.add_sphere(Sphere(radius=0.3, position=[float(k), 0.0, 0.0]))
-    M_eager = sp.compute_mobility_tensor()
-    M_jit = jax.jit(sp.compute_mobility_tensor)()
+    M_eager = sp.compute_grand_mobility()
+    M_jit = jax.jit(sp.compute_grand_mobility)()
     assert jnp.allclose(M_eager, M_jit, atol=1e-7)
 
 

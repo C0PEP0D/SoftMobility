@@ -16,3 +16,5 @@ ipython
 numpydoc
 sphinx-copybutton
 sphinx_rtd_theme
+# Used by Plotly to export tutorial figures as vector PDF (paper-ready output).
+kaleido
