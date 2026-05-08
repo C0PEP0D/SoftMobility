@@ -52,12 +52,13 @@ Simulation and optimization
 Rotation utilities
 ------------------
 
-These helpers are public module-level functions but are mostly useful for
-advanced users working directly with Rodrigues vectors.
+These helpers are exposed at the package top level
+(``sm.rotation_matrix``, ``sm.rescale_orientation``, ``sm.compute_bortz_operator``)
+and are mostly useful for advanced users working directly with Rodrigues vectors.
 
 .. autosummary::
    :toctree: autosummary
 
-   softmobility.classes.solver.rescale_orientation
-   softmobility.classes.solver.compute_bortz_operator
-   softmobility.classes.solver.rotation_matrix
+   softmobility.rescale_orientation
+   softmobility.compute_bortz_operator
+   softmobility.rotation_matrix

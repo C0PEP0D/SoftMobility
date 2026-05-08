@@ -671,6 +671,20 @@ def rotation_matrix(rvec):
     -------
     jnp.ndarray
         Rotation matrix of shape ``(3, 3)``.
+
+    Examples
+    --------
+    The function accepts NumPy arrays or Python lists, so notebooks that do
+    not import ``jax.numpy`` can still call it. Wrap with ``np.asarray`` if a
+    strictly NumPy result is needed:
+
+    >>> import numpy as np
+    >>> import softmobility as sm
+    >>> R = np.asarray(sm.rotation_matrix(np.array([0.0, 0.0, np.pi / 2])))
+    >>> R.round(6)
+    array([[ 0., -1.,  0.],
+           [ 1.,  0.,  0.],
+           [ 0.,  0.,  1.]])
     """
     rvec = jnp.asarray(rvec, dtype=float)
     r_sq = jnp.dot(rvec, rvec)

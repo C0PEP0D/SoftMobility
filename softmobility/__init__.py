@@ -19,7 +19,14 @@ from .classes.inputs import (
     extensional_flow,
     taylor_green_flow,
 )
-from .classes.solver import FlowBodyRollout, FlowBodyOptimizer, FlowBodyRL
+from .classes.solver import (
+    FlowBodyRollout,
+    FlowBodyOptimizer,
+    FlowBodyRL,
+    rotation_matrix,  # rotation utilities
+    rescale_orientation,
+    compute_bortz_operator,
+)
 
 from ._version import get_versions
 
