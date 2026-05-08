@@ -244,7 +244,10 @@ class SoftBody(SphereAssembly):
         Raises
         ------
         ValueError
-            If any pair (i, j) has centre-to-centre distance ≤ r_i + r_j.
+            If any pair (i, j) has centre-to-centre distance < r_i + r_j
+            (strict overlap). Exactly-touching spheres (distance equal to
+            the sum of radii within ``1e-9 · max(r_i, r_j)``) are accepted
+            since they are the natural state of the Gears Model.
         """
         dofs, design, time = self._setup_params(dofs, design, time)
         positions = [np.asarray(s.position(dofs, design, time), dtype=float) for s in self.spheres]
@@ -253,9 +256,10 @@ class SoftBody(SphereAssembly):
             for j in range(i + 1, self.Nspheres):
                 Rij = float(np.linalg.norm(positions[i] - positions[j]))
                 ri_rj = radii[i] + radii[j]
-                if Rij <= ri_rj:
+                tol = 1e-9 * max(radii[i], radii[j])
+                if Rij < ri_rj - tol:
                     raise ValueError(
-                        f"Spheres {i} and {j} overlap: separation {Rij:.4f} ≤ "
+                        f"Spheres {i} and {j} overlap: separation {Rij:.4f} < "
                         f"sum of radii {ri_rj:.4f}. "
                         "GRPY mobility requires non-overlapping spheres."
                     )

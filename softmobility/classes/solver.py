@@ -194,6 +194,10 @@ class FlowBodyRollout:
         init_dofs=None,
         design=None,
         scheme="rk4",
+        clamp_position_fn=None,
+        clamp_orientation_fn=None,
+        clamp_dofs_mask=None,
+        clamp_dofs_fn=None,
     ):
         """
         Simulate the advection and deformation of the soft body over n_steps.
@@ -224,6 +228,30 @@ class FlowBodyRollout:
             and converges as ``O(dt^2)``. RK4 costs roughly 2× per step but
             is typically orders of magnitude more accurate at any
             non-trivial tolerance, so it is the recommended default.
+        clamp_position_fn : callable, optional
+            Time function ``t -> (3,)`` that returns the prescribed lab
+            position of the soft body's frame origin. After each integrator
+            step, the body position is overwritten with this value (the
+            integrator's velocity contribution is discarded). Useful for
+            modeling clamped / kinematically actuated filaments such as
+            those of Delmotte et al. 2015 §3.4 (Figs 12, 13). Default
+            ``None`` lets the body translate dynamically.
+        clamp_orientation_fn : callable, optional
+            Time function ``t -> (3,)`` that returns the prescribed body
+            Rodrigues rotation vector. After each integrator step, the body
+            orientation is overwritten with this value (``rescale_orientation``
+            is skipped — the user's prescription is authoritative). Default
+            ``None`` lets the body rotate dynamically.
+        clamp_dofs_mask : jnp.ndarray of bool, shape (Ndof,), optional
+            Static boolean mask of DOFs to clamp. Must have shape
+            ``(soft_body.Ndof,)``. Entries set to ``True`` are overridden
+            after each integrator step by the corresponding values from
+            ``clamp_dofs_fn``; entries set to ``False`` integrate normally.
+            Required if ``clamp_dofs_fn`` is provided.
+        clamp_dofs_fn : callable, optional
+            Time function ``t -> (Ndof,)`` returning the prescribed DOF
+            values. Only entries selected by ``clamp_dofs_mask`` are read.
+            Default ``None`` lets all DOFs evolve dynamically.
 
         Returns
         -------
@@ -239,6 +267,11 @@ class FlowBodyRollout:
         -----
         - This method is stateless and pure-functional, making it fully compatible with JAX transformations.
         - The simulation is performed using ``jax.lax.scan`` for efficient, JAX-compatible iteration.
+        - Clamping is applied **after** each RK4/RK2 step. The dynamics are
+          still computed at each stage (so the velocity field on the
+          unclamped DOFs is consistent with the hydrodynamic interactions
+          on the clamped ones), but the integrator's update is overwritten
+          for the clamped components.
         """
         init_position = jnp.zeros(3) if init_position is None else jnp.asarray(init_position, dtype=float)
         init_orientation = jnp.zeros(3) if init_orientation is None else jnp.asarray(init_orientation, dtype=float)
@@ -254,6 +287,16 @@ class FlowBodyRollout:
         )
         dt = jnp.asarray(dt, dtype=float)
 
+        if (clamp_dofs_fn is None) ^ (clamp_dofs_mask is None):
+            raise ValueError("clamp_dofs_fn and clamp_dofs_mask must be provided together.")
+        if clamp_dofs_mask is not None:
+            clamp_dofs_mask = jnp.asarray(clamp_dofs_mask, dtype=bool)
+            if clamp_dofs_mask.shape != (self.soft_body.Ndof,):
+                raise ValueError(
+                    f"clamp_dofs_mask must have shape ({self.soft_body.Ndof},), "
+                    f"got {clamp_dofs_mask.shape}"
+                )
+
         try:
             step_fn = self._SCHEMES[scheme]
         except KeyError as exc:
@@ -261,9 +304,32 @@ class FlowBodyRollout:
                 f"Unknown integration scheme {scheme!r}; choose from {sorted(self._SCHEMES)}"
             ) from exc
 
+        has_clamps = (
+            clamp_position_fn is not None
+            or clamp_orientation_fn is not None
+            or clamp_dofs_fn is not None
+        )
+
+        if has_clamps:
+            def step_with_clamps(self, carry, t, design, dt):
+                new_carry, _ = step_fn(self, carry, t, design, dt)
+                pos, ori, dofs_ = new_carry
+                t_new = (t + 1) * dt
+                if clamp_position_fn is not None:
+                    pos = clamp_position_fn(t_new)
+                if clamp_orientation_fn is not None:
+                    ori = clamp_orientation_fn(t_new)
+                if clamp_dofs_fn is not None:
+                    dofs_ = jnp.where(clamp_dofs_mask, clamp_dofs_fn(t_new), dofs_)
+                return (pos, ori, dofs_), (pos, ori, dofs_)
+
+            scan_step = step_with_clamps
+        else:
+            scan_step = step_fn
+
         carry = (init_position, init_orientation, init_dofs)
         _, (positions, orientations, dofs) = jax.lax.scan(
-            partial(step_fn, self, design=design, dt=dt), carry, jnp.arange(n_steps)
+            partial(scan_step, self, design=design, dt=dt), carry, jnp.arange(n_steps)
         )
         return positions, orientations, dofs
 
