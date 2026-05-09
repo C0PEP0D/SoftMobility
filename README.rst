@@ -14,66 +14,41 @@ optimize design parameters with JAX.
 The package is installed as ``soft-mobility`` and imported as
 ``softmobility``.
 
-Documentation
--------------
+Try the tutorials online
+------------------------
 
-The Sphinx sources live in ``docs/source``. The HTML build is produced under
-``docs/build/html`` (gitignored). The documentation covers:
+The fastest way to get a feel for SoftMobility is to run a tutorial directly
+in your browser via Google Colab — no clone, fork, or local install required.
+The first cell of every tutorial installs ``SoftMobility`` from this
+repository when it detects a Colab runtime (locally the cell is a no-op).
 
-* an overview of the physical and numerical conventions,
-* geometry and YAML model definitions,
-* scalar, field, and flow inputs,
-* rollout simulation,
-* design optimization,
-* the full API reference (auto-generated from docstrings).
+Click a badge below to launch the corresponding notebook in Colab:
 
-Build it locally
-~~~~~~~~~~~~~~~~
+* |colab-01| ``01_assembly_creation``
+* |colab-02| ``02_rigid_mobility``
+* |colab-03| ``03_soft_mobility_simulation``
+* |colab-04| ``04_optimization``
+* |colab-11| ``11_sinking_rigid_body``
+* |colab-12| ``12_flexible_fiber_2d``
+* |colab-13| ``13_rotating_fiber_3d``
+* |colab-14| ``14_jeffery_rigid``
+* |colab-21| ``21_jeffery_soft``
+* |colab-22| ``22_three_sphere_swimmer``
+* |colab-23| ``23_soft_surfer``
 
-First install the development tools that include Sphinx and its extensions
-(``sphinx``, ``sphinx_rtd_theme``, ``sphinx-copybutton``, ``numpydoc``,
-``ipython``):
-
-.. code-block:: bash
-
-   pip install -r requirements-dev.txt
-
-Then build the HTML pages from the repository root. The two equivalent
-commands below produce the same output in ``docs/build/html``:
-
-.. code-block:: bash
-
-   # using the Makefile (preferred — also available: ``make -C docs clean``)
-   make -C docs html
-
-   # or invoking sphinx-build directly
-   sphinx-build -b html docs/source docs/build/html
-
-Open the result in a browser:
-
-.. code-block:: bash
-
-   open docs/build/html/index.html        # macOS
-   xdg-open docs/build/html/index.html    # Linux
-
-To match the GitHub Actions ``docs.yml`` workflow exactly — which treats
-warnings as errors and fails on broken cross-references — clean first and
-pass ``-W``:
-
-.. code-block:: bash
-
-   make -C docs clean
-   sphinx-build -W -b html docs/source docs/build/html
-
-Run this last command before opening a pull request that touches docstrings
-or ``docs/source/*.rst`` so CI surprises are caught locally.
+For any notebook not listed above, you can build a Colab URL by hand by
+replacing the GitHub URL prefix
+``https://github.com/celoy/SoftMobility/blob/`` with
+``https://colab.research.google.com/github/celoy/SoftMobility/blob/``.
 
 Installation
 ------------
 
 SoftMobility requires Python 3.10 or newer. For a new user, the safest path is
 to work in an isolated environment. Two equivalent recipes follow — pick the
-one that matches the tooling you already use.
+one that matches the tooling you already use. The Sphinx ``installation``
+page in the documentation contains the same recipes plus troubleshooting
+notes (Apple Silicon, GPU JAX builds, etc.).
 
 With venv
 ~~~~~~~~~
@@ -114,15 +89,6 @@ the ``-e .`` editable install):
    cd SoftMobility
    conda env create -f environment.yml
    conda activate softmobility
-
-Development and documentation tools (both paths)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To install the development and documentation tools:
-
-.. code-block:: bash
-
-   python -m pip install -r requirements-dev.txt
 
 Verify the installation:
 
@@ -188,58 +154,8 @@ A complete simulation uses three pieces:
        init_orientation=jnp.zeros(3),
    )
 
-Try the tutorials online
-------------------------
-
-You can run any of the tutorials in your browser without cloning, forking, or
-installing anything locally — Google Colab opens the notebook straight from
-GitHub, and the first cell of every tutorial installs ``SoftMobility`` from
-this repository when it detects a Colab runtime (locally the cell is a no-op).
-
-Click a badge below to launch the corresponding notebook in Colab:
-
-* |colab-01| ``01_assembly_creation``
-* |colab-02| ``02_rigid_mobility``
-* |colab-03| ``03_soft_mobility_simulation``
-* |colab-04| ``04_optimization``
-* |colab-11| ``11_sinking_rigid_body``
-* |colab-12| ``12_flexible_fiber_2d``
-* |colab-13| ``13_rotating_fiber_3d``
-* |colab-14| ``14_jeffery_rigid``
-* |colab-21| ``21_jeffery_soft``
-* |colab-22| ``22_three_sphere_swimmer``
-* |colab-23| ``23_soft_surfer``
-
-For any notebook not listed above, you can build a Colab URL by hand by
-replacing the GitHub URL prefix
-``https://github.com/celoy/SoftMobility/blob/`` with
-``https://colab.research.google.com/github/celoy/SoftMobility/blob/``.
-
-.. |colab-01| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/01_assembly_creation.ipynb
-.. |colab-02| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/02_rigid_mobility.ipynb
-.. |colab-03| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/03_soft_mobility_simulation.ipynb
-.. |colab-04| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/04_optimization.ipynb
-.. |colab-11| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/11_sinking_rigid_body.ipynb
-.. |colab-12| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/12_flexible_fiber_2d.ipynb
-.. |colab-13| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/13_rotating_fiber_3d.ipynb
-.. |colab-14| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/14_jeffery_rigid.ipynb
-.. |colab-21| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/21_jeffery_soft.ipynb
-.. |colab-22| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/22_three_sphere_swimmer.ipynb
-.. |colab-23| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/23_soft_surfer.ipynb
-
-Examples
---------
+Tutorials
+---------
 
 Tutorial notebooks live in ``softmobility/tutorials`` and are grouped into
 three layers; the numbering reflects the layer
@@ -273,31 +189,61 @@ three layers; the numbering reflects the layer
 New users should start with ``01_assembly_creation`` and work through the
 0X group before moving to validation cases or original studies.
 
-Testing
--------
+Build the documentation locally
+-------------------------------
 
-Run the test suite with:
+The Sphinx sources live in ``docs/source``. To build the HTML pages, first
+install the development tools (which include Sphinx and its extensions):
 
 .. code-block:: bash
 
-   pytest
+   pip install -r requirements-dev.txt
 
-For documentation builds, see the *Build it locally* subsection above.
+Then build from the repository root:
+
+.. code-block:: bash
+
+   make -C docs html
+   open docs/build/html/index.html        # macOS
+   xdg-open docs/build/html/index.html    # Linux
+
+The strict, warnings-as-errors build that mirrors CI is documented in the
+*Developers* page (``docs/source/developers.rst``).
 
 Contributing
 ------------
 
-Contributions are welcome. Before opening a pull request, please run the tests
-and, when documentation is touched, build the Sphinx docs locally.
-
-Development notes and TODO items are kept in ``TODO.md``. This keeps the
-GitHub README focused on users while still making TODOs visible to editor tools
-such as the VS Code `Todo Tree`_ extension.
-
-.. _Todo Tree: https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree
+Contributions are welcome. The *Developers* page in the documentation
+(``docs/source/developers.rst``) covers the development install, running the
+tests, building the docs strictly, the versioning and release process, and
+the policy for opening issues and pull requests. Please read it before
+sending a PR.
 
 License
 -------
 
-SoftMobility is distributed under the 3-clause BSD license. See ``LICENSE`` for
-details.
+SoftMobility is distributed under the 3-clause BSD license. See ``LICENSE``
+for details.
+
+.. |colab-01| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/01_assembly_creation.ipynb
+.. |colab-02| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/02_rigid_mobility.ipynb
+.. |colab-03| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/03_soft_mobility_simulation.ipynb
+.. |colab-04| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/04_optimization.ipynb
+.. |colab-11| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/11_sinking_rigid_body.ipynb
+.. |colab-12| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/12_flexible_fiber_2d.ipynb
+.. |colab-13| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/13_rotating_fiber_3d.ipynb
+.. |colab-14| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/14_jeffery_rigid.ipynb
+.. |colab-21| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/21_jeffery_soft.ipynb
+.. |colab-22| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/22_three_sphere_swimmer.ipynb
+.. |colab-23| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/23_soft_surfer.ipynb
