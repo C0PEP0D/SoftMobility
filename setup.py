@@ -46,7 +46,7 @@ setup(
     long_description=readme,
     author="Christophe Eloy",
     author_email="christopheloy@gmail.com",
-    url="https://github.com/celoy/SoftMobility",
+    url="https://github.com/C0PEP0D/SoftMobility",
     python_requires=">={}".format(".".join(str(n) for n in min_version)),
     packages=find_packages(exclude=["docs", "tests"]),
     entry_points={
