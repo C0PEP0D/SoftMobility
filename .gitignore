@@ -92,5 +92,9 @@ CLAUDE.md
 .claude/
 
 # Latex
-manuscript/
+manuscript/*.aux
+manuscript/*.log
+manuscript/*.blg
+manuscript/*.bib
+manuscript/*.synctex.gz
 tutorials/figures/
