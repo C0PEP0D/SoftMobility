@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; Soft Mobility 1.0.0.post22.dev0+g620f3e1 documentation</title>
+  <title>Installation &mdash; Soft Mobility 1.0.0.post26.dev0+g72da246 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=51a86cbb"></script>
+      <script src="_static/documentation_options.js?v=a2c369d3"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -48,9 +48,14 @@
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installation-from-source">Installation from Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-from-source">Installation from Source</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#with-venv">With venv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#with-conda">With conda</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#development-and-documentation-tools">Development and documentation tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#verifying-installation">Verifying Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tutorials-on-google-colab">Running tutorials on Google Colab</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
@@ -105,8 +110,11 @@ It also depends on:</p>
 </section>
 <section id="installation-from-source">
 <h2>Installation from Source<a class="headerlink" href="#installation-from-source" title="Link to this heading"></a></h2>
-<p>The package is not yet on PyPI. Clone the repository and install in editable
-mode:</p>
+<p>The package is not yet on PyPI. Clone the repository and install it in editable
+mode inside an isolated environment. Two equivalent recipes are documented
+below — use whichever matches your existing tooling.</p>
+<section id="with-venv">
+<h3>With venv<a class="headerlink" href="#with-venv" title="Link to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/celoy/SoftMobility.git
 <span class="nb">cd</span><span class="w"> </span>SoftMobility
 python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
@@ -116,9 +124,35 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 </pre></div>
 </div>
 </section>
+<section id="with-conda">
+<h3>With conda<a class="headerlink" href="#with-conda" title="Link to this heading"></a></h3>
+<p>If you prefer <code class="docutils literal notranslate"><span class="pre">conda</span></code> (or the faster, drop-in <code class="docutils literal notranslate"><span class="pre">mamba</span></code>) for environment
+management, the recommended pattern is to let conda manage the Python sandbox
+and let pip install the package itself — JAX in particular is more reliable
+when installed from PyPI than from conda-forge:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/celoy/SoftMobility.git
+<span class="nb">cd</span><span class="w"> </span>SoftMobility
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>softmobility<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
+conda<span class="w"> </span>activate<span class="w"> </span>softmobility
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+<p>Or, equivalently, use the bundled <code class="docutils literal notranslate"><span class="pre">environment.yml</span></code>, which performs the same
+steps in a single command. It must be run from the repository root because of
+the <code class="docutils literal notranslate"><span class="pre">-e</span> <span class="pre">.</span></code> editable install:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/celoy/SoftMobility.git
+<span class="nb">cd</span><span class="w"> </span>SoftMobility
+conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
+conda<span class="w"> </span>activate<span class="w"> </span>softmobility
+</pre></div>
+</div>
+</section>
+</section>
 <section id="development-and-documentation-tools">
 <h2>Development and documentation tools<a class="headerlink" href="#development-and-documentation-tools" title="Link to this heading"></a></h2>
-<p>Install the additional tools needed to run tests and build the documentation:</p>
+<p>Install the additional tools needed to run tests and build the documentation
+(this works inside either a <code class="docutils literal notranslate"><span class="pre">venv</span></code> or a <code class="docutils literal notranslate"><span class="pre">conda</span></code> environment):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-dev.txt
 </pre></div>
 </div>
@@ -129,6 +163,18 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SoftMobility version: </span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</section>
+<section id="running-tutorials-on-google-colab">
+<span id="id1"></span><h2>Running tutorials on Google Colab<a class="headerlink" href="#running-tutorials-on-google-colab" title="Link to this heading"></a></h2>
+<p>Tutorials in <code class="docutils literal notranslate"><span class="pre">softmobility/tutorials</span></code> can be run directly in Google Colab —
+no local clone, fork, or install required. Each notebook contains a first cell
+that installs <code class="docutils literal notranslate"><span class="pre">SoftMobility</span></code> from GitHub when it detects a Colab runtime;
+locally the cell is a no-op.</p>
+<p>To open a notebook in Colab, either click the corresponding badge in the
+<a class="reference external" href="https://github.com/celoy/SoftMobility#try-the-tutorials-online">README on GitHub</a>,
+or build the URL by hand by replacing the GitHub URL prefix
+<code class="docutils literal notranslate"><span class="pre">https://github.com/celoy/SoftMobility/blob/</span></code> with
+<code class="docutils literal notranslate"><span class="pre">https://colab.research.google.com/github/celoy/SoftMobility/blob/</span></code>.</p>
 </section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>

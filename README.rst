@@ -72,7 +72,11 @@ Installation
 ------------
 
 SoftMobility requires Python 3.10 or newer. For a new user, the safest path is
-to work in a virtual environment:
+to work in an isolated environment. Two equivalent recipes follow — pick the
+one that matches the tooling you already use.
+
+With venv
+~~~~~~~~~
 
 .. code-block:: bash
 
@@ -82,6 +86,37 @@ to work in a virtual environment:
    source .venv/bin/activate
    python -m pip install --upgrade pip
    python -m pip install -e .
+
+With conda
+~~~~~~~~~~
+
+If you prefer ``conda`` (or the faster, drop-in ``mamba``) for environment
+management, the recommended pattern is to let conda manage the Python sandbox
+and let pip install the package itself — JAX and a few other dependencies
+install more reliably from PyPI than from conda-forge:
+
+.. code-block:: bash
+
+   git clone https://github.com/celoy/SoftMobility.git
+   cd SoftMobility
+   conda create -n softmobility python=3.11
+   conda activate softmobility
+   python -m pip install --upgrade pip
+   python -m pip install -e .
+
+Or, equivalently, use the bundled ``environment.yml`` (which performs the same
+steps in a single command and must be run from the repository root because of
+the ``-e .`` editable install):
+
+.. code-block:: bash
+
+   git clone https://github.com/celoy/SoftMobility.git
+   cd SoftMobility
+   conda env create -f environment.yml
+   conda activate softmobility
+
+Development and documentation tools (both paths)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To install the development and documentation tools:
 
@@ -152,6 +187,56 @@ A complete simulation uses three pieces:
        init_position=jnp.zeros(3),
        init_orientation=jnp.zeros(3),
    )
+
+Try the tutorials online
+------------------------
+
+You can run any of the tutorials in your browser without cloning, forking, or
+installing anything locally — Google Colab opens the notebook straight from
+GitHub, and the first cell of every tutorial installs ``SoftMobility`` from
+this repository when it detects a Colab runtime (locally the cell is a no-op).
+
+Click a badge below to launch the corresponding notebook in Colab:
+
+* |colab-01| ``01_assembly_creation``
+* |colab-02| ``02_rigid_mobility``
+* |colab-03| ``03_soft_mobility_simulation``
+* |colab-04| ``04_optimization``
+* |colab-11| ``11_sinking_rigid_body``
+* |colab-12| ``12_flexible_fiber_2d``
+* |colab-13| ``13_rotating_fiber_3d``
+* |colab-14| ``14_jeffery_rigid``
+* |colab-21| ``21_jeffery_soft``
+* |colab-22| ``22_three_sphere_swimmer``
+* |colab-23| ``23_soft_surfer``
+
+For any notebook not listed above, you can build a Colab URL by hand by
+replacing the GitHub URL prefix
+``https://github.com/celoy/SoftMobility/blob/`` with
+``https://colab.research.google.com/github/celoy/SoftMobility/blob/``.
+
+.. |colab-01| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/01_assembly_creation.ipynb
+.. |colab-02| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/02_rigid_mobility.ipynb
+.. |colab-03| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/03_soft_mobility_simulation.ipynb
+.. |colab-04| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/04_optimization.ipynb
+.. |colab-11| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/11_sinking_rigid_body.ipynb
+.. |colab-12| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/12_flexible_fiber_2d.ipynb
+.. |colab-13| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/13_rotating_fiber_3d.ipynb
+.. |colab-14| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/14_jeffery_rigid.ipynb
+.. |colab-21| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/21_jeffery_soft.ipynb
+.. |colab-22| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/22_three_sphere_swimmer.ipynb
+.. |colab-23| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/23_soft_surfer.ipynb
 
 Examples
 --------
