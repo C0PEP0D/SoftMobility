@@ -45,7 +45,8 @@ def test_straight_equilibrium_positions():
 
 
 def test_planar_bending_kinematics():
-    """For planar N=3 with θ_1 = ε, the recurrence gives an analytic answer."""
+    """Bond length is exactly 2a in any bent configuration; bond direction
+    is the normalized average of the two adjacent bead tangents."""
     n = 3
     radius = 1.0
     body = FlexibleFiber(n_beads=n, radius=radius, planar=True)
@@ -57,12 +58,38 @@ def test_planar_bending_kinematics():
     p0 = jnp.array([1.0, 0.0, 0.0])
     p1 = jnp.array([jnp.cos(eps), 0.0, jnp.sin(eps)])
     p2 = jnp.array([1.0, 0.0, 0.0])
-    r1_expected = a * (p0 + p1)
-    r2_expected = r1_expected + a * (p1 + p2)
+
+    def _bond(p_a, p_b):
+        s = p_a + p_b
+        return 2.0 * a * s / jnp.linalg.norm(s)
+
+    r0 = body.spheres[0].position(dofs, body.design_defaults, t)
     r1 = body.spheres[1].position(dofs, body.design_defaults, t)
     r2 = body.spheres[2].position(dofs, body.design_defaults, t)
-    assert jnp.allclose(r1, r1_expected, atol=1e-6)
-    assert jnp.allclose(r2, r2_expected, atol=1e-6)
+
+    assert jnp.allclose(r0, jnp.zeros(3), atol=1e-6)
+    assert jnp.allclose(r1 - r0, _bond(p0, p1), atol=1e-6)
+    assert jnp.allclose(r2 - r1, _bond(p1, p2), atol=1e-6)
+    # Both bonds have length exactly 2a regardless of bending.
+    assert jnp.isclose(jnp.linalg.norm(r1 - r0), 2.0 * a, atol=1e-6)
+    assert jnp.isclose(jnp.linalg.norm(r2 - r1), 2.0 * a, atol=1e-6)
+
+
+def test_bent_bond_length_invariant():
+    """Bond length stays at 2a for a wide range of joint angles (planar)."""
+    n = 6
+    radius = 1.0
+    body = FlexibleFiber(n_beads=n, radius=radius, planar=True)
+    t = jnp.array([0.0])
+    for kappa in (0.05, 0.2, 0.5, 1.0):  # up to ~57° per joint
+        dofs = kappa * jnp.arange(n, dtype=jnp.float32)
+        positions = jnp.stack(
+            [body.spheres[i].position(dofs, body.design_defaults, t) for i in range(n)]
+        )
+        bonds = jnp.linalg.norm(positions[1:] - positions[:-1], axis=1)
+        assert jnp.allclose(bonds, 2.0 * radius, atol=1e-5), (
+            f"κ={kappa}: bonds={bonds}"
+        )
 
 
 def test_planar_C_K_is_torsional_chain_laplacian():
