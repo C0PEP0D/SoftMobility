@@ -1,4 +1,4 @@
-"""Unified Plotly styling for paper figures (PRFluids format).
+"""Unified Plotly styling for scientific paper figures.
 
 Use it like this in a notebook::
 
@@ -49,8 +49,8 @@ COLORS: dict[str, str] = {
 }
 
 # Pixel widths at 96 DPI (kaleido's default) — they convert to physical
-# inches at PDF output. PRFluids columns are 8.6 cm (single) and 17.4 cm
-# (double).
+# inches at PDF output. Sized for typical scientific-journal column widths
+# of 8.6 cm (single) and 17.4 cm (double).
 SIZES: dict[str, int] = {
     "full":  658,   # 6.85 in = 17.4 cm  — double column
     "half":  326,   # 3.39 in =  8.6 cm  — single column / panels (a)/(b)
