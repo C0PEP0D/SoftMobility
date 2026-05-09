@@ -24,4 +24,5 @@ model should be simulated, differentiated, and optimized with JAX.
    usage
    api
    release-history
+   developers
    min_versions
