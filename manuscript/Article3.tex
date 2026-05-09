@@ -449,7 +449,7 @@ The linearized background flow [Eq.~(\ref{eq:bg_flow})] evaluated at the sphere 
 \begin{equation}\label{eq:grandflowvelocity}
 \bv^\infty = \tC_U \cdot \bv_0^\infty + \tC_S : \tE_0^\infty, \quad \tE^\infty = \tE_0^\infty,
 \end{equation}
-where $\tC_U$ is the same transport coupling tensor as in Eq.~(\ref{eq.composition_velocities}) and $\tC_S$ is a $6N\times 3\times 3$ stresslet coupling tensor. Here $\bv_0^\infty = [\bu_0^\infty, \bomega_0^\infty]$ denotes the six-component velocity of the undisturbed flow evaluated at the reference point $\br_0$.
+where $\tC_U$ is the same transport coupling tensor as in Eq.~(\ref{eq.composition_velocities}) and $\tC_S$ is a $6N\times 3\times 3$ stresslet coupling tensor. Here $\bv_0^\infty = [\bu_0^\infty, \bomega_0^\infty]$ denotes the six-component velocity of the undisturbed flow evaluated at the reference point $\br_0$. For simplicity, we also introduce the generalized flow velocity $\bp_0^\infty = [\bu_0^\infty, \bomega_0^\infty, \mathbf{0}]$ of size $N_q=6+N_Q$. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -468,15 +468,17 @@ and satisfy $\sum_{i=1}^N (\bff_K)_i = 0$ (Newton's third law for internal force
 \bff_\mathrm{ext} = \tC_H \cdot \bH.
 \end{equation}
 
-The principle of virtual power allows us to eliminate the unknown constraint forces. For any virtual velocity $\bv^*$ compatible with the constraints, the constraint forces do not work and hence $\bff_c \cdot \bv^* = 0$.   so the virtual power of all forces except constraints vanishes:
-$$P^* = \sum_i \left[(\bff_\mathrm{hydro})_i + (\bff_\mathrm{ext})_i + (\bff_K)_i\right] \cdot \bv^*_i = 0, \quad \forall\,\bp^*.$$
-
-can be written $\bv^*_i = \sum_j (\partial \bv_i/\partial p_j)\,p_j^*$,
-Since this must hold for all $\bp^*$, one obtains
+The principle of virtual power allows us to eliminate the unknown constraint forces. For any virtual velocity $\bv^*$ compatible with the constraints, the constraint forces do not work and hence $\bff_c \cdot \bv^* = 0$. The virtual power of all forces can thus be written:
+\begin{equation}
+P^* = \left(\bff_\mathrm{hydro} + \bff_\mathrm{ext} + \bff_K\right) \cdot \bv^* = 0,
+\end{equation}
+and it vanishes because the forces balance. 
+Since $\bv^* = (\partial \bv/\partial \bp)\cdot \bp^*$,
+and the above equality must hold for all $\bp^*$, one obtains
 \begin{equation}\label{eq.generalized_force_Q}
 \tJ^T \cdot \left(\bff_\mathrm{hydro} + \bff_\mathrm{ext} + \bff_K\right) = 0,
 \end{equation}
-where $\tJ = \partial \bv/\partial \bp$ is the Jacobian of Eq.~(\ref{eq.U_is_J_Qdot}). This projection reduces the $6N$-dimensional force balance to the $N_q$ generalized coordinates while eliminating the constraint forces $\bff_c$ from the equations of motion.
+where $\tJ = \partial \bv/\partial \bp$ is the same Jacobian as in Eq.~(\ref{eq.U_is_J_Qdot}). This projection, deduced from classical tools of Lagrangian mechanics, reduces the $6N$-dimensional force balance to the $N_q$ dimensions of the generalized coordinates while eliminating the constraint forces $\bff_c$ from the equations of motion.
 
 
 The hydrodynamic force on the sphere assembly is given by the grand resistance relation
@@ -486,20 +488,20 @@ The hydrodynamic force on the sphere assembly is given by the grand resistance r
 where $\tR$ is the $6N\times 6N$ grand resistance matrix and $\tR_S$ is the $6N\times 3\times 3$ stresslet resistance tensor. Substituting Eqs.~(\ref{eq.U_is_J_Qdot}), (\ref{eq:grandflowvelocity}), and (\ref{eq.mobility_problem_all_spheres}) into the generalized force balance~(\ref{eq.generalized_force_Q}), and writing $\bff = \bff_\mathrm{ext} + \bff_K$ for the non-hydrodynamic forces, one obtains
 \begin{eqnarray}
 \tJ^T \cdot \tR \cdot \bv & = & \tJ^T \cdot \left[\bff + \tR \cdot \bv^\infty + \tR_S : \tE^\infty \right],\\
-\bp & = & \tPi \cdot \left[ \tR^{-1} \cdot \bff \new{{} - \bV_\mathrm{act}} + \tC_U \cdot \bv_0^\infty + (\tC_S + \tR^{-1} \cdot \tR_S) : \tE_0^\infty \right],\\
-\bp & = & \tM \cdot \bff \new{{} - \tPi \cdot \bV_\mathrm{act}} + \tC_V \cdot \bv_0^\infty + \tC_E : \tE_0^\infty,\label{eq:soft_mobility}
+\bp & = & \tPi \cdot \left[ \tR^{-1} \cdot \bff - \bV_\mathrm{act} + \tC_U \cdot \bv_0^\infty + (\tC_S + \tR^{-1} \cdot \tR_S) : \tE_0^\infty \right],\\
+\bp & = & \tM \cdot \bff - \tPi \cdot \bV_\mathrm{act} + \bp_0^\infty + \tC_E : \tE_0^\infty,\label{eq:soft_mobility}
 \end{eqnarray}
 upon introducing the $N_q\times 6N$ projection operator
 \begin{equation}\label{eq:projection}
 \tPi = \left( \tJ^T \cdot \tR \cdot \tJ \right)^{-1} \cdot \tJ^T \cdot \tR,
 \end{equation}
-which satisfies $\tPi \cdot \tJ = \tI_{N_q}$ and eliminates the constraint forces. The soft mobility tensor and reduced flow-coupling tensors are
+which satisfies $\tPi \cdot \tJ = \tI$ and eliminates the constraint forces. The soft mobility tensor and reduced flow-coupling tensors are
 \begin{equation}
 \tM = \tPi \cdot \tR^{-1} = \left(\tJ^T \cdot \tR \cdot \tJ\right)^{-1} \cdot \tJ^T, \quad
-\tC_V = \tPi \cdot \tC_U, \quad
 \tC_E = \tPi \cdot (\tC_S + \tR^{-1} \cdot \tR_S).
 \end{equation}
-The tensor $\tM$ ($N_q\times 6N$) extends the classical rigid-body mobility to deformable assemblies. The tensor $\tC_V$ ($N_q\times 6$) captures the response to the background rigid-body velocity; its top $6\times 6$ block equals the identity, reflecting that the assembly's own rigid-body motion follows the background flow in the absence of forces. Substituting the force decompositions~(\ref{eq.linear_elasticity})--(\ref{eq.body_force}) yields
+The tensor $\tM$ ($N_q\times 6N$) extends the classical rigid-body mobility to deformable assemblies. 
+Substituting the force decompositions~(\ref{eq.linear_elasticity})--(\ref{eq.body_force}) yields
 \begin{equation}\label{eq.MK_MH}
 \tM \cdot \bff_K = \tM_K \cdot \bQ, \quad \tM \cdot \bff_\mathrm{ext} = \tM_H \cdot \bH,
 \end{equation}
@@ -507,6 +509,7 @@ with $\tM_K = \tM \cdot \tC_K$ of size $N_q\times N_Q$ and $\tM_H = \tM \cdot \t
 
 Equation~(\ref{eq:soft_mobility}) constitutes the soft mobility equation of the assembly. Expressed in the body's frame, it reads
 \begin{equation}\label{eq:soft_mobility_body}
+\bp - \bp_0^\infty = 
 \left(
 \begin{array}{c}
 \bu_0 - \bu_0^\infty\\[0.5ex]
@@ -514,10 +517,9 @@ Equation~(\ref{eq:soft_mobility}) constitutes the soft mobility equation of the 
 \bQd
 \end{array}
 \right) =
-  \tM_K \cdot \bQ + \tM_H \cdot \bH + \tC_E : \tE_0^\infty \new{{} - \tPi \cdot \bV_\mathrm{act}},
+  \tM_K \cdot \bQ + \tM_H \cdot \bH + \tC_E : \tE_0^\infty - \tPi \cdot \bV_\mathrm{act},
 \end{equation}
-where $\tM_K$, $\tM_H$, \new{$\tPi$,} and $\tC_E$ depend only on the deformation state $\bQ$. Since $\bp = \tB^{-1}\cdot\bqd$, this is a first-order ODE $\bqd = f(\bq, t)$ that can be integrated forward in time given initial conditions and the prescribed flow and external fields. \new{An apparent slip velocity $\bv_\mathrm{slip}$ between the fluid and the spheres can equivalently be modeled as an additional external force $\bff_\mathrm{slip} = \tR \cdot \bv_\mathrm{slip}$ entering through the $\tM\cdot\bff$ term of Eq.~(\ref{eq:soft_mobility}), so it does not require a dedicated tensor.}
-
+where $\tM_K$, $\tM_H$, $\tC_E$, and $\tPi$ depend only on the deformation state $\bQ$. Since $\bp = \tB^{-1}\cdot\bqd$, this is a first-order ODE of the form $\bqd = f(\bq, t)$, which can be integrated forward in time given initial conditions and the prescribed flow and external fields. 
 When the flow and external fields are known in the laboratory frame, they must be rotated into the body's frame before evaluating the right-hand side:
 \begin{equation}\label{eq:rotation_fields}
 \bu_0^\infty = \mRot^T \cdot \left(\bu_0^\infty\right)_\mathrm{lab}, \quad
