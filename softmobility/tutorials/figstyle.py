@@ -720,25 +720,29 @@ def displace_label(
 def save(fig: go.Figure, name: str, figdir: str | Path = "figures") -> Path | None:
     """Write ``fig`` to ``figdir/<name>.pdf`` at the figure's stored size.
 
-    Requires ``kaleido`` (an optional dependency). If kaleido is not
-    installed, prints a one-line warning and returns ``None`` instead of
-    raising, so tutorials remain runnable end-to-end on a runtime that
-    only has the base requirements (e.g. Google Colab).
+    PDF export requires a working ``kaleido`` install (an optional dev
+    dependency — see ``requirements-dev.txt``). If kaleido is not
+    installed, or the installed version is incompatible with the
+    installed plotly (a common Google Colab failure mode where plotly
+    raises ``ValueError`` from its internal scope check), prints a
+    one-line warning and returns ``None`` instead of raising, so
+    tutorials remain runnable end-to-end on a runtime that only has the
+    base requirements.
 
     The directory is created on demand. Returns the path to the PDF on
     success, ``None`` if export was skipped.
     """
-    try:
-        import kaleido  # noqa: F401
-    except ImportError:
-        print(
-            f"[figstyle] kaleido not installed; skipping PDF export of "
-            f"'{name}'. Run `pip install kaleido` to enable.",
-            file=sys.stderr,
-        )
-        return None
     figdir = Path(figdir)
     figdir.mkdir(parents=True, exist_ok=True)
     path = figdir / f"{name}.pdf"
-    fig.write_image(path)
+    try:
+        fig.write_image(path)
+    except (ImportError, ValueError) as exc:
+        print(
+            f"[figstyle] PDF export of '{name}' skipped "
+            f"({type(exc).__name__}: {exc}). "
+            f"Install kaleido (e.g. `pip install -r requirements-dev.txt`) to enable.",
+            file=sys.stderr,
+        )
+        return None
     return path
