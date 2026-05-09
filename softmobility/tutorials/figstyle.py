@@ -29,6 +29,7 @@ subsequent figures.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -716,11 +717,26 @@ def displace_label(
 # PDF export
 # ---------------------------------------------------------------------------
 
-def save(fig: go.Figure, name: str, figdir: str | Path = "figures") -> Path:
+def save(fig: go.Figure, name: str, figdir: str | Path = "figures") -> Path | None:
     """Write ``fig`` to ``figdir/<name>.pdf`` at the figure's stored size.
 
-    The directory is created on demand.  Returns the path to the PDF.
+    Requires ``kaleido`` (an optional dependency). If kaleido is not
+    installed, prints a one-line warning and returns ``None`` instead of
+    raising, so tutorials remain runnable end-to-end on a runtime that
+    only has the base requirements (e.g. Google Colab).
+
+    The directory is created on demand. Returns the path to the PDF on
+    success, ``None`` if export was skipped.
     """
+    try:
+        import kaleido  # noqa: F401
+    except ImportError:
+        print(
+            f"[figstyle] kaleido not installed; skipping PDF export of "
+            f"'{name}'. Run `pip install kaleido` to enable.",
+            file=sys.stderr,
+        )
+        return None
     figdir = Path(figdir)
     figdir.mkdir(parents=True, exist_ok=True)
     path = figdir / f"{name}.pdf"
