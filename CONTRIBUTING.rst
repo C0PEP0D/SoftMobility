@@ -12,5 +12,5 @@ documentation under ``docs/source/developers.rst`` (rendered as the
 
 Quick links:
 
-- Issue tracker: https://github.com/celoy/SoftMobility/issues
-- Source repository: https://github.com/celoy/SoftMobility
+- Issue tracker: https://github.com/C0PEP0D/SoftMobility/issues
+- Source repository: https://github.com/C0PEP0D/SoftMobility

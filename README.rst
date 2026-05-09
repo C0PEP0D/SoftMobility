@@ -2,8 +2,8 @@
 SoftMobility
 ============
 
-.. image:: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml/badge.svg
-   :target: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml
+.. image:: https://github.com/C0PEP0D/SoftMobility/actions/workflows/testing.yml/badge.svg
+   :target: https://github.com/C0PEP0D/SoftMobility/actions/workflows/testing.yml
    :alt: Test status
 
 SoftMobility is a Python library for modelling deformable assemblies of
@@ -38,8 +38,8 @@ Click a badge below to launch the corresponding notebook in Colab:
 
 For any notebook not listed above, you can build a Colab URL by hand by
 replacing the GitHub URL prefix
-``https://github.com/celoy/SoftMobility/blob/`` with
-``https://colab.research.google.com/github/celoy/SoftMobility/blob/``.
+``https://github.com/C0PEP0D/SoftMobility/blob/`` with
+``https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/``.
 
 Installation
 ------------
@@ -55,7 +55,7 @@ With venv
 
 .. code-block:: bash
 
-   git clone https://github.com/celoy/SoftMobility.git
+   git clone https://github.com/C0PEP0D/SoftMobility.git
    cd SoftMobility
    python -m venv .venv
    source .venv/bin/activate
@@ -72,7 +72,7 @@ install more reliably from PyPI than from conda-forge:
 
 .. code-block:: bash
 
-   git clone https://github.com/celoy/SoftMobility.git
+   git clone https://github.com/C0PEP0D/SoftMobility.git
    cd SoftMobility
    conda create -n softmobility python=3.11
    conda activate softmobility
@@ -85,7 +85,7 @@ the ``-e .`` editable install):
 
 .. code-block:: bash
 
-   git clone https://github.com/celoy/SoftMobility.git
+   git clone https://github.com/C0PEP0D/SoftMobility.git
    cd SoftMobility
    conda env create -f environment.yml
    conda activate softmobility
@@ -226,24 +226,24 @@ SoftMobility is distributed under the 3-clause BSD license. See ``LICENSE``
 for details.
 
 .. |colab-01| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/01_assembly_creation.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/01_assembly_creation.ipynb
 .. |colab-02| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/02_rigid_mobility.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/02_rigid_mobility.ipynb
 .. |colab-03| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/03_soft_mobility_simulation.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/03_soft_mobility_simulation.ipynb
 .. |colab-04| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/04_optimization.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/04_optimization.ipynb
 .. |colab-11| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/11_sinking_rigid_body.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/11_sinking_rigid_body.ipynb
 .. |colab-12| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/12_flexible_fiber_2d.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/12_flexible_fiber_2d.ipynb
 .. |colab-13| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/13_rotating_fiber_3d.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/13_rotating_fiber_3d.ipynb
 .. |colab-14| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/14_jeffery_rigid.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/14_jeffery_rigid.ipynb
 .. |colab-21| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/21_jeffery_soft.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/21_jeffery_soft.ipynb
 .. |colab-22| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/22_three_sphere_swimmer.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/22_three_sphere_swimmer.ipynb
 .. |colab-23| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/celoy/SoftMobility/blob/main/softmobility/tutorials/23_soft_surfer.ipynb
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/23_soft_surfer.ipynb
