@@ -17,8 +17,12 @@ It also depends on:
 Installation from Source
 ------------------------
 
-The package is not yet on PyPI. Clone the repository and install in editable
-mode:
+The package is not yet on PyPI. Clone the repository and install it in editable
+mode inside an isolated environment. Two equivalent recipes are documented
+below — use whichever matches your existing tooling.
+
+With venv
+~~~~~~~~~
 
 .. code-block:: bash
 
@@ -29,10 +33,39 @@ mode:
     python -m pip install --upgrade pip
     python -m pip install -e .
 
+With conda
+~~~~~~~~~~
+
+If you prefer ``conda`` (or the faster, drop-in ``mamba``) for environment
+management, the recommended pattern is to let conda manage the Python sandbox
+and let pip install the package itself — JAX in particular is more reliable
+when installed from PyPI than from conda-forge:
+
+.. code-block:: bash
+
+    git clone https://github.com/celoy/SoftMobility.git
+    cd SoftMobility
+    conda create -n softmobility python=3.11
+    conda activate softmobility
+    python -m pip install --upgrade pip
+    python -m pip install -e .
+
+Or, equivalently, use the bundled ``environment.yml``, which performs the same
+steps in a single command. It must be run from the repository root because of
+the ``-e .`` editable install:
+
+.. code-block:: bash
+
+    git clone https://github.com/celoy/SoftMobility.git
+    cd SoftMobility
+    conda env create -f environment.yml
+    conda activate softmobility
+
 Development and documentation tools
 ------------------------------------
 
-Install the additional tools needed to run tests and build the documentation:
+Install the additional tools needed to run tests and build the documentation
+(this works inside either a ``venv`` or a ``conda`` environment):
 
 .. code-block:: bash
 
@@ -45,6 +78,22 @@ Verifying Installation
 
     import softmobility as sm
     print(f"SoftMobility version: {sm.__version__}")
+
+.. _running-tutorials-on-google-colab:
+
+Running tutorials on Google Colab
+---------------------------------
+
+Tutorials in ``softmobility/tutorials`` can be run directly in Google Colab —
+no local clone, fork, or install required. Each notebook contains a first cell
+that installs ``SoftMobility`` from GitHub when it detects a Colab runtime;
+locally the cell is a no-op.
+
+To open a notebook in Colab, either click the corresponding badge in the
+`README on GitHub <https://github.com/celoy/SoftMobility#try-the-tutorials-online>`_,
+or build the URL by hand by replacing the GitHub URL prefix
+``https://github.com/celoy/SoftMobility/blob/`` with
+``https://colab.research.google.com/github/celoy/SoftMobility/blob/``.
 
 Troubleshooting
 ---------------

@@ -394,13 +394,21 @@ An alternative is to consider a soft body made of rigid spheres connected by spr
 
 The general Galerkin framework of Sec.~\ref{sec.numerics}.A applies to any compatible velocity basis $\{\bV_j\}$. For bodies composed of rigid spheres connected by elastic links, the natural choice is the rigid-body modes of each sphere. The sphere-assembly discretization developed here is the specialization of the Galerkin method to this basis.
 
-We consider an assembly of $N$ spheres in a body frame $(\bE_1,\bE_2,\bE_3)$ attached to the assembly. The $i$-th sphere of radius $a_i$ has center position $\bR_i(\bQ,t)$ and Rodrigues orientation vector $\bTheta_i(\bQ,t)$ in the body frame, both functions of time and the $N_Q$ degrees of freedom $\bQ$ representing the deformation (Fig.~\ref{fig:assembly_spheres}). Its six-component velocity $\bV_i = [\bU_i, \bOmega_i]$ is related to $\bQd$ by the per-sphere Jacobian $\tJ_i = \partial \bV_i/\partial \bQd$ (see Appendix~\ref{app:bortz} for the Bortz operator relating angular velocity $\bOmega_i$ to the orientation rate $\bThetad_i$). \new{More generally, allowing $\bR_i$ and $\bTheta_i$ to depend explicitly on time as well as on $\bQ$ --- representing prescribed active kinematics --- the chain rule applied to $\bX_i(\bQ,t) = [\bR_i,\bTheta_i]$ yields the affine relation $\bV_i = \tJ_i \cdot \bQd + (\bv_\mathrm{act})_i$, with $(\bv_\mathrm{act})_i = \tB_i \cdot \partial\bX_i/\partial t$.}
+We consider an assembly of $N$ spheres connected by springs and rods.  The $i$-th sphere of radius $a_i$ has center position $\bR_i$ and Rodrigues orientation vector $\bTheta_i$ in the body frame $(\bE_1,\bE_2,\bE_3)$. 
+Both are gathered in a six-component position $\bX_i(\bQ,t)$, a function of time and the $N_Q$ degrees of freedom $\bQ$ representing the deformation (Fig.~\ref{fig:assembly_spheres}). 
+The associated six-component velocity is $\bV_i = [\bU_i, \bOmega_i]$, with $\bU_i$ the translational velocity and $\bOmega_i$ the angular velocity.  
+The  six-component velocity $\bV_i$ is related to $\bQd$ by the per-sphere Jacobian $\tJ_i = \partial \bV_i/\partial \bQd$ 
+\begin{equation}
+\bV_i = \tJ_i \cdot \bQd + (\bV_\mathrm{act})_i,
+\end{equation}
+with $(\bV_\mathrm{act})_i = \tB_i \cdot \partial\bX_i/\partial t$ an active component due to prescibed kinematics and $\tB_i(\bTheta_i)$ the Bortz operator (see Appendix~\ref{app:bortz}).
 
 Stacking all spheres, the grand velocity $\bV = [\bV_1, \dots, \bV_N]$ in the body frame satisfies
 \begin{equation}\label{eq.Jacobian_assembly}
-\bV = \tJ_\mathrm{sph} \cdot \bQd \new{{} + \bv_\mathrm{act}},
+\bV = \tJ_\mathrm{sph} \cdot \bQd + \bV_\mathrm{act},
 \end{equation}
-with the assembly Jacobian $\tJ_\mathrm{sph}(\bQ,t) = \partial \bV/\partial \bQd$ of size $6N \times N_Q$\new{, and the grand active velocity $\bv_\mathrm{act} = [(\bv_\mathrm{act})_1, \dots, (\bv_\mathrm{act})_N]$ collecting the per-sphere contributions. Because $\bV$ is affine in $\bQd$, it is a quasi-velocity of the Lagrangian system}.
+with the grand active velocity $\bV_\mathrm{act} = [(\bV_\mathrm{act})_1, \dots, (\bV_\mathrm{act})_N]$ of size $6N$ collecting the per-sphere contributions, and the assembly Jacobian $\tJ_\mathrm{sph}(\bQ,t) = \partial \bV/\partial \bQd$ of size $6N \times N_Q$. 
+Because $\bV$ is affine in $\bQd$, it is a quasi-velocity of the Lagrangian system.
 
 \begin{figure}[t]
 \begin{center}
@@ -412,11 +420,18 @@ with the assembly Jacobian $\tJ_\mathrm{sph}(\bQ,t) = \partial \bV/\partial \bQd
 \end{center}
 \end{figure}
 
-In the laboratory frame, the assembly also undergoes a global rigid-body motion: translation $\bu_0$ and rotation $\bomega_0$ of the body frame, encoded in the six-component grand velocity $\bv_0 = [\bu_0, \bomega_0]$ and the corresponding generalized coordinate $\bx_0 = [\br_0, \btheta_0]$, where $\br_0$ is the position and $\btheta_0$ the Rodrigues orientation of the body frame. The full state of the assembly in the laboratory frame is therefore the $N_q = 6 + N_Q$ generalized coordinate
-$$\bq = \left[\bx_0,\, \bQ \right]$$
-and the associated generalized velocity
-$$\bp = \left[\bu_0,\, \bomega_0,\, \bQd \right] = \tB \cdot \bqd,$$
-where $\tB$ is the block-diagonal Bortz matrix assembled from the per-degree-of-freedom operators of Appendix~\ref{app:bortz}.
+The body's frame $(\bE_1,\bE_2,\bE_3)$ undergoes a global rigid-body motion.
+Its position and orientation are encoded in the six-component position $\bx_0 = [\br_0, \btheta_0]$, where $\br_0$ is the position and $\btheta_0$ the Rodrigues orientation of the body's frame. 
+The full state of the assembly in the laboratory frame is therefore given by the generalized coordinates (of size $N_q = 6 + N_Q$)
+\begin{equation}
+\bq = \left[\bx_0,\, \bQ \right].
+\end{equation}
+We also define the six-component velocity $\bv_0 = [\bu_0, \bomega_0]$, with $\bu_0$ the translational velocity and $\bomega_0$ the angular velocity of the body in the laboratory frame. 
+This six-component velocity is  associated with a generalized velocity
+\begin{equation}
+\bp = \left[\bu_0,\, \bomega_0,\, \bQd \right] = \tB \cdot \bqd,
+\end{equation}
+where $\tB(\btheta_0)$ is a Bortz matrix given inAppendix~\ref{app:bortz}.
 
 The laboratory-frame velocity of sphere $i$ combines the body-frame velocity $\bV_i$ with the rigid-body transport due to $\bv_0$:
 $$\bu_i = \bU_i + \bu_0 + \bomega_0 \times \bR_i, \quad \bomega_i = \bOmega_i + \bomega_0.$$
@@ -426,11 +441,11 @@ Stacking all spheres, this composition takes the compact form
 \end{equation}
 with $\tB_0 = \tB_i(\btheta_0)$ the Bortz operator evaluated at the body-frame orientation and $\tC_U$ a $6N\times 6$ transport coupling tensor. Combining Eqs.~(\ref{eq.Jacobian_assembly}) and (\ref{eq.composition_velocities}), the grand velocity of all spheres in the laboratory frame is related to $\bp$ by
 \begin{equation}\label{eq.U_is_J_Qdot}
-\bv = \new{\bv_\mathrm{act} + {}}\tJ \cdot \bp = \new{\bv_\mathrm{act} + {}}\tJ \cdot \tB \cdot \bqd,
+\bv = \bV_\mathrm{act} + \tJ \cdot \bp = \bV_\mathrm{act} + \tJ \cdot \tB \cdot \bqd,
 \end{equation}
 where $\tJ = \partial \bv/\partial \bp$ is the $6N\times N_q$ full Jacobian. Because $\tB$ is invertible, the grand sphere velocities $\bv$ are quasi-velocities of this Lagrangian system.
 
-The linearized background flow [Eq.~(\ref{eq:bg_flow})] evaluated at the sphere centers gives the grand flow velocity $\bv^\infty = [\bu^\infty(\br_i)]_{i=1}^N$ and the rate-of-strain tensor
+The linearized background flow [Eq.~(\ref{eq:bg_flow})] evaluated at the sphere centers gives the grand flow velocity $\bv^\infty = [\bv^\infty_1,\dots,\bv^\infty_N]$ and the rate-of-strain tensor
 \begin{equation}\label{eq:grandflowvelocity}
 \bv^\infty = \tC_U \cdot \bv_0^\infty + \tC_S : \tE_0^\infty, \quad \tE^\infty = \tE_0^\infty,
 \end{equation}
@@ -440,22 +455,23 @@ where $\tC_U$ is the same transport coupling tensor as in Eq.~(\ref{eq.compositi
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Soft mobility equation of a sphere assembly}
 
-With the kinematic description established, we derive the equation of motion by applying the principle of virtual power to the force balance on the sphere assembly, then reduce it to a closed-form soft mobility equation.
+With the kinematic description established, we now derive the equation of motion by applying the principle of virtual power to the sphere assembly. We then show how to reduce it to the soft mobility equation.
 
-\paragraph{Force balance.}
-The six-component force $\bff_i = [\bF_i, \bT_i]$ acting on sphere $i$ collects the force $\bF_i$ applied at its center and the associated torque $\bT_i$. Stacking all spheres, the total grand force decomposes as
+The six-component force $\bff_i = [\bF_i, \bT_i]$ acting on sphere $i$ collects the force $\bF_i$ applied at its center and the associated torque $\bT_i$. Stacking all forces into the  grand force $\bff = [\bff_1,\dots,\bff_N]$, it can be decomposed as
 $$\bff = \bff_c + \bff_\mathrm{hydro} + \bff_\mathrm{ext} + \bff_K,$$
-where $\bff_c$ are internal constraint forces (maintaining rigidity of each sphere and prescribed inter-sphere constraints), $\bff_\mathrm{hydro}$ are hydrodynamic forces, $\bff_\mathrm{ext}$ are external body forces, and $\bff_K$ are elastic restoring forces. The elastic forces are linear in the deformation state,
+where $\bff_c$ are internal constraint forces (maintaining prescribed inter-sphere constraints), $\bff_\mathrm{hydro}$ are hydrodynamic forces, $\bff_\mathrm{ext}$ are external body forces, and $\bff_K$ are elastic restoring forces. The elastic forces are linear in the deformation state,
 \begin{equation}\label{eq.linear_elasticity}
 \bff_K = \tC_K \cdot \bQ,
 \end{equation}
-and satisfy $\sum_{i=1}^N (\bff_K)_i = 0$ (Newton's third law for internal forces). The external forces are linear in an external field $\bH$,
+and satisfy $\sum_{i=1}^N (\bff_K)_i = 0$ (Newton's third law for internal forces). The body forces are linear in an external field $\bH$,
 \begin{equation}\label{eq.body_force}
 \bff_\mathrm{ext} = \tC_H \cdot \bH.
 \end{equation}
 
-The principle of virtual power eliminates the unknown constraint forces. Any virtual velocity $\bv^*$ compatible with the constraints can be written $\bv^*_i = \sum_j (\partial \bv_i/\partial p_j)\,p_j^*$, so the virtual power of all forces except constraints vanishes:
-$$P^* = \sum_i \left[(\bff_\mathrm{hydro})_i + (\bff_\mathrm{ext})_i + (\bff_K)_i\right] \cdot \bv^*_i = 0 \quad \forall\,\bp^*.$$
+The principle of virtual power allows us to eliminate the unknown constraint forces. For any virtual velocity $\bv^*$ compatible with the constraints, the constraint forces do not work and hence $\bff_c \cdot \bv^* = 0$.   so the virtual power of all forces except constraints vanishes:
+$$P^* = \sum_i \left[(\bff_\mathrm{hydro})_i + (\bff_\mathrm{ext})_i + (\bff_K)_i\right] \cdot \bv^*_i = 0, \quad \forall\,\bp^*.$$
+
+can be written $\bv^*_i = \sum_j (\partial \bv_i/\partial p_j)\,p_j^*$,
 Since this must hold for all $\bp^*$, one obtains
 \begin{equation}\label{eq.generalized_force_Q}
 \tJ^T \cdot \left(\bff_\mathrm{hydro} + \bff_\mathrm{ext} + \bff_K\right) = 0,
@@ -470,8 +486,8 @@ The hydrodynamic force on the sphere assembly is given by the grand resistance r
 where $\tR$ is the $6N\times 6N$ grand resistance matrix and $\tR_S$ is the $6N\times 3\times 3$ stresslet resistance tensor. Substituting Eqs.~(\ref{eq.U_is_J_Qdot}), (\ref{eq:grandflowvelocity}), and (\ref{eq.mobility_problem_all_spheres}) into the generalized force balance~(\ref{eq.generalized_force_Q}), and writing $\bff = \bff_\mathrm{ext} + \bff_K$ for the non-hydrodynamic forces, one obtains
 \begin{eqnarray}
 \tJ^T \cdot \tR \cdot \bv & = & \tJ^T \cdot \left[\bff + \tR \cdot \bv^\infty + \tR_S : \tE^\infty \right],\\
-\bp & = & \tPi \cdot \left[ \tR^{-1} \cdot \bff \new{{} - \bv_\mathrm{act}} + \tC_U \cdot \bv_0^\infty + (\tC_S + \tR^{-1} \cdot \tR_S) : \tE_0^\infty \right],\\
-\bp & = & \tM \cdot \bff \new{{} - \tPi \cdot \bv_\mathrm{act}} + \tC_V \cdot \bv_0^\infty + \tC_E : \tE_0^\infty,\label{eq:soft_mobility}
+\bp & = & \tPi \cdot \left[ \tR^{-1} \cdot \bff \new{{} - \bV_\mathrm{act}} + \tC_U \cdot \bv_0^\infty + (\tC_S + \tR^{-1} \cdot \tR_S) : \tE_0^\infty \right],\\
+\bp & = & \tM \cdot \bff \new{{} - \tPi \cdot \bV_\mathrm{act}} + \tC_V \cdot \bv_0^\infty + \tC_E : \tE_0^\infty,\label{eq:soft_mobility}
 \end{eqnarray}
 upon introducing the $N_q\times 6N$ projection operator
 \begin{equation}\label{eq:projection}
@@ -498,7 +514,7 @@ Equation~(\ref{eq:soft_mobility}) constitutes the soft mobility equation of the 
 \bQd
 \end{array}
 \right) =
-  \tM_K \cdot \bQ + \tM_H \cdot \bH + \tC_E : \tE_0^\infty \new{{} - \tPi \cdot \bv_\mathrm{act}},
+  \tM_K \cdot \bQ + \tM_H \cdot \bH + \tC_E : \tE_0^\infty \new{{} - \tPi \cdot \bV_\mathrm{act}},
 \end{equation}
 where $\tM_K$, $\tM_H$, \new{$\tPi$,} and $\tC_E$ depend only on the deformation state $\bQ$. Since $\bp = \tB^{-1}\cdot\bqd$, this is a first-order ODE $\bqd = f(\bq, t)$ that can be integrated forward in time given initial conditions and the prescribed flow and external fields. \new{An apparent slip velocity $\bv_\mathrm{slip}$ between the fluid and the spheres can equivalently be modeled as an additional external force $\bff_\mathrm{slip} = \tR \cdot \bv_\mathrm{slip}$ entering through the $\tM\cdot\bff$ term of Eq.~(\ref{eq:soft_mobility}), so it does not require a dedicated tensor.}
 
