@@ -1,0 +1,746 @@
+%apsrev4-2.bst 2019-01-14 (MD) hand-edited version of apsrev4-1.bst
+%Control: key (0)
+%Control: author (8) initials jnrlst
+%Control: editor formatted (1) identically to author
+%Control: production of article title (0) allowed
+%Control: page (0) single
+%Control: year (1) truncated
+%Control: production of eprint (0) enabled
+\begin{thebibliography}{65}%
+\makeatletter
+\providecommand \@ifxundefined [1]{%
+ \@ifx{#1\undefined}
+}%
+\providecommand \@ifnum [1]{%
+ \ifnum #1\expandafter \@firstoftwo
+ \else \expandafter \@secondoftwo
+ \fi
+}%
+\providecommand \@ifx [1]{%
+ \ifx #1\expandafter \@firstoftwo
+ \else \expandafter \@secondoftwo
+ \fi
+}%
+\providecommand \natexlab [1]{#1}%
+\providecommand \enquote  [1]{``#1''}%
+\providecommand \bibnamefont  [1]{#1}%
+\providecommand \bibfnamefont [1]{#1}%
+\providecommand \citenamefont [1]{#1}%
+\providecommand \href@noop [0]{\@secondoftwo}%
+\providecommand \href [0]{\begingroup \@sanitize@url \@href}%
+\providecommand \@href[1]{\@@startlink{#1}\@@href}%
+\providecommand \@@href[1]{\endgroup#1\@@endlink}%
+\providecommand \@sanitize@url [0]{\catcode `\\12\catcode `\$12\catcode
+  `\&12\catcode `\#12\catcode `\^12\catcode `\_12\catcode `\%12\relax}%
+\providecommand \@@startlink[1]{}%
+\providecommand \@@endlink[0]{}%
+\providecommand \url  [0]{\begingroup\@sanitize@url \@url }%
+\providecommand \@url [1]{\endgroup\@href {#1}{\urlprefix }}%
+\providecommand \urlprefix  [0]{URL }%
+\providecommand \Eprint [0]{\href }%
+\providecommand \doibase [0]{https://doi.org/}%
+\providecommand \selectlanguage [0]{\@gobble}%
+\providecommand \bibinfo  [0]{\@secondoftwo}%
+\providecommand \bibfield  [0]{\@secondoftwo}%
+\providecommand \translation [1]{[#1]}%
+\providecommand \BibitemOpen [0]{}%
+\providecommand \bibitemStop [0]{}%
+\providecommand \bibitemNoStop [0]{.\EOS\space}%
+\providecommand \EOS [0]{\spacefactor3000\relax}%
+\providecommand \BibitemShut  [1]{\csname bibitem#1\endcsname}%
+\let\auto@bib@innerbib\@empty
+%</preamble>
+\bibitem [{\citenamefont {Visser}(2001)}]{Visser2001}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.~W.}\ \bibnamefont
+  {Visser}},\ }\bibfield  {title} {\bibinfo {title} {Hydromechanical signals in
+  the plankton},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Marine Ecology Progress Series}\ }\textbf {\bibinfo {volume} {222}},\
+  \bibinfo {pages} {1} (\bibinfo {year} {2001})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Wheeler}\ \emph {et~al.}(2019)\citenamefont
+  {Wheeler}, \citenamefont {Secchi}, \citenamefont {Rusconi},\ and\
+  \citenamefont {Stocker}}]{Wheeler2019}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.~D.}\ \bibnamefont
+  {Wheeler}}, \bibinfo {author} {\bibfnamefont {E.}~\bibnamefont {Secchi}},
+  \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont {Rusconi}},\ and\ \bibinfo
+  {author} {\bibfnamefont {R.}~\bibnamefont {Stocker}},\ }\bibfield  {title}
+  {\bibinfo {title} {Not just going with the flow: the effects of fluid flow on
+  bacteria and plankton},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Annual review of cell and developmental biology}\ }\textbf
+  {\bibinfo {volume} {35}},\ \bibinfo {pages} {213} (\bibinfo {year}
+  {2019})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Lauga}\ and\ \citenamefont
+  {Powers}(2009)}]{Lauga2009}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {E.}~\bibnamefont
+  {Lauga}}\ and\ \bibinfo {author} {\bibfnamefont {T.~R.}\ \bibnamefont
+  {Powers}},\ }\bibfield  {title} {\bibinfo {title} {The hydrodynamics of
+  swimming microorganisms},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Reports on progress in physics}\ }\textbf {\bibinfo {volume}
+  {72}},\ \bibinfo {pages} {096601} (\bibinfo {year} {2009})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Lauga}(2016)}]{Lauga2016}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {E.}~\bibnamefont
+  {Lauga}},\ }\bibfield  {title} {\bibinfo {title} {Bacterial hydrodynamics},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Annual Review of
+  Fluid Mechanics}\ }\textbf {\bibinfo {volume} {48}},\ \bibinfo {pages} {105}
+  (\bibinfo {year} {2016})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Lauga}(2020)}]{Lauga2020}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {E.}~\bibnamefont
+  {Lauga}},\ }\href@noop {} {\emph {\bibinfo {title} {The fluid dynamics of
+  cell motility}}},\ Vol.~\bibinfo {volume} {62}\ (\bibinfo  {publisher}
+  {Cambridge University Press},\ \bibinfo {year} {2020})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Guasto}\ \emph {et~al.}(2012)\citenamefont {Guasto},
+  \citenamefont {Rusconi},\ and\ \citenamefont {Stocker}}]{Guasto2012}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.~S.}\ \bibnamefont
+  {Guasto}}, \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont {Rusconi}},\
+  and\ \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont {Stocker}},\
+  }\bibfield  {title} {\bibinfo {title} {Fluid mechanics of planktonic
+  microorganisms},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Annual Review of Fluid Mechanics}\ }\textbf {\bibinfo {volume} {44}},\
+  \bibinfo {pages} {373} (\bibinfo {year} {2012})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Barth\`es-Biesel}(2016)}]{BarthesBiesel2016}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {D.}~\bibnamefont
+  {Barth\`es-Biesel}},\ }\bibfield  {title} {\bibinfo {title} {Motion and
+  deformation of elastic capsules and vesicles in flow},\ }\href
+  {https://doi.org/10.1146/annurev-fluid-122414-034345} {\bibfield  {journal}
+  {\bibinfo  {journal} {Annual Review of Fluid Mechanics}\ }\textbf {\bibinfo
+  {volume} {48}},\ \bibinfo {pages} {25} (\bibinfo {year} {2016})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Farutin}\ \emph {et~al.}(2013)\citenamefont
+  {Farutin}, \citenamefont {Rafa{\"\i}}, \citenamefont {Dysthe}, \citenamefont
+  {Duperray}, \citenamefont {Peyla},\ and\ \citenamefont
+  {Misbah}}]{Farutin2013}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Farutin}}, \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont {Rafa{\"\i}}},
+  \bibinfo {author} {\bibfnamefont {D.~K.}\ \bibnamefont {Dysthe}}, \bibinfo
+  {author} {\bibfnamefont {A.}~\bibnamefont {Duperray}}, \bibinfo {author}
+  {\bibfnamefont {P.}~\bibnamefont {Peyla}},\ and\ \bibinfo {author}
+  {\bibfnamefont {C.}~\bibnamefont {Misbah}},\ }\bibfield  {title} {\bibinfo
+  {title} {Amoeboid swimming: A generic self-propulsion of cells in fluids by
+  means of membrane deformations},\ }\href@noop {} {\bibfield  {journal}
+  {\bibinfo  {journal} {Physical review letters}\ }\textbf {\bibinfo {volume}
+  {111}},\ \bibinfo {pages} {228102} (\bibinfo {year} {2013})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Smayda}(1974)}]{Smayda1974}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {T.~J.}\ \bibnamefont
+  {Smayda}},\ }\bibfield  {title} {\bibinfo {title} {Some experiments on the
+  sinking characteristics of two freshwater diatoms},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Limnology and oceanography}\
+  }\textbf {\bibinfo {volume} {19}},\ \bibinfo {pages} {628} (\bibinfo {year}
+  {1974})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Wiseman}\ and\ \citenamefont
+  {Reynolds}(1981)}]{Wiseman1981}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {S.~W.}\ \bibnamefont
+  {Wiseman}}\ and\ \bibinfo {author} {\bibfnamefont {C.~S.}\ \bibnamefont
+  {Reynolds}},\ }\bibfield  {title} {\bibinfo {title} {Sinking rate and
+  electrophoretic mobility of the freshwater diatom asterionella formosa: an
+  experimental investigation},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {British phycological journal}\ }\textbf {\bibinfo {volume} {16}},\
+  \bibinfo {pages} {357} (\bibinfo {year} {1981})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Padis{\'a}k}\ \emph {et~al.}(2003)\citenamefont
+  {Padis{\'a}k}, \citenamefont {Sor{\'o}czki-Pint{\'e}r},\ and\ \citenamefont
+  {Rezner}}]{Padisak2003}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.}~\bibnamefont
+  {Padis{\'a}k}}, \bibinfo {author} {\bibfnamefont {{\'E}.}~\bibnamefont
+  {Sor{\'o}czki-Pint{\'e}r}},\ and\ \bibinfo {author} {\bibfnamefont
+  {Z.}~\bibnamefont {Rezner}},\ }\bibfield  {title} {\bibinfo {title} {Sinking
+  properties of some phytoplankton shapes and the relation of form resistance
+  to morphological diversity of plankton---an experimental study},\ }\href@noop
+  {} {\bibfield  {journal} {\bibinfo  {journal} {Aquatic Biodiversity: A
+  Celebratory Volume in Honour of Henri J. Dumont}\ ,\ \bibinfo {pages} {243}}
+  (\bibinfo {year} {2003})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Wiggins}\ \emph {et~al.}(1998)\citenamefont
+  {Wiggins}, \citenamefont {Riveline}, \citenamefont {Ott},\ and\ \citenamefont
+  {Goldstein}}]{Wiggins1998}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.~H.}\ \bibnamefont
+  {Wiggins}}, \bibinfo {author} {\bibfnamefont {D.}~\bibnamefont {Riveline}},
+  \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Ott}},\ and\ \bibinfo
+  {author} {\bibfnamefont {R.~E.}\ \bibnamefont {Goldstein}},\ }\bibfield
+  {title} {\bibinfo {title} {Trapping and wiggling: elastohydrodynamics of
+  driven microfilaments},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Biophysical journal}\ }\textbf {\bibinfo {volume} {74}},\ \bibinfo
+  {pages} {1043} (\bibinfo {year} {1998})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Brouzet}\ \emph {et~al.}(2014)\citenamefont
+  {Brouzet}, \citenamefont {Verhille},\ and\ \citenamefont
+  {Le~Gal}}]{Brouzet2014}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {Brouzet}}, \bibinfo {author} {\bibfnamefont {G.}~\bibnamefont {Verhille}},\
+  and\ \bibinfo {author} {\bibfnamefont {P.}~\bibnamefont {Le~Gal}},\
+  }\bibfield  {title} {\bibinfo {title} {Flexible fiber in a turbulent flow: A
+  macroscopic polymer},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Physical review letters}\ }\textbf {\bibinfo {volume} {112}},\
+  \bibinfo {pages} {074501} (\bibinfo {year} {2014})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Du~Roure}\ \emph {et~al.}(2019)\citenamefont
+  {Du~Roure}, \citenamefont {Lindner}, \citenamefont {Nazockdast},\ and\
+  \citenamefont {Shelley}}]{Du-Roure2019}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {O.}~\bibnamefont
+  {Du~Roure}}, \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Lindner}},
+  \bibinfo {author} {\bibfnamefont {E.~N.}\ \bibnamefont {Nazockdast}},\ and\
+  \bibinfo {author} {\bibfnamefont {M.~J.}\ \bibnamefont {Shelley}},\
+  }\bibfield  {title} {\bibinfo {title} {Dynamics of flexible fibers in viscous
+  flows and fluids},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Annu. Rev. Fluid Mech.}\ }\textbf {\bibinfo {volume} {51}},\ \bibinfo
+  {pages} {539} (\bibinfo {year} {2019})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {{\.Z}uk}\ \emph {et~al.}(2021)\citenamefont
+  {{\.Z}uk}, \citenamefont {S{\l}owicka}, \citenamefont {Ekiel-Je{\.z}ewska},\
+  and\ \citenamefont {Stone}}]{Zuk2021}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {P.~J.}\ \bibnamefont
+  {{\.Z}uk}}, \bibinfo {author} {\bibfnamefont {A.~M.}\ \bibnamefont
+  {S{\l}owicka}}, \bibinfo {author} {\bibfnamefont {M.~L.}\ \bibnamefont
+  {Ekiel-Je{\.z}ewska}},\ and\ \bibinfo {author} {\bibfnamefont {H.~A.}\
+  \bibnamefont {Stone}},\ }\bibfield  {title} {\bibinfo {title} {Universal
+  features of the shape of elastic fibres in shear flow},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Journal of Fluid Mechanics}\
+  }\textbf {\bibinfo {volume} {914}},\ \bibinfo {pages} {A31} (\bibinfo {year}
+  {2021})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Sitti}(2021)}]{Sitti2021}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {M.}~\bibnamefont
+  {Sitti}},\ }\bibfield  {title} {\bibinfo {title} {Physical intelligence as a
+  new paradigm},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Extreme Mechanics Letters}\ }\textbf {\bibinfo {volume} {46}},\ \bibinfo
+  {pages} {101340} (\bibinfo {year} {2021})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Yasa}\ \emph {et~al.}(2023)\citenamefont {Yasa},
+  \citenamefont {Toshimitsu}, \citenamefont {Michelis}, \citenamefont {Jones},
+  \citenamefont {Filippi}, \citenamefont {Buchner},\ and\ \citenamefont
+  {Katzschmann}}]{Yasa2023}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {O.}~\bibnamefont
+  {Yasa}}, \bibinfo {author} {\bibfnamefont {Y.}~\bibnamefont {Toshimitsu}},
+  \bibinfo {author} {\bibfnamefont {M.~Y.}\ \bibnamefont {Michelis}}, \bibinfo
+  {author} {\bibfnamefont {L.~S.}\ \bibnamefont {Jones}}, \bibinfo {author}
+  {\bibfnamefont {M.}~\bibnamefont {Filippi}}, \bibinfo {author} {\bibfnamefont
+  {T.}~\bibnamefont {Buchner}},\ and\ \bibinfo {author} {\bibfnamefont {R.~K.}\
+  \bibnamefont {Katzschmann}},\ }\bibfield  {title} {\bibinfo {title} {An
+  overview of soft robotics},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Annual Review of Control, Robotics, and Autonomous Systems}\
+  }\textbf {\bibinfo {volume} {6}},\ \bibinfo {pages} {1} (\bibinfo {year}
+  {2023})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Tsang}\ \emph {et~al.}(2020)\citenamefont {Tsang},
+  \citenamefont {Demir}, \citenamefont {Ding},\ and\ \citenamefont
+  {Pak}}]{Tsang2020b}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.~C.}\ \bibnamefont
+  {Tsang}}, \bibinfo {author} {\bibfnamefont {E.}~\bibnamefont {Demir}},
+  \bibinfo {author} {\bibfnamefont {Y.}~\bibnamefont {Ding}},\ and\ \bibinfo
+  {author} {\bibfnamefont {O.~S.}\ \bibnamefont {Pak}},\ }\bibfield  {title}
+  {\bibinfo {title} {Roads to smart artificial microswimmers},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Advanced Intelligent Systems}\
+  }\textbf {\bibinfo {volume} {2}},\ \bibinfo {pages} {1900137} (\bibinfo
+  {year} {2020})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Elnaggar}\ \emph {et~al.}(2024)\citenamefont
+  {Elnaggar}, \citenamefont {Kang}, \citenamefont {Tian}, \citenamefont {Han},\
+  and\ \citenamefont {Keshavarz}}]{Elnaggar2024}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Elnaggar}}, \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont {Kang}},
+  \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont {Tian}}, \bibinfo {author}
+  {\bibfnamefont {B.}~\bibnamefont {Han}},\ and\ \bibinfo {author}
+  {\bibfnamefont {M.}~\bibnamefont {Keshavarz}},\ }\bibfield  {title} {\bibinfo
+  {title} {State of the art in actuation of micro/nanorobots for biomedical
+  applications},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Small Science}\ }\textbf {\bibinfo {volume} {4}},\ \bibinfo {pages}
+  {2300211} (\bibinfo {year} {2024})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Dabbagh}\ \emph {et~al.}(2022)\citenamefont
+  {Dabbagh}, \citenamefont {Sarabi}, \citenamefont {Birtek}, \citenamefont
+  {Seyfi}, \citenamefont {Sitti},\ and\ \citenamefont {Tasoglu}}]{Dabbagh2022}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {S.~R.}\ \bibnamefont
+  {Dabbagh}}, \bibinfo {author} {\bibfnamefont {M.~R.}\ \bibnamefont {Sarabi}},
+  \bibinfo {author} {\bibfnamefont {M.~T.}\ \bibnamefont {Birtek}}, \bibinfo
+  {author} {\bibfnamefont {S.}~\bibnamefont {Seyfi}}, \bibinfo {author}
+  {\bibfnamefont {M.}~\bibnamefont {Sitti}},\ and\ \bibinfo {author}
+  {\bibfnamefont {S.}~\bibnamefont {Tasoglu}},\ }\bibfield  {title} {\bibinfo
+  {title} {3d-printed microrobots from design to translation},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Nature Communications}\ }\textbf
+  {\bibinfo {volume} {13}},\ \bibinfo {pages} {5875} (\bibinfo {year}
+  {2022})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Mo}\ \emph {et~al.}(2023)\citenamefont {Mo},
+  \citenamefont {Li},\ and\ \citenamefont {Bian}}]{Mo2023}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {Mo}}, \bibinfo {author} {\bibfnamefont {G.}~\bibnamefont {Li}},\ and\
+  \bibinfo {author} {\bibfnamefont {X.}~\bibnamefont {Bian}},\ }\bibfield
+  {title} {\bibinfo {title} {Challenges and attempts to make intelligent
+  microswimmers},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Frontiers in Physics}\ }\textbf {\bibinfo {volume} {11}},\ \bibinfo {pages}
+  {1279883} (\bibinfo {year} {2023})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Jiang}\ \emph {et~al.}(2022)\citenamefont {Jiang},
+  \citenamefont {Yang}, \citenamefont {Ferreira},\ and\ \citenamefont
+  {Zhang}}]{Jiang2022}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.}~\bibnamefont
+  {Jiang}}, \bibinfo {author} {\bibfnamefont {Z.}~\bibnamefont {Yang}},
+  \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Ferreira}},\ and\
+  \bibinfo {author} {\bibfnamefont {L.}~\bibnamefont {Zhang}},\ }\bibfield
+  {title} {\bibinfo {title} {Control and autonomy of microrobots: Recent
+  progress and perspective},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Advanced Intelligent Systems}\ }\textbf {\bibinfo {volume} {4}},\
+  \bibinfo {pages} {2100279} (\bibinfo {year} {2022})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Sutherland}\ \emph {et~al.}(2023)\citenamefont
+  {Sutherland}, \citenamefont {DiBenedetto}, \citenamefont {Kaminski},\ and\
+  \citenamefont {Van Den~Bremer}}]{Sutherland2023}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {B.~R.}\ \bibnamefont
+  {Sutherland}}, \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont
+  {DiBenedetto}}, \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Kaminski}},\ and\ \bibinfo {author} {\bibfnamefont {T.}~\bibnamefont {Van
+  Den~Bremer}},\ }\bibfield  {title} {\bibinfo {title} {Fluid dynamics
+  challenges in predicting plastic pollution transport in the ocean: A
+  perspective},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Physical Review Fluids}\ }\textbf {\bibinfo {volume} {8}},\ \bibinfo {pages}
+  {070701} (\bibinfo {year} {2023})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Brenner}(1963)}]{Brenner1963}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Brenner}},\ }\bibfield  {title} {\bibinfo {title} {The stokes resistance of
+  an arbitrary particle},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Chemical Engineering Science}\ }\textbf {\bibinfo {volume} {18}},\
+  \bibinfo {pages} {1} (\bibinfo {year} {1963})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Happel}\ and\ \citenamefont
+  {Brenner}(1983)}]{Happel2012}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.}~\bibnamefont
+  {Happel}}\ and\ \bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Brenner}},\ }\href@noop {} {\emph {\bibinfo {title} {Low Reynolds number
+  hydrodynamics: with special applications to particulate media}}},\ \bibinfo
+  {edition} {first paperback edition}\ ed.\ (\bibinfo  {publisher} {Martinus
+  Nijhoff Publishers, The Hague},\ \bibinfo {year} {1983})\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Kim}\ and\ \citenamefont {Karrila}(2013)}]{Kim2013}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {S.}~\bibnamefont
+  {Kim}}\ and\ \bibinfo {author} {\bibfnamefont {S.~J.}\ \bibnamefont
+  {Karrila}},\ }\href@noop {} {\emph {\bibinfo {title} {Microhydrodynamics:
+  principles and selected applications}}}\ (\bibinfo  {publisher}
+  {Butterworth-Heinemann},\ \bibinfo {year} {2013})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Kim}\ \emph {et~al.}(2013)\citenamefont {Kim},
+  \citenamefont {Laschi},\ and\ \citenamefont {Trimmer}}]{Kim2013a}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {S.}~\bibnamefont
+  {Kim}}, \bibinfo {author} {\bibfnamefont {C.}~\bibnamefont {Laschi}},\ and\
+  \bibinfo {author} {\bibfnamefont {B.}~\bibnamefont {Trimmer}},\ }\bibfield
+  {title} {\bibinfo {title} {Soft robotics: a bioinspired evolution in
+  robotics},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Trends
+  in biotechnology}\ }\textbf {\bibinfo {volume} {31}},\ \bibinfo {pages} {287}
+  (\bibinfo {year} {2013})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Pfeifer}\ and\ \citenamefont
+  {Bongard}(2006)}]{Pfeifer2006}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Pfeifer}}\ and\ \bibinfo {author} {\bibfnamefont {J.}~\bibnamefont
+  {Bongard}},\ }\href@noop {} {\emph {\bibinfo {title} {How the body shapes the
+  way we think: a new view of intelligence}}}\ (\bibinfo  {publisher} {MIT
+  press},\ \bibinfo {year} {2006})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Pfeifer}\ \emph {et~al.}(2014)\citenamefont
+  {Pfeifer}, \citenamefont {Iida},\ and\ \citenamefont
+  {Lungarella}}]{Pfeifer2014}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Pfeifer}}, \bibinfo {author} {\bibfnamefont {F.}~\bibnamefont {Iida}},\ and\
+  \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont {Lungarella}},\ }\bibfield
+   {title} {\bibinfo {title} {Cognition from the bottom up: on biological
+  inspiration, body morphology, and soft materials},\ }\href@noop {} {\bibfield
+   {journal} {\bibinfo  {journal} {Trends in cognitive sciences}\ }\textbf
+  {\bibinfo {volume} {18}},\ \bibinfo {pages} {404} (\bibinfo {year}
+  {2014})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Hauser}\ \emph {et~al.}(2011)\citenamefont {Hauser},
+  \citenamefont {Ijspeert}, \citenamefont {F{\"u}chslin}, \citenamefont
+  {Pfeifer},\ and\ \citenamefont {Maass}}]{Hauser2011}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Hauser}}, \bibinfo {author} {\bibfnamefont {A.~J.}\ \bibnamefont
+  {Ijspeert}}, \bibinfo {author} {\bibfnamefont {R.~M.}\ \bibnamefont
+  {F{\"u}chslin}}, \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Pfeifer}},\ and\ \bibinfo {author} {\bibfnamefont {W.}~\bibnamefont
+  {Maass}},\ }\bibfield  {title} {\bibinfo {title} {Towards a theoretical
+  foundation for morphological computation with compliant bodies},\ }\href@noop
+  {} {\bibfield  {journal} {\bibinfo  {journal} {Biological cybernetics}\
+  }\textbf {\bibinfo {volume} {105}},\ \bibinfo {pages} {355} (\bibinfo {year}
+  {2011})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Hauser}\ \emph {et~al.}(2014)\citenamefont {Hauser},
+  \citenamefont {F{\"u}chslin},\ and\ \citenamefont {Pfeifer}}]{Hauser2014}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Hauser}}, \bibinfo {author} {\bibfnamefont {R.~M.}\ \bibnamefont
+  {F{\"u}chslin}},\ and\ \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Pfeifer}},\ }\bibfield  {title} {\bibinfo {title} {Opinions and outlooks on
+  morphological computation},\ }\href@noop {} {\  (\bibinfo {year}
+  {2014})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Nakajima}\ \emph {et~al.}(2015)\citenamefont
+  {Nakajima}, \citenamefont {Hauser}, \citenamefont {Li},\ and\ \citenamefont
+  {Pfeifer}}]{Nakajima2015}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {K.}~\bibnamefont
+  {Nakajima}}, \bibinfo {author} {\bibfnamefont {H.}~\bibnamefont {Hauser}},
+  \bibinfo {author} {\bibfnamefont {T.}~\bibnamefont {Li}},\ and\ \bibinfo
+  {author} {\bibfnamefont {R.}~\bibnamefont {Pfeifer}},\ }\bibfield  {title}
+  {\bibinfo {title} {Information processing via physical soft body},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Scientific
+  reports}\ }\textbf {\bibinfo {volume} {5}},\ \bibinfo {pages} {10487}
+  (\bibinfo {year} {2015})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Hauser}\ \emph {et~al.}(2023)\citenamefont {Hauser},
+  \citenamefont {Nanayakkara},\ and\ \citenamefont {Forni}}]{Hauser2023}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Hauser}}, \bibinfo {author} {\bibfnamefont {T.}~\bibnamefont
+  {Nanayakkara}},\ and\ \bibinfo {author} {\bibfnamefont {F.}~\bibnamefont
+  {Forni}},\ }\bibfield  {title} {\bibinfo {title} {Leveraging morphological
+  computation for controlling soft robots: Learning from nature to control soft
+  robots},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {IEEE
+  Control Systems Magazine}\ }\textbf {\bibinfo {volume} {43}},\ \bibinfo
+  {pages} {114} (\bibinfo {year} {2023})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Pozrikidis}(1992)}]{Pozrikidis1992}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {Pozrikidis}},\ }\href@noop {} {\emph {\bibinfo {title} {Boundary integral
+  and singularity methods for linearized viscous flow}}},\ Cambridge Texts in
+  Applied Mathematics\ (\bibinfo  {publisher} {Cambridge University Press},\
+  \bibinfo {year} {1992})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Balboa~Usabiaga}\ \emph {et~al.}(2017)\citenamefont
+  {Balboa~Usabiaga}, \citenamefont {Kallemov}, \citenamefont {Delmotte},
+  \citenamefont {Bhalla}, \citenamefont {Griffith},\ and\ \citenamefont
+  {Donev}}]{Balboa-Usabiaga2017}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {F.}~\bibnamefont
+  {Balboa~Usabiaga}}, \bibinfo {author} {\bibfnamefont {B.}~\bibnamefont
+  {Kallemov}}, \bibinfo {author} {\bibfnamefont {B.}~\bibnamefont {Delmotte}},
+  \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Bhalla}}, \bibinfo
+  {author} {\bibfnamefont {B.}~\bibnamefont {Griffith}},\ and\ \bibinfo
+  {author} {\bibfnamefont {A.}~\bibnamefont {Donev}},\ }\bibfield  {title}
+  {\bibinfo {title} {Hydrodynamics of suspensions of passive and active rigid
+  particles: a rigid multiblob approach},\ }\href@noop {} {\bibfield  {journal}
+  {\bibinfo  {journal} {Communications in Applied Mathematics and Computational
+  Science}\ }\textbf {\bibinfo {volume} {11}},\ \bibinfo {pages} {217}
+  (\bibinfo {year} {2017})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Balboa~Usabiaga}\ and\ \citenamefont
+  {Delmotte}(2022)}]{Balboa-Usabiaga2022}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {F.}~\bibnamefont
+  {Balboa~Usabiaga}}\ and\ \bibinfo {author} {\bibfnamefont {B.}~\bibnamefont
+  {Delmotte}},\ }\bibfield  {title} {\bibinfo {title} {A numerical method for
+  suspensions of articulated bodies in viscous flows},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Journal of Computational
+  Physics}\ }\textbf {\bibinfo {volume} {464}},\ \bibinfo {pages} {111365}
+  (\bibinfo {year} {2022})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Broms}\ \emph {et~al.}(2023)\citenamefont {Broms},
+  \citenamefont {Sandberg},\ and\ \citenamefont {Tornberg}}]{Broms2023}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Broms}}, \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont {Sandberg}},\
+  and\ \bibinfo {author} {\bibfnamefont {A.-K.}\ \bibnamefont {Tornberg}},\
+  }\bibfield  {title} {\bibinfo {title} {A locally corrected multiblob method
+  with hydrodynamically matched grids for the stokes mobility problem},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Journal of
+  Computational Physics}\ }\textbf {\bibinfo {volume} {487}},\ \bibinfo {pages}
+  {112172} (\bibinfo {year} {2023})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Tornberg}\ and\ \citenamefont
+  {Shelley}(2004)}]{Tornberg2004}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.-K.}\ \bibnamefont
+  {Tornberg}}\ and\ \bibinfo {author} {\bibfnamefont {M.~J.}\ \bibnamefont
+  {Shelley}},\ }\bibfield  {title} {\bibinfo {title} {Simulating the dynamics
+  and interactions of flexible fibers in stokes flows},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Journal of Computational
+  Physics}\ }\textbf {\bibinfo {volume} {196}},\ \bibinfo {pages} {8} (\bibinfo
+  {year} {2004})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Nazockdast}\ \emph {et~al.}(2017)\citenamefont
+  {Nazockdast}, \citenamefont {Rahimian}, \citenamefont {Zorin},\ and\
+  \citenamefont {Shelley}}]{Nazockdast2017}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {E.}~\bibnamefont
+  {Nazockdast}}, \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Rahimian}}, \bibinfo {author} {\bibfnamefont {D.}~\bibnamefont {Zorin}},\
+  and\ \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont {Shelley}},\
+  }\bibfield  {title} {\bibinfo {title} {A fast platform for simulating
+  semi-flexible fiber suspensions applied to cell mechanics},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Journal of Computational
+  Physics}\ }\textbf {\bibinfo {volume} {329}},\ \bibinfo {pages} {173}
+  (\bibinfo {year} {2017})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Maxian}\ \emph {et~al.}(2022)\citenamefont {Maxian},
+  \citenamefont {Sprinkle}, \citenamefont {Peskin},\ and\ \citenamefont
+  {Donev}}]{Maxian2022}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {O.}~\bibnamefont
+  {Maxian}}, \bibinfo {author} {\bibfnamefont {B.}~\bibnamefont {Sprinkle}},
+  \bibinfo {author} {\bibfnamefont {C.~S.}\ \bibnamefont {Peskin}},\ and\
+  \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Donev}},\ }\bibfield
+  {title} {\bibinfo {title} {Hydrodynamics of a twisting, bending, inextensible
+  fiber in stokes flow},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Physical Review Fluids}\ }\textbf {\bibinfo {volume} {7}},\
+  \bibinfo {pages} {074101} (\bibinfo {year} {2022})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Garc{\'\i}a de~la Torre}\ and\ \citenamefont
+  {Bloomfield}(1981)}]{Garcia-de-la-Torre1981}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.}~\bibnamefont
+  {Garc{\'\i}a de~la Torre}}\ and\ \bibinfo {author} {\bibfnamefont {V.~A.}\
+  \bibnamefont {Bloomfield}},\ }\bibfield  {title} {\bibinfo {title}
+  {Hydrodynamic properties of complex, rigid, biological macromolecules: theory
+  and applications},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Quarterly reviews of biophysics}\ }\textbf {\bibinfo {volume} {14}},\
+  \bibinfo {pages} {81} (\bibinfo {year} {1981})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Zuk}\ \emph {et~al.}(2014)\citenamefont {Zuk},
+  \citenamefont {Wajnryb}, \citenamefont {Mizerski},\ and\ \citenamefont
+  {Szymczak}}]{Zuk2014}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {P.~J.}\ \bibnamefont
+  {Zuk}}, \bibinfo {author} {\bibfnamefont {E.}~\bibnamefont {Wajnryb}},
+  \bibinfo {author} {\bibfnamefont {K.}~\bibnamefont {Mizerski}},\ and\
+  \bibinfo {author} {\bibfnamefont {P.}~\bibnamefont {Szymczak}},\ }\bibfield
+  {title} {\bibinfo {title} {{R}otne--{P}rager--{Y}amakawa approximation for
+  different-sized particles in application to macromolecular bead models},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {J. Fluid Mech.}\
+  }\textbf {\bibinfo {volume} {741}},\ \bibinfo {pages} {R5} (\bibinfo {year}
+  {2014})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Zuk}\ \emph {et~al.}(2018)\citenamefont {Zuk},
+  \citenamefont {Cichocki},\ and\ \citenamefont {Szymczak}}]{Zuk2018}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {P.~J.}\ \bibnamefont
+  {Zuk}}, \bibinfo {author} {\bibfnamefont {B.}~\bibnamefont {Cichocki}},\ and\
+  \bibinfo {author} {\bibfnamefont {P.}~\bibnamefont {Szymczak}},\ }\bibfield
+  {title} {\bibinfo {title} {Grpy: an accurate bead method for calculation of
+  hydrodynamic properties of rigid biomacromolecules},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Biophysical Journal}\ }\textbf
+  {\bibinfo {volume} {115}},\ \bibinfo {pages} {782} (\bibinfo {year}
+  {2018})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Gonzalez}\ \emph {et~al.}(2004)\citenamefont
+  {Gonzalez}, \citenamefont {Graf},\ and\ \citenamefont
+  {Maddocks}}]{Gonzalez2004}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {O.}~\bibnamefont
+  {Gonzalez}}, \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Graf}},\
+  and\ \bibinfo {author} {\bibfnamefont {J.}~\bibnamefont {Maddocks}},\
+  }\bibfield  {title} {\bibinfo {title} {Dynamics of a rigid body in a stokes
+  fluid},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Journal
+  of Fluid Mechanics}\ }\textbf {\bibinfo {volume} {519}},\ \bibinfo {pages}
+  {133} (\bibinfo {year} {2004})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Witten}\ and\ \citenamefont
+  {Diamant}(2020)}]{Witten2020}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {T.~A.}\ \bibnamefont
+  {Witten}}\ and\ \bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Diamant}},\ }\bibfield  {title} {\bibinfo {title} {A review of shaped
+  colloidal particles in fluids: anisotropy and chirality},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Reports on progress in physics}\
+  }\textbf {\bibinfo {volume} {83}},\ \bibinfo {pages} {116601} (\bibinfo
+  {year} {2020})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Moreau}(2023)}]{Moreau2023}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {Moreau}},\ }\bibfield  {title} {\bibinfo {title} {Controllability and
+  optimal control of microswimmers: Theory and applications},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Journal of the Physical Society
+  of Japan}\ }\textbf {\bibinfo {volume} {92}},\ \bibinfo {pages} {121005}
+  (\bibinfo {year} {2023})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Brady}\ and\ \citenamefont
+  {Bossis}(1988)}]{Brady1988}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.~F.}\ \bibnamefont
+  {Brady}}\ and\ \bibinfo {author} {\bibfnamefont {G.}~\bibnamefont {Bossis}},\
+  }\bibfield  {title} {\bibinfo {title} {Stokesian dynamics},\ }\href
+  {https://doi.org/10.1146/annurev.fl.20.010188.000551} {\bibfield  {journal}
+  {\bibinfo  {journal} {Annual Review of Fluid Mechanics}\ }\textbf {\bibinfo
+  {volume} {20}},\ \bibinfo {pages} {111} (\bibinfo {year} {1988})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Ichiki}(2002)}]{Ichiki2002}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {K.}~\bibnamefont
+  {Ichiki}},\ }\bibfield  {title} {\bibinfo {title} {Improvement of the
+  stokesian dynamics method for systems with a finite number of particles},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Journal of fluid
+  mechanics}\ }\textbf {\bibinfo {volume} {452}},\ \bibinfo {pages} {231}
+  (\bibinfo {year} {2002})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Fiore}\ and\ \citenamefont {Swan}(2019)}]{Fiore2019}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.~M.}\ \bibnamefont
+  {Fiore}}\ and\ \bibinfo {author} {\bibfnamefont {J.~W.}\ \bibnamefont
+  {Swan}},\ }\bibfield  {title} {\bibinfo {title} {Fast stokesian dynamics},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Journal of Fluid
+  Mechanics}\ }\textbf {\bibinfo {volume} {878}},\ \bibinfo {pages} {544}
+  (\bibinfo {year} {2019})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Swan}\ and\ \citenamefont {Wang}(2016)}]{Swan2016}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.~W.}\ \bibnamefont
+  {Swan}}\ and\ \bibinfo {author} {\bibfnamefont {G.}~\bibnamefont {Wang}},\
+  }\bibfield  {title} {\bibinfo {title} {Rapid calculation of hydrodynamic and
+  transport properties in concentrated solutions of colloidal particles and
+  macromolecules},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Physics of Fluids}\ }\textbf {\bibinfo {volume} {28}} (\bibinfo {year}
+  {2016})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Rotne}\ and\ \citenamefont
+  {Prager}(1969)}]{Rotne1969}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.}~\bibnamefont
+  {Rotne}}\ and\ \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont {Prager}},\
+  }\bibfield  {title} {\bibinfo {title} {Variational treatment of hydrodynamic
+  interaction in polymers},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {The Journal of Chemical Physics}\ }\textbf {\bibinfo {volume}
+  {50}},\ \bibinfo {pages} {4831} (\bibinfo {year} {1969})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Yamakawa}(1970)}]{Yamakawa1970}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Yamakawa}},\ }\bibfield  {title} {\bibinfo {title} {Transport properties of
+  polymer chains in dilute solution: hydrodynamic interaction},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {The Journal of Chemical Physics}\
+  }\textbf {\bibinfo {volume} {53}},\ \bibinfo {pages} {436} (\bibinfo {year}
+  {1970})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Wajnryb}\ \emph {et~al.}(2013)\citenamefont
+  {Wajnryb}, \citenamefont {Mizerski}, \citenamefont {Zuk},\ and\ \citenamefont
+  {Szymczak}}]{Wajnryb2013}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {E.}~\bibnamefont
+  {Wajnryb}}, \bibinfo {author} {\bibfnamefont {K.~A.}\ \bibnamefont
+  {Mizerski}}, \bibinfo {author} {\bibfnamefont {P.~J.}\ \bibnamefont {Zuk}},\
+  and\ \bibinfo {author} {\bibfnamefont {P.}~\bibnamefont {Szymczak}},\
+  }\bibfield  {title} {\bibinfo {title} {Generalization of the
+  rotne--prager--yamakawa mobility and shear disturbance tensors},\ }\href@noop
+  {} {\bibfield  {journal} {\bibinfo  {journal} {Journal of Fluid Mechanics}\
+  }\textbf {\bibinfo {volume} {731}},\ \bibinfo {pages} {R3} (\bibinfo {year}
+  {2013})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Cichocki}\ \emph {et~al.}(2021)\citenamefont
+  {Cichocki}, \citenamefont {Szymczak},\ and\ \citenamefont
+  {{\.Z}uk}}]{Cichocki2021}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {B.}~\bibnamefont
+  {Cichocki}}, \bibinfo {author} {\bibfnamefont {P.}~\bibnamefont {Szymczak}},\
+  and\ \bibinfo {author} {\bibfnamefont {P.~J.}\ \bibnamefont {{\.Z}uk}},\
+  }\bibfield  {title} {\bibinfo {title} {Generalized rotne--prager--yamakawa
+  approximation for brownian dynamics in shear flow in bounded, unbounded, and
+  periodic domains},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {The Journal of Chemical Physics}\ }\textbf {\bibinfo {volume} {154}}
+  (\bibinfo {year} {2021})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Delmotte}\ \emph
+  {et~al.}(2015{\natexlab{a}})\citenamefont {Delmotte}, \citenamefont
+  {Keaveny}, \citenamefont {Plourabou{\'e}},\ and\ \citenamefont
+  {Climent}}]{Delmotte2015b}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {B.}~\bibnamefont
+  {Delmotte}}, \bibinfo {author} {\bibfnamefont {E.~E.}\ \bibnamefont
+  {Keaveny}}, \bibinfo {author} {\bibfnamefont {F.}~\bibnamefont
+  {Plourabou{\'e}}},\ and\ \bibinfo {author} {\bibfnamefont {E.}~\bibnamefont
+  {Climent}},\ }\bibfield  {title} {\bibinfo {title} {Large-scale simulation of
+  steady and time-dependent active suspensions with the force-coupling
+  method},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Journal
+  of Computational Physics}\ }\textbf {\bibinfo {volume} {302}},\ \bibinfo
+  {pages} {524} (\bibinfo {year} {2015}{\natexlab{a}})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Delmotte}\ \emph
+  {et~al.}(2015{\natexlab{b}})\citenamefont {Delmotte}, \citenamefont
+  {Climent},\ and\ \citenamefont {Plourabou{\'e}}}]{Delmotte2015}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {B.}~\bibnamefont
+  {Delmotte}}, \bibinfo {author} {\bibfnamefont {E.}~\bibnamefont {Climent}},\
+  and\ \bibinfo {author} {\bibfnamefont {F.}~\bibnamefont {Plourabou{\'e}}},\
+  }\bibfield  {title} {\bibinfo {title} {A general formulation of bead models
+  applied to flexible fibers and active filaments at low reynolds number},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Journal of
+  Computational Physics}\ }\textbf {\bibinfo {volume} {286}},\ \bibinfo {pages}
+  {14} (\bibinfo {year} {2015}{\natexlab{b}})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Fuchter}\ and\ \citenamefont
+  {Bloomfield-Gad{\^e}lha}(2023)}]{Fuchter2023}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {P.}~\bibnamefont
+  {Fuchter}}\ and\ \bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Bloomfield-Gad{\^e}lha}},\ }\bibfield  {title} {\bibinfo {title} {The
+  three-dimensional coarse-graining formulation of interacting
+  elastohydrodynamic filaments and multi-body microhydrodynamics},\ }\href@noop
+  {} {\bibfield  {journal} {\bibinfo  {journal} {Journal of the Royal Society
+  Interface}\ }\textbf {\bibinfo {volume} {20}},\ \bibinfo {pages} {20230021}
+  (\bibinfo {year} {2023})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Liang}\ \emph {et~al.}(2013)\citenamefont {Liang},
+  \citenamefont {Gimbutas}, \citenamefont {Greengard}, \citenamefont {Huang},\
+  and\ \citenamefont {Jiang}}]{Liang2013}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {Z.}~\bibnamefont
+  {Liang}}, \bibinfo {author} {\bibfnamefont {Z.}~\bibnamefont {Gimbutas}},
+  \bibinfo {author} {\bibfnamefont {L.}~\bibnamefont {Greengard}}, \bibinfo
+  {author} {\bibfnamefont {J.}~\bibnamefont {Huang}},\ and\ \bibinfo {author}
+  {\bibfnamefont {S.}~\bibnamefont {Jiang}},\ }\bibfield  {title} {\bibinfo
+  {title} {A fast multipole method for the {R}otne--{P}rager--{Y}amakawa tensor
+  and its applications},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Journal of Computational Physics}\ }\textbf {\bibinfo {volume}
+  {234}},\ \bibinfo {pages} {133} (\bibinfo {year} {2013})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Solovev}\ and\ \citenamefont
+  {Friedrich}(2021)}]{Solovev2021}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Solovev}}\ and\ \bibinfo {author} {\bibfnamefont {B.~M.}\ \bibnamefont
+  {Friedrich}},\ }\bibfield  {title} {\bibinfo {title} {Lagrangian mechanics of
+  active systems},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {The European Physical Journal E}\ }\textbf {\bibinfo {volume} {44}},\
+  \bibinfo {pages} {1} (\bibinfo {year} {2021})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Najafi}\ and\ \citenamefont
+  {Golestanian}(2004)}]{Najafi2004}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Najafi}}\ and\ \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Golestanian}},\ }\bibfield  {title} {\bibinfo {title} {Simple swimmer at low
+  reynolds number: Three linked spheres},\ }\href@noop {} {\bibfield  {journal}
+  {\bibinfo  {journal} {Physical Review E---Statistical, Nonlinear, and Soft
+  Matter Physics}\ }\textbf {\bibinfo {volume} {69}},\ \bibinfo {pages}
+  {062901} (\bibinfo {year} {2004})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Purcell}(2014)}]{Purcell2014}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {E.~M.}\ \bibnamefont
+  {Purcell}},\ }\bibfield  {title} {\bibinfo {title} {Life at low reynolds
+  number},\ }in\ \href@noop {} {\emph {\bibinfo {booktitle} {Physics and our
+  world: reissue of the proceedings of a symposium in honor of Victor F
+  Weisskopf}}}\ (\bibinfo {organization} {World Scientific},\ \bibinfo {year}
+  {2014})\ pp.\ \bibinfo {pages} {47--67}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Eloy}(2026)}]{softmoblility}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {Eloy}},\ }\href {https://github.com/celoy/SoftMobility} {\bibinfo {title}
+  {Soft mobility python library}} (\bibinfo {year} {2026})\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Bradbury}\ \emph {et~al.}(2018)\citenamefont
+  {Bradbury}, \citenamefont {Frostig}, \citenamefont {Hawkins}, \citenamefont
+  {Johnson}, \citenamefont {Leary}, \citenamefont {Maclaurin}, \citenamefont
+  {Necula}, \citenamefont {Paszke}, \citenamefont {Vander{P}las}, \citenamefont
+  {Wanderman-{M}ilne},\ and\ \citenamefont {Zhang}}]{jax2018github}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.}~\bibnamefont
+  {Bradbury}}, \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont {Frostig}},
+  \bibinfo {author} {\bibfnamefont {P.}~\bibnamefont {Hawkins}}, \bibinfo
+  {author} {\bibfnamefont {M.~J.}\ \bibnamefont {Johnson}}, \bibinfo {author}
+  {\bibfnamefont {C.}~\bibnamefont {Leary}}, \bibinfo {author} {\bibfnamefont
+  {D.}~\bibnamefont {Maclaurin}}, \bibinfo {author} {\bibfnamefont
+  {G.}~\bibnamefont {Necula}}, \bibinfo {author} {\bibfnamefont
+  {A.}~\bibnamefont {Paszke}}, \bibinfo {author} {\bibfnamefont
+  {J.}~\bibnamefont {Vander{P}las}}, \bibinfo {author} {\bibfnamefont
+  {S.}~\bibnamefont {Wanderman-{M}ilne}},\ and\ \bibinfo {author}
+  {\bibfnamefont {Q.}~\bibnamefont {Zhang}},\ }\href
+  {http://github.com/google/jax} {\bibinfo {title} {{JAX}: composable
+  transformations of {Python}+{NumPy} programs}} (\bibinfo {year}
+  {2018})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {DeepMind}\ \emph {et~al.}(2020)\citenamefont
+  {DeepMind} \emph {et~al.}}]{optax2020github}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibnamefont {DeepMind}} \emph
+  {et~al.},\ }\href {http://github.com/google-deepmind/optax} {\bibinfo {title}
+  {The {D}eep{M}ind {JAX} {E}cosystem}} (\bibinfo {year} {2020})\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Bortz}(1971)}]{Bortz1971}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.~E.}\ \bibnamefont
+  {Bortz}},\ }\bibfield  {title} {\bibinfo {title} {A new mathematical
+  formulation for strapdown inertial navigation},\ }\href@noop {} {\bibfield
+  {journal} {\bibinfo  {journal} {IEEE transactions on aerospace and electronic
+  systems}\ ,\ \bibinfo {pages} {61}} (\bibinfo {year} {1971})}\BibitemShut
+  {NoStop}%
+\end{thebibliography}%

@@ -1,0 +1,737 @@
+%  Add 'draft' option to mark overfull boxes with black boxes
+%  Add 'showkeys' option to make keywords appear
+\documentclass[aps,prfluids,groupedaddress]{revtex4-2}
+%\documentclass[aps,prl,preprint,groupedaddress]{revtex4-2}
+%\documentclass[aps,prl,preprint,superscriptaddress]{revtex4-2}
+%\documentclass[aps,prl,reprint,groupedaddress]{revtex4-2}
+
+\usepackage{bm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{xcolor}
+
+% Mark up new/edited content in red for review.
+\newcommand{\new}[1]{{\color{red}#1}}
+
+%% OPTIONAL MACRO DEFINITIONS
+
+% Dimensionless numbers
+\newcommand{\Reyn}{\mathrm{Re}}
+
+% math symbols
+\newcommand{\rme}{\mathrm{e}}
+\newcommand{\rmi}{\mathrm{i}}
+\newcommand{\rmd}{\mathrm{d}}
+\newcommand{\sym}{\mathrm{sym}}
+
+% vectors small case
+\newcommand{\bb}{\bm{b}}
+\newcommand{\bc}{\bm{c}}
+\newcommand{\be}{\bm{e}}
+\newcommand{\bff}{\bm{f}}
+\newcommand{\bg}{\bm{g}}
+\newcommand{\bh}{\bm{h}}
+\newcommand{\bmm}{\bm{m}}
+\newcommand{\bn}{\bm{n}}
+\newcommand{\bp}{\bm{p}}
+\newcommand{\bq}{\bm{q}}
+\newcommand{\br}{\bm{r}}
+\newcommand{\bu}{\bm{u}}
+\newcommand{\bv}{\bm{v}}
+\newcommand{\bx}{\bm{x}}
+\newcommand{\by}{\bm{y}}
+\newcommand{\bz}{\bm{z}}
+
+% vectors small case (greek letters)
+\newcommand{\bchi}{\bm{\chi}}
+\newcommand{\bmu}{\bm{\mu}}
+\newcommand{\bomega}{\bm{\omega}}
+\newcommand{\bphi}{\bm{\phi}}
+\newcommand{\btau}{\bm{\tau}}
+\newcommand{\btheta}{\bm{\theta}}
+
+% vectors small case (latin)
+\newcommand{\ba}{\bm{a}}
+
+% vectors capital case
+\newcommand{\bB}{\bm{B}}
+\newcommand{\bC}{\bm{C}}
+\newcommand{\bE}{\bm{E}}
+\newcommand{\bF}{\bm{F}}
+\newcommand{\bH}{\bm{H}}
+\newcommand{\bI}{\bm{I}}
+\newcommand{\bK}{\bm{K}}
+\newcommand{\bM}{\bm{M}}
+\newcommand{\bN}{\bm{N}}
+\newcommand{\bP}{\bm{P}}
+\newcommand{\bQ}{\bm{Q}}
+\newcommand{\bR}{\bm{R}}
+\newcommand{\bS}{\bm{S}}
+\newcommand{\bT}{\bm{T}}
+\newcommand{\bU}{\bm{U}}
+\newcommand{\bV}{\bm{V}}
+\newcommand{\bW}{\bm{W}}
+\newcommand{\bX}{\bm{X}}
+\newcommand{\bTheta}{\bm{\Theta}}
+\newcommand{\bOmega}{\bm{\Omega}}
+
+% tensors
+\newcommand{\tI}{\bm{\mathit{1}}}
+%
+\newcommand{\tB}{\bm{{B}}}
+\newcommand{\tC}{\bm{{C}}}
+\newcommand{\tE}{\bm{{E}}}
+\newcommand{\tEd}{\bm{\dot {E}}}
+\newcommand{\tF}{\bm{{F}}}
+\newcommand{\tG}{\bm{G}}
+\newcommand{\tJ}{\bm{J}}
+\newcommand{\tK}{\bm{{K}}}
+\newcommand{\tM}{\bm{{M}}}
+\newcommand{\tP}{\bm{{P}}}
+\newcommand{\tPi}{\bm{{\Pi}}}
+\newcommand{\tQ}{\bm{{Q}}}
+\newcommand{\tR}{\bm{{R}}}
+\newcommand{\tS}{\bm{{S}}}
+\newcommand{\tT}{\bm{{T}}}
+\newcommand{\tU}{\bm{U}}
+\newcommand{\tsigma}{\bm{{\sigma}}}
+\newcommand{\tepsilon}{\bm{{\epsilon}}}
+
+% time derivatives of vectors
+\newcommand{\bad}{\bm{\dot a}}
+\newcommand{\bqd}{\bm{\dot q}}
+\newcommand{\brd}{\bm{\dot r}}
+\newcommand{\bxd}{\bm{\dot \chi}}
+\newcommand{\bthetad}{\bm{\dot \theta}}
+\newcommand{\bQd}{\bm{\dot Q}}
+\newcommand{\bRd}{\bm{\dot R}}
+\newcommand{\bXd}{\bm{\dot X}}
+\newcommand{\bThetad}{\bm{\dot \Theta}}
+
+% unit vectors
+\newcommand{\hz}{\bm{\hat z}}
+\newcommand{\htheta}{\bm{\hat \theta}}
+\newcommand{\hTheta}{\bm{\hat \Theta}}
+
+% matrices
+\newcommand{\mRot}{\bm{\mathcal{R}}_0}
+
+% Math operators
+\DeclareMathOperator{\cotan}{cotan}
+
+
+\begin{document}
+
+\title{Soft Mobility Theory}
+
+% repeat the \author .. \affiliation  etc. as needed
+% \email, \thanks, \homepage, \altaffiliation all apply to the current
+% author. Explanatory text should go in the []'s, actual e-mail
+% address or url should go in the {}'s for \email and \homepage.
+% Please use the appropriate macro for each type of information
+
+% \affiliation command applies to all authors since the last
+% \affiliation command. The \affiliation command should follow the
+% other information
+% \affiliation can be followed by \email, \homepage, \thanks as well.
+\author{Christophe Eloy}
+\affiliation{Aix-Marseille Univ, CNRS, Centrale Med, IRPHE, Marseille, France}
+\email[]{christophe.eloy@centrale-med.fr}
+%\homepage[]{Your web page}
+%\thanks{}
+\affiliation{Department of Applied Mathematics and Theoretical Physics, University of Cambridge, Cambridge, UK}
+
+%Collaboration name if desired (requires use of superscriptaddress
+%option in \documentclass). \noaffiliation is required (may also be
+%used with the \author command).
+%\collaboration can be followed by \email, \homepage, \thanks as well.
+%\collaboration{}
+%\noaffiliation
+
+\date{\today}
+
+\begin{abstract}
+Elastohydrodynamics is the interaction of elastic bodies with viscous flow. It governs phenomena from molecular translocation to microorganism locomotion. While the continuum formulation is well-established, analytical solutions exist only in asymptotic limits, and numerical approaches are typically problem-specific. We present a general theoretical framework for elastohydrodynamic systems that admit finite-dimensional parameterization through generalized coordinates describing both rigid-body motion and deformation. Applying d'Alembert's principle, we derive a soft mobility equation that extends classical rigid-body mobility theory to configuration-dependent systems. The mobility, advection, and flow-gradient coupling tensors all depend on the instantaneous configuration, yielding a nonlinear dynamical system amenable to efficient computation and gradient-based optimization. We demonstrate the framework through assemblies of hydrodynamically-interacting spheres connected by elastic springs, where the Rotne-Prager-Yamakawa tensor provides the configuration-dependent mobility. Three canonical problems reveal new physics: elastic corrections to Jeffery orbits exhibit memory effects and flow sensing through deformation; magnetic actuation produces efficient swimming via resonant deformation; and passive particles steer autonomously through preferential sampling of flow structures. This soft mobility formulation provides a unified approach to diverse elastohydrodynamic phenomena, from biological microswimmers to synthetic soft microrobots.
+\end{abstract}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction\label{sec.intro}}
+
+Microorganisms rely on their deformability to interact with the surrounding fluid \cite{Visser2001,Wheeler2019}. 
+This deformation can be active when microswimmers propel themselves through their slender flagella and cilia~\cite{Lauga2009,Lauga2016,Lauga2020,Guasto2012,Wheeler2019}. It can also be passive, like red blood cells undergoing large shape changes as they flow through capillaries~\cite{BarthesBiesel2016,Farutin2013}, or diatoms using flexible structures such as mucilage stalks and fine spines to adapt their sinking velocity~\cite{Smayda1974,Wiseman1981,Padisak2003}. 
+Across these systems, deformability is not incidental but functional, often conferring sensing, locomotion, or feeding advantages that a rigid body could not achieve.
+
+In artificial systems, flexible fibers and filaments have been shown to buckle and tumble in quiescent, shear, and turbulent flows~\cite{Wiggins1998,Brouzet2014,Du-Roure2019,Zuk2021}, and a growing class of soft microrobots is being engineered for biomedical applications, such as in-situ sensing, drug delivery, and microsurgery~\cite{Sitti2021,Yasa2023,Tsang2020b,Elnaggar2024,Dabbagh2022,Mo2023,Jiang2022}.
+Even microplastics deform and disperse in the ocean in ways that depend on their shape and flexibility~\cite{Sutherland2023}. 
+
+These problems share a common physical structure: a deformable body whose shape evolves under the combined action of active, elastic, viscous, and body forces. 
+This broad class of fluid--structure interactions is conventionally referred to as \emph{elastohydrodynamics}. 
+We adopt here the more specific term \emph{soft mobility}, by which we mean the transport and deformation of a small deformable body immersed in a background flow, in direct analogy with the classical rigid-body mobility theory~\cite{Brenner1963,Happel2012,Kim2013}. 
+
+Soft mobility encompasses both the \emph{forward} problem of predicting how a given soft body moves and deforms in a prescribed flow, and the \emph{inverse} problem of designing soft bodies to perform a target function: efficient locomotion, flow sensing, clustering, or autonomous navigation in complex environments. 
+The latter is increasingly central to soft robotics~\cite{Kim2013a,Yasa2023} and embodied intelligence~\cite{Pfeifer2006}, and underlies the related notions of morphological computation~\cite{Pfeifer2014,Hauser2011,Hauser2014,Nakajima2015} and physical intelligence~\cite{Sitti2021,Hauser2023}, in which sensing, control, and decision-making are partly offloaded from a centralized processor to the mechanical response of the body itself.
+Solving this inverse problem at low Reynolds number requires a specific approach, which we aim to develop in the present paper.
+
+The natural starting point is the classical mobility theory developed in the 1960s for rigid bodies in Stokes flow~\cite{Brenner1963,Happel2012,Kim2013}. 
+Owing to the linearity of the Stokes equations, the six-component velocity of a rigid body depends linearly on the applied force and torque and on the local background velocity, vorticity, and rate-of-strain. 
+The mobility tensors entering this relation depend only on the body's shape and incorporate all the hydrodynamic complexity of the Stokes equations into a finite set of geometric coefficients. 
+These tensors can be computed with different methods: boundary integral methods~\cite{Pozrikidis1992} that exploit Lorentz reciprocal theorem~\cite{Happel2012}, multiblob methods that discretize body surfaces with ``blobs''~\cite{Balboa-Usabiaga2017,Balboa-Usabiaga2022,Broms2023}, or slender-body theory for filaments and fibers~\cite{Tornberg2004,Nazockdast2017,Maxian2022}.
+This formulation has recently been revived for complex-shaped macromolecules~\cite{Garcia-de-la-Torre1981,Zuk2014,Zuk2018} and reinterpreted as a low-dimensional dynamical system describing rigid-body sinking trajectories~\cite{Gonzalez2004,Witten2020}.
+Its appeal, from the standpoint of the inverse problem, is the explicit, shape-dependent linear relation it provides between velocities and loads~\cite{Moreau2023}.
+
+For $N$ rigid bodies, the same linear relationship extends to a $6N\times 6N$ grand mobility tensor encoding both single-body mobility and many-body hydrodynamic interactions. 
+This tensor is at the core of Stokesian dynamics, which aims to simulate a large ensemble of rigid bodies interacting in a flow~\cite{Brady1988,Ichiki2002,Fiore2019,Swan2016}. 
+To compute the grand mobility tensor efficiently, multipole expansions are generally used, such as the Rotne--Prager--Yamakawa (RPY) approximation, which provides a closed-form mobility for assemblies of spheres of possibly different radii~\cite{Rotne1969,Yamakawa1970,Wajnryb2013,Zuk2014,Cichocki2021}.
+This approach is now mature for both passive rigid suspensions and active suspensions of rigid swimmers, routinely tackling problems with millions of degrees of freedom~\cite{Delmotte2015b}. 
+
+A natural next step has been to leverage these tools to simulate deformable bodies by treating them as assemblies of rigid
+sub-bodies linked by elastic or rigid constraints. 
+For instance, bead models or multiblob methods approximate filaments as an ensemble of touching spheres connected by springs~\cite{Delmotte2015,Zuk2021,Fuchter2023}, and general articulated bodies can be simulated in a similar way~\cite{Balboa-Usabiaga2022}. 
+At each timestep, however, these formulations require enforcing the constraints, which is a saddle-point linear system, typically solved via preconditioned iterative solvers (GMRES, FMM-accelerated iterations~\cite{Liang2013,Fiore2019}). 
+This is efficient for forward simulation, but would be prohibitive for the inverse problem of shape optimization.
+
+Closest in spirit to the present paper is the framework of Solovev and Friedrich~\cite{Solovev2021}. 
+They explicitly project the deformation of a soft body onto a small set of generalized coordinates using Lagrangian mechanics.
+This ``trick'' allows them to compute the dynamics of a shape-changing body without solving the constraints. 
+In the conjugate space of generalized coordinates, they balance generalized hydrodynamic forces against active driving forces, which yields an explicit ordinary differential equation for the generalized velocities. 
+Three differences with the present work should be noted. 
+First, their framework is primarily designed for active microswimmers, not soft bodies deforming elastically. They model active bacterial flagella, eukaryotic cilia, and minimal model swimmers such as Purcell's three-link swimmer~\cite{Purcell2014} or Najafi's three-sphere swimmer~\cite{Najafi2004}.
+Second, in their formulation, hydrodynamic forces are tabulated with boundary-element methods and interpolated, which makes it difficult to differentiate cleanly for gradient-based optimization. 
+Third, their framework does not include the coupling to the background flow, which is essential for turbulent transport.
+
+The goal of this paper is to develop a general ``soft mobility'' framework that simultaneously: 
+(1) is derived from the continuum elastohydrodynamic problem of a hyperelastic body in a background Stokes flow; 
+(2) accommodates arbitrary generalized coordinates and yields an explicit, configuration-dependent ordinary differential equation in which mobility, advection, and flow-gradient coupling tensors all appear; and 
+(3) is constructed so that all tensors are smooth, differentiable functions of the design parameters, enabling end-to-end gradient-based inverse design.
+
+The paper is organized as follows.
+Section~\ref{sec.theory} formulates the continuum elastohydrodynamic
+problem and derives its weak form via the principle of virtual power
+and the Lorentz reciprocal theorem~\cite{Happel2012}. Section~\ref{sec.numerics}
+specializes the framework to two finite-dimensional reductions --- a
+Galerkin discretization on arbitrary basis modes and a
+sphere-and-spring assembly --- and arrives at the soft mobility
+equation in closed form, alongside the open-source Python
+library~\cite{softmoblility}. Section~\ref{sec.results} applies the framework to
+five canonical problems: sinking of a rigid body or a flexible fiber, the instability of a rotating flexible fiber, soft Jeffery orbits, and the optimisation of a three-sphere microswimmer. Finally, we show an example of ``smart'' navigation through flexibility with the soft surfer. Section~\ref{sec.discussion} discusses extensions and applications.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem formulation\label{sec.theory}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsection{Hypotheses}
+
+%%%%%%%%%%%%%%%%
+%\subsubsection{Assumption of small Reynolds number}
+We consider a deformable body of characteristic size $L$ immersed in a viscous fluid of kinematic viscosity $\nu$. 
+The Reynolds number is $\Reyn = UL/\nu$, where $U$ is a characteristic velocity at the body scale. 
+In turbulent environments, the Reynolds number can be calculated by using the Kolmogorov velocity $u_\eta=(\nu\varepsilon)^{1/4}$ as this characteristic velocity, such that $\Reyn = L/\eta$, with $\eta=(\nu^3/\varepsilon)^{1/4}$ the Kolmogorov length scale. An alternative choice is to estimate the characteristic velocity from the local velocity gradient. In that case, the caracteristic velocity is $U \sim \|\nabla\bu^\infty\|L \sim L /\tau_\eta$, with $\tau_\eta = (\nu / \varepsilon)^{1/2}$ the Kolmogorov time scale, such that $\Reyn = (L/\eta)^2$. 
+
+Throughout this work, we assume $\Reyn \ll 1$, so that inertia is negligible. 
+Both choices yield $L\ll\eta$, where $\eta$ is the Kolmogorov length scale, as the condition for this approximation to hold. Under this assumption, the body is in quasi-static equilibrium at each instant, and the surrounding fluid obeys the Stokes equations.
+
+%%%%%%%%%%%%%%%%
+%\subsubsection{Background flow}
+A further consequence of the small-Reynolds-number assumption is that the background flow $\bu^\infty(\br)$ can be linearized about a reference point $\br_0$ attached to the body,
+\begin{equation}\label{eq:bg_flow}
+\bu^\infty(\br) \approx \bu_0^\infty + \bomega_0^\infty \times (\br-\br_0)  + \tE_0^\infty \cdot (\br-\br_0),
+\end{equation}
+with $\bu_0^\infty$ the translational velocity, $\bomega_0^\infty = \frac{1}{2}\nabla\times\bu^\infty$ the angular velocity, and $\tE_0^\infty = \frac{1}{2}(\nabla\bu^\infty + \nabla^T\bu^\infty)$ the rate-of-strain tensor of the background flow evaluated at $\br_0$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Body}
+
+%%%%%%%%%%%%%%%%
+%\subsubsection{Hyperelastic material}
+In its undeformed configuration, the body occupies a reference volume $\Omega_0$, with boundary $\partial\Omega_0$. % and an orthonormal body frame $(\be_1,\be_2,\be_3)$ is attached to it. 
+Under the action of the flow and internal stresses, a material point $\bX\in\Omega_0$ is carried to its current position $\bx = \bchi(\bX,t)\in\Omega_t$ through the deformation map $\bchi$ (Fig.~\ref{fig:elastic_deformations}). The deformation gradient tensor $\tF = \partial\bchi/\partial\bX$ characterizes the local stretching and rotation of the material, and $J = \det\tF$ is its Jacobian. Mass conservation gives $\rho = \rho_0/J$, relating the density $\rho$ in the deformed configuration to its reference value $\rho_0$.
+
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[scale=0.66]{./Figures/Fig1}
+\caption{Representation of the body in (a) the reference configuration and (b) the deformed configuration. }
+\label{fig:elastic_deformations}
+\end{center}
+\end{figure}
+
+The material is assumed hyperelastic, so that the second Piola–Kirchhoff stress tensor $\tS$ derives from a strain energy density $W(\tE)$ as $\tS = \partial W/\partial\tE$, where $\tE = (\tF^T\cdot\tF - \tI)/2$ is the Lagrangian Green strain tensor. The outward unit normals to the body surface in the reference and deformed configurations are denoted $\bN(\bX)$ and $\bn(\bx)$, respectively. 
+The first Piola–Kirchhoff stress tensor $\tP = \tF\cdot\tS$ provides the traction $\bF_s$ in the reference configuration: $\bF_s = \tP\cdot\bN$ is the force per unit reference area exerted on a surface element with outward normal $\bN$, so that the surrounding fluid exerts a force $\bF_s$ on the body. 
+
+%%%%%%%%%%%%%%%%
+%\subsubsection{Static equilibrium}
+Our goal is to determine the velocity field $\bxd$ of the body in terms of the applied forces and its elastic properties. At low Reynolds number, inertia is negligible and the body is in quasi-static equilibrium at each instant. The equilibrium equations in the reference configuration are
+\begin{eqnarray}
+\nabla_{\bX}\cdot \tP + \bF_v & = & 0, \quad \mbox{in }\Omega_0,\\
+\tP \cdot \bN & = & \bF_s, \quad \mbox{on }\partial\Omega_0,
+\end{eqnarray}
+expressing the balance of body forces $\bF_v$ against the divergence of the first Piola–Kirchhoff stress, and the continuity of traction at the solid--fluid interface.
+
+To obtain a weak formulation of the equilibrium equations, we apply the principle of virtual power: for any kinematically admissible virtual velocity field $\bV^*(\bX)$, the internal virtual power equals the power of the external forces
+\begin{equation}\label{eq:virtual_power}
+\int_{\Omega_0} \tS : \tEd^* \, \rmd V =
+	\int_{\Omega_0} \bF_v \cdot \bV^* \, \rmd V +
+	\int_{\partial \Omega_0} \bF_s \cdot \bV^* \, \rmd S,
+\end{equation}
+where the virtual strain rate is
+\begin{equation}\label{eq:virtual_strain_rate}
+\tEd^* = \sym\left(\tF^T \cdot \nabla \bV^* \right).
+\end{equation}
+
+%%%%%%%%%%%%%%%%
+%\subsubsection{Body forces}
+We assume that the body force is linear in an externally applied field $\bH$, uniform at the scale of the body,
+\begin{equation}
+\bF_v(\bx) = \rho(\bx)\,\tC_H(\bx) \cdot \bH
+            = \rho_0(\bX)\,\tF \cdot \tC_H(\bX) \cdot \tF^{-1} \cdot \bH,
+\end{equation}
+where $\tC_H(\bx)$ is a configuration-dependent coupling tensor. The second equality uses $\rho = \rho_0/J$ and the pushforward of $\tC_H$ to the reference configuration. This parameterization covers gravity ($\bH = \bg$, $\tC_H = \tI$) and magnetic forces ($\bH = \bB$, $\tC_H = [\bmu]_\times$, where $\bmu$ is the magnetic moment per unit mass).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Fluid}
+
+%%%%%%%%%%%%%%%%
+%\subsubsection{Hydrodynamic forces}
+The fluid occupies the exterior domain $\bar\Omega_t$ and its motion satisfies the Stokes equations,
+\begin{eqnarray}
+\nabla p & = & \mu \nabla^2 \bu, \quad \mbox{in }\bar\Omega_t,\\
+\nabla \cdot \bu & = & 0, \quad \mbox{in }\bar\Omega_t.
+\end{eqnarray}
+We introduce two Stokes solutions that share the same geometry but differ in their boundary conditions on $\partial\Omega_t$ (Fig.~\ref{fig:two_stokes}). The physical solution $(\bu, p)$ represents the disturbance flow due to the moving body; the total fluid velocity is $\bu + \bu^\infty$, with boundary condition
+\begin{equation}
+\bu = \bxd - \bu^\infty \quad \mbox{on }\partial\Omega_t.
+\end{equation}
+The auxiliary solution $(\bu^*, p^*)$ is driven by the virtual velocity field,
+\begin{equation}
+\bu^* = \bV^* \quad \mbox{on }\partial\Omega_t.
+\end{equation}
+
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[scale=0.66]{./Figures/Fig2}
+\caption{Two solutions of the Stokes equations used in the reciprocal theorem: (a) the auxiliary problem, driven by virtual surface velocity $\bV^*$ in an otherwise quiescent fluid, producing traction $\bff_s^*$ on the left-hand side of Eq.~(\ref{eq:reciprocity}); (b) the physical problem, the body moving with velocity $\bxd$ in background flow $\bu^\infty$, producing traction $\bff_s$ on the right-hand side of Eq.~(\ref{eq:reciprocity}).}
+\label{fig:two_stokes}
+\end{center}
+\end{figure}
+
+Each solution produces a traction on the body surface: $\bff_s$ for the physical flow and $\bff_s^*$ for the virtual flow. Applying the Lorentz reciprocal theorem \cite{Happel2012} to these two Stokes flows gives
+\begin{equation}\label{eq:reciprocity}
+\int_{\partial \Omega_t} \bff_s \cdot \bV^* \, \rmd s = 
+\int_{\partial \Omega_t} \bff_s^* \cdot \left(
+										 \bxd - \bu^\infty
+									\right) \, \rmd s.
+\end{equation}
+
+These integrals in the deformed configuration can also be expressed in the reference configuration using the surface Jacobian $J_s$ (Eq.~\ref{eq:surface_Jacobian})
+\begin{equation}
+\int_{\partial \Omega_t} \bff_s \cdot \bV^* \, \rmd s =
+\int_{\partial \Omega_0} \bF_s \cdot \bV^* \, \rmd S,
+\end{equation}
+with $\bF_s = J_s\bff_s$ (and similarly $\bF_s^* = J_s\bff_s^*$) the surface force in the reference configuration. We recognize here the last term of Eq. \eqref{eq:virtual_power}, which can thus conveniently be calculated through the following equality
+\begin{equation}\label{eq:reciprocity_ref}
+\int_{\partial \Omega_0} \bF_s \cdot \bV^* \, \rmd S=
+\int_{\partial \Omega_0} \bF^*_s \cdot \left(
+										 \bxd - \bu^\infty
+									\right) \, \rmd S.
+\end{equation}
+But to do that, we need to calculate the virtual traction $\bF_s^* = J_s \bff_s^*$ for a body of shape $\bx$ with surface velocity $\bV^*$. From the linearity of the Stokes equations, we know that the relation between $\bff_s^*$ and $\bV^*$ is linear, but depends nonlinearly on the shape $\bx$. In general, $\bF_s^*$ can be computed through the boundary integral equation (Appendix \ref{sec:BIE}). 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Summary}
+Using Eqs. (\ref{eq:virtual_power}), (\ref{eq:reciprocity}), and (\ref{eq:reciprocity_ref}), we find the weak formulation of the problem on the space $V$ of kinematically admissible velocity fields: one seeks $\bxd\in V$ satisfying 
+\begin{equation}\label{eq:weak_form}
+\int_{\partial \Omega_0} \bF_s^* \cdot \bxd \, \rmd S =
+	\int_{\partial \Omega_0} \bF_s^* \cdot  \bu^\infty \, \rmd S + 
+	\int_{\Omega_0} \tS : \tEd^* \, \rmd V -
+	\int_{\Omega_0} \bF_v \cdot \bV^* \, \rmd V,
+\end{equation}
+for all virtual velocities $\bV^*\in V$.
+
+The left-hand side is linear in the unknown $\bxd$ but nonlinear in the body's shape. The right-hand side is independent of $\bxd$ and is composed of three terms: (1) the virtual power of the viscous forces due to the background flow, (2) the virtual elastic power, and (3) the virtual power of the body forces.
+
+The structure of Eq.~(\ref{eq:weak_form}) becomes transparent through the decomposition of $\bxd$ into a rigid-body part and a strain-producing deformation part. Let $\bu_0$, $\bomega_0$ be the translational and rotational velocity of the body frame. Then
+\begin{equation}\label{eq:velocity_decomp}
+\bxd(\bX,t) = \bu_0 + \bomega_0\times\left(\bchi(\bx,t)-\br_0\right) + \bV_\mathrm{def}(\bX,t),
+\end{equation}
+where $\tU(\br)$ is the transport tensor of Eq.~(\ref{eq:bg_flow}) and $\bV_\mathrm{def}$ is the velocity due to shape change at fixed $\bv_0$.
+
+Two structural consequences follow. First, for any rigid-body virtual velocity $\bV^* = \tU(\bchi-\br_0)\cdot\bv_0^*$, the hyperelastic term in Eq.~(\ref{eq:weak_form}) vanishes. This is because  $\tF^T \cdot \nabla \bV^*$ is then skew-symmetric in Eq.~(\ref{eq:virtual_strain_rate}) when $\nabla\bV^* = [\bomega_0^*]_\times\cdot\tF$.
+Second, comparing Eq.~(\ref{eq:velocity_decomp}) with the background flow linearization~(\ref{eq:bg_flow}), the same transport operator $\tU(\bchi-\br_0)$ couples $\bv_0$ on the left of Eq.~(\ref{eq:weak_form}) and $\bv_0^\infty$ on the right. Only the relative velocity $\bv_0 - \bv_0^\infty$ therefore drives the hydrodynamic coupling, consistent with Galilean invariance.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Numerical approaches\label{sec.numerics}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Galerkin discretization}
+Equation~(\ref{eq:weak_form}) is a weak formulation on infinite-dimensional space $V$. Because the background flow $\bu^\infty$ is linear in $\bv_0^\infty=[\bu_0^\infty, \bomega_0^\infty]$ and $\tE_0^\infty$ [Eq.~(\ref{eq:bg_flow})], and the problem is linear in $\bxd$, the solution decomposes into contributions driven by each input separately.
+
+To obtain a finite-dimensional system, we restrict $\bxd$ to a subspace $V_n\subset V$ spanned by $n$ basis functions $\{\bV_j\}$ and write
+\begin{equation}
+\bxd (\bX,t) =  \sum_{j=1}^n \dot{a}_j(t)\, \bV_j(\bX).
+\end{equation}
+Testing Eq.~(\ref{eq:weak_form}) with each $\bV_i$ and using the linearity in $\bv_0^\infty$ and $\tE_0^\infty$ yields the projected system
+\begin{equation}\label{eq:galerkin_system}
+\hat{\tR} \cdot \dot{\ba} + \hat{\tK}_{NL} - \hat{\tC}_H\cdot\bH + \hat{\tC}_V \cdot \bv_0^\infty + \hat{\tC}_E : \tE_0^\infty = 0,
+\end{equation}
+where $\ba = [a_1,\dots a_n]$ and $\tE_0^\infty$ is the $3\times3$ symmetric traceless rate-of-strain tensor, which in practice is represented as a 5-component vector (see Appendix~\ref{app:strain_vec}). All tensors depend on the current configuration $\bchi(\bX,t)$. The resistance matrix $\hat{\tR}$ is symmetric positive definite by virtue of the reciprocal theorem. The nonlinear stiffness $\hat{\tK}_{NL}$ is symmetric positive semi-definite by its relation to the elastic energy.
+
+Inverting Eq. \eqref{eq:galerkin_system} allows one to compute $\dot{\ba}$ and thus to simulate through time integration the transport and deformation of a soft body in a background flow. 
+The difficulty is that all tensors in Eq. \eqref{eq:galerkin_system} depend on the current shape through the vector $\ba$. An efficient method would be to project the deformation onto the most meaningful modes $V_n$, for instance, by computing the least attenuated viscous eigenmodes of the system with no background flow and no body forces. 
+An alternative is to consider a soft body made of rigid spheres connected by springs, as done below. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Kinematics of a sphere assembly\label{sec.kinematics}}
+
+The general Galerkin framework of Sec.~\ref{sec.numerics}.A applies to any compatible velocity basis $\{\bV_j\}$. For bodies composed of rigid spheres connected by elastic links, the natural choice is the rigid-body modes of each sphere. The sphere-assembly discretization developed here is the specialization of the Galerkin method to this basis.
+
+We consider an assembly of $N$ spheres in a body frame $(\bE_1,\bE_2,\bE_3)$ attached to the assembly. The $i$-th sphere of radius $a_i$ has center position $\bR_i(\bQ,t)$ and Rodrigues orientation vector $\bTheta_i(\bQ,t)$ in the body frame, both functions of time and the $N_Q$ degrees of freedom $\bQ$ representing the deformation (Fig.~\ref{fig:assembly_spheres}). Its six-component velocity $\bV_i = [\bU_i, \bOmega_i]$ is related to $\bQd$ by the per-sphere Jacobian $\tJ_i = \partial \bV_i/\partial \bQd$ (see Appendix~\ref{app:bortz} for the Bortz operator relating angular velocity $\bOmega_i$ to the orientation rate $\bThetad_i$). \new{More generally, allowing $\bR_i$ and $\bTheta_i$ to depend explicitly on time as well as on $\bQ$ --- representing prescribed active kinematics --- the chain rule applied to $\bX_i(\bQ,t) = [\bR_i,\bTheta_i]$ yields the affine relation $\bV_i = \tJ_i \cdot \bQd + (\bv_\mathrm{act})_i$, with $(\bv_\mathrm{act})_i = \tB_i \cdot \partial\bX_i/\partial t$.}
+
+Stacking all spheres, the grand velocity $\bV = [\bV_1, \dots, \bV_N]$ in the body frame satisfies
+\begin{equation}\label{eq.Jacobian_assembly}
+\bV = \tJ_\mathrm{sph} \cdot \bQd \new{{} + \bv_\mathrm{act}},
+\end{equation}
+with the assembly Jacobian $\tJ_\mathrm{sph}(\bQ,t) = \partial \bV/\partial \bQd$ of size $6N \times N_Q$\new{, and the grand active velocity $\bv_\mathrm{act} = [(\bv_\mathrm{act})_1, \dots, (\bv_\mathrm{act})_N]$ collecting the per-sphere contributions. Because $\bV$ is affine in $\bQd$, it is a quasi-velocity of the Lagrangian system}.
+
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[scale=0.66]{./Figures/Fig3}
+\caption{Notations for an assembly of spheres.
+(a) Assembly of $N=3$ spheres with $N_Q=2$ degrees of freedom $\bQ=[Q_1,Q_2]$. In the assembly frame, the $i$-th sphere is at position $\bR_i$ and has an orientation $\bTheta_i$. The assembly frame is at position $\br_0$ and orientation $\btheta_0$ in the laboratory frame.
+(b) The assembly configuration is entirely represented by its position $\br_0$, its orientation $\btheta_0$, and its degrees of freedom $\bQ$.}
+\label{fig:assembly_spheres}
+\end{center}
+\end{figure}
+
+In the laboratory frame, the assembly also undergoes a global rigid-body motion: translation $\bu_0$ and rotation $\bomega_0$ of the body frame, encoded in the six-component grand velocity $\bv_0 = [\bu_0, \bomega_0]$ and the corresponding generalized coordinate $\bx_0 = [\br_0, \btheta_0]$, where $\br_0$ is the position and $\btheta_0$ the Rodrigues orientation of the body frame. The full state of the assembly in the laboratory frame is therefore the $N_q = 6 + N_Q$ generalized coordinate
+$$\bq = \left[\bx_0,\, \bQ \right]$$
+and the associated generalized velocity
+$$\bp = \left[\bu_0,\, \bomega_0,\, \bQd \right] = \tB \cdot \bqd,$$
+where $\tB$ is the block-diagonal Bortz matrix assembled from the per-degree-of-freedom operators of Appendix~\ref{app:bortz}.
+
+The laboratory-frame velocity of sphere $i$ combines the body-frame velocity $\bV_i$ with the rigid-body transport due to $\bv_0$:
+$$\bu_i = \bU_i + \bu_0 + \bomega_0 \times \bR_i, \quad \bomega_i = \bOmega_i + \bomega_0.$$
+Stacking all spheres, this composition takes the compact form
+\begin{equation}\label{eq.composition_velocities}
+\bv = \bV + \tC_U \cdot \bv_0 = \bV + \tC_U \cdot \tB_0 \cdot \bm{\dot x}_0,
+\end{equation}
+with $\tB_0 = \tB_i(\btheta_0)$ the Bortz operator evaluated at the body-frame orientation and $\tC_U$ a $6N\times 6$ transport coupling tensor. Combining Eqs.~(\ref{eq.Jacobian_assembly}) and (\ref{eq.composition_velocities}), the grand velocity of all spheres in the laboratory frame is related to $\bp$ by
+\begin{equation}\label{eq.U_is_J_Qdot}
+\bv = \new{\bv_\mathrm{act} + {}}\tJ \cdot \bp = \new{\bv_\mathrm{act} + {}}\tJ \cdot \tB \cdot \bqd,
+\end{equation}
+where $\tJ = \partial \bv/\partial \bp$ is the $6N\times N_q$ full Jacobian. Because $\tB$ is invertible, the grand sphere velocities $\bv$ are quasi-velocities of this Lagrangian system.
+
+The linearized background flow [Eq.~(\ref{eq:bg_flow})] evaluated at the sphere centers gives the grand flow velocity $\bv^\infty = [\bu^\infty(\br_i)]_{i=1}^N$ and the rate-of-strain tensor
+\begin{equation}\label{eq:grandflowvelocity}
+\bv^\infty = \tC_U \cdot \bv_0^\infty + \tC_S : \tE_0^\infty, \quad \tE^\infty = \tE_0^\infty,
+\end{equation}
+where $\tC_U$ is the same transport coupling tensor as in Eq.~(\ref{eq.composition_velocities}) and $\tC_S$ is a $6N\times 3\times 3$ stresslet coupling tensor. Here $\bv_0^\infty = [\bu_0^\infty, \bomega_0^\infty]$ denotes the six-component velocity of the undisturbed flow evaluated at the reference point $\br_0$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Soft mobility equation of a sphere assembly}
+
+With the kinematic description established, we derive the equation of motion by applying the principle of virtual power to the force balance on the sphere assembly, then reduce it to a closed-form soft mobility equation.
+
+\paragraph{Force balance.}
+The six-component force $\bff_i = [\bF_i, \bT_i]$ acting on sphere $i$ collects the force $\bF_i$ applied at its center and the associated torque $\bT_i$. Stacking all spheres, the total grand force decomposes as
+$$\bff = \bff_c + \bff_\mathrm{hydro} + \bff_\mathrm{ext} + \bff_K,$$
+where $\bff_c$ are internal constraint forces (maintaining rigidity of each sphere and prescribed inter-sphere constraints), $\bff_\mathrm{hydro}$ are hydrodynamic forces, $\bff_\mathrm{ext}$ are external body forces, and $\bff_K$ are elastic restoring forces. The elastic forces are linear in the deformation state,
+\begin{equation}\label{eq.linear_elasticity}
+\bff_K = \tC_K \cdot \bQ,
+\end{equation}
+and satisfy $\sum_{i=1}^N (\bff_K)_i = 0$ (Newton's third law for internal forces). The external forces are linear in an external field $\bH$,
+\begin{equation}\label{eq.body_force}
+\bff_\mathrm{ext} = \tC_H \cdot \bH.
+\end{equation}
+
+The principle of virtual power eliminates the unknown constraint forces. Any virtual velocity $\bv^*$ compatible with the constraints can be written $\bv^*_i = \sum_j (\partial \bv_i/\partial p_j)\,p_j^*$, so the virtual power of all forces except constraints vanishes:
+$$P^* = \sum_i \left[(\bff_\mathrm{hydro})_i + (\bff_\mathrm{ext})_i + (\bff_K)_i\right] \cdot \bv^*_i = 0 \quad \forall\,\bp^*.$$
+Since this must hold for all $\bp^*$, one obtains
+\begin{equation}\label{eq.generalized_force_Q}
+\tJ^T \cdot \left(\bff_\mathrm{hydro} + \bff_\mathrm{ext} + \bff_K\right) = 0,
+\end{equation}
+where $\tJ = \partial \bv/\partial \bp$ is the Jacobian of Eq.~(\ref{eq.U_is_J_Qdot}). This projection reduces the $6N$-dimensional force balance to the $N_q$ generalized coordinates while eliminating the constraint forces $\bff_c$ from the equations of motion.
+
+
+The hydrodynamic force on the sphere assembly is given by the grand resistance relation
+\begin{equation}\label{eq.mobility_problem_all_spheres}
+\bff_\mathrm{hydro} = \tR \cdot \left( \bv^\infty - \bv \right) + \tR_S : \tE^\infty,
+\end{equation}
+where $\tR$ is the $6N\times 6N$ grand resistance matrix and $\tR_S$ is the $6N\times 3\times 3$ stresslet resistance tensor. Substituting Eqs.~(\ref{eq.U_is_J_Qdot}), (\ref{eq:grandflowvelocity}), and (\ref{eq.mobility_problem_all_spheres}) into the generalized force balance~(\ref{eq.generalized_force_Q}), and writing $\bff = \bff_\mathrm{ext} + \bff_K$ for the non-hydrodynamic forces, one obtains
+\begin{eqnarray}
+\tJ^T \cdot \tR \cdot \bv & = & \tJ^T \cdot \left[\bff + \tR \cdot \bv^\infty + \tR_S : \tE^\infty \right],\\
+\bp & = & \tPi \cdot \left[ \tR^{-1} \cdot \bff \new{{} - \bv_\mathrm{act}} + \tC_U \cdot \bv_0^\infty + (\tC_S + \tR^{-1} \cdot \tR_S) : \tE_0^\infty \right],\\
+\bp & = & \tM \cdot \bff \new{{} - \tPi \cdot \bv_\mathrm{act}} + \tC_V \cdot \bv_0^\infty + \tC_E : \tE_0^\infty,\label{eq:soft_mobility}
+\end{eqnarray}
+upon introducing the $N_q\times 6N$ projection operator
+\begin{equation}\label{eq:projection}
+\tPi = \left( \tJ^T \cdot \tR \cdot \tJ \right)^{-1} \cdot \tJ^T \cdot \tR,
+\end{equation}
+which satisfies $\tPi \cdot \tJ = \tI_{N_q}$ and eliminates the constraint forces. The soft mobility tensor and reduced flow-coupling tensors are
+\begin{equation}
+\tM = \tPi \cdot \tR^{-1} = \left(\tJ^T \cdot \tR \cdot \tJ\right)^{-1} \cdot \tJ^T, \quad
+\tC_V = \tPi \cdot \tC_U, \quad
+\tC_E = \tPi \cdot (\tC_S + \tR^{-1} \cdot \tR_S).
+\end{equation}
+The tensor $\tM$ ($N_q\times 6N$) extends the classical rigid-body mobility to deformable assemblies. The tensor $\tC_V$ ($N_q\times 6$) captures the response to the background rigid-body velocity; its top $6\times 6$ block equals the identity, reflecting that the assembly's own rigid-body motion follows the background flow in the absence of forces. Substituting the force decompositions~(\ref{eq.linear_elasticity})--(\ref{eq.body_force}) yields
+\begin{equation}\label{eq.MK_MH}
+\tM \cdot \bff_K = \tM_K \cdot \bQ, \quad \tM \cdot \bff_\mathrm{ext} = \tM_H \cdot \bH,
+\end{equation}
+with $\tM_K = \tM \cdot \tC_K$ of size $N_q\times N_Q$ and $\tM_H = \tM \cdot \tC_H$ of size $N_q\times 3$.
+
+Equation~(\ref{eq:soft_mobility}) constitutes the soft mobility equation of the assembly. Expressed in the body's frame, it reads
+\begin{equation}\label{eq:soft_mobility_body}
+\left(
+\begin{array}{c}
+\bu_0 - \bu_0^\infty\\[0.5ex]
+\bomega_0 - \bomega_0^\infty\\[0.5ex]
+\bQd
+\end{array}
+\right) =
+  \tM_K \cdot \bQ + \tM_H \cdot \bH + \tC_E : \tE_0^\infty \new{{} - \tPi \cdot \bv_\mathrm{act}},
+\end{equation}
+where $\tM_K$, $\tM_H$, \new{$\tPi$,} and $\tC_E$ depend only on the deformation state $\bQ$. Since $\bp = \tB^{-1}\cdot\bqd$, this is a first-order ODE $\bqd = f(\bq, t)$ that can be integrated forward in time given initial conditions and the prescribed flow and external fields. \new{An apparent slip velocity $\bv_\mathrm{slip}$ between the fluid and the spheres can equivalently be modeled as an additional external force $\bff_\mathrm{slip} = \tR \cdot \bv_\mathrm{slip}$ entering through the $\tM\cdot\bff$ term of Eq.~(\ref{eq:soft_mobility}), so it does not require a dedicated tensor.}
+
+When the flow and external fields are known in the laboratory frame, they must be rotated into the body's frame before evaluating the right-hand side:
+\begin{equation}\label{eq:rotation_fields}
+\bu_0^\infty = \mRot^T \cdot \left(\bu_0^\infty\right)_\mathrm{lab}, \quad
+\tE_0^\infty = \mRot^T \cdot \left(\tE_0^\infty\right)_\mathrm{lab} \cdot \mRot, \quad
+\bH = \mRot^T \cdot \left(\bH \right)_\mathrm{lab},
+\end{equation}
+where $\mRot(\btheta_0)$ is the rotation matrix given by the Euler--Rodrigues formula~(\ref{eq:Rodrigues_formula}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Python library}
+
+The soft mobility model for sphere assemblies described above is implemented in a Python library, freely available as open-source code \cite{softmoblility}.
+The reader is encouraged to test it, all results presented below are available as tutorial notebooks in the library.
+
+The soft mobility library allows the user to define a sphere assembly and to integrate its trajectory in a flow.   
+The main workflow proceeds in five steps: 
+(1)~define the sphere-assembly characteristics and create an instance of the \texttt{SoftBody} class; 
+(2)~compute the soft mobility tensors of Eq.~(\ref{eq:soft_mobility_body}); 
+(3)~specify the background flow, the external fields associated with body forces, and the kinematic or internal forces laws; 
+(4)~integrate the trajectory with the class \texttt{FlowBodyRollout}; and
+(5)~optionally optimize design variables with the class \texttt{FlowBodyOptimizer}.
+
+
+Each soft body partitions its parameters into three groups.
+First, degrees of freedom (\texttt{dofs}) are the generalized coordinates
+$\bQ$ associated with deformation, such as spring extensions or hinge angles, that evolve during a
+simulation.
+Second, design variables (\texttt{design}) are morphological and material
+parameters, such as sphere radii, rest lengths, and stiffnesses. They are fixed during a given simulation and are the natural targets for optimization.
+Third, inputs (\texttt{inputs}) are external or active controls (such as a gravity field or an imposed kinematic deformation). Three-component
+variable names ending in \texttt{0}, \texttt{1}, \texttt{2} (e.g.\
+\texttt{gravity0\ldots2}) are automatically treated as vector fields, while single-component names are treated as scalar controls. The distinction is made because fields rotate when changing the reference frame through Eq.~(\ref{eq:rotation_fields}) and scalars do not
+
+Sphere assemblies are most conveniently defined via a compact YAML description
+in which the position, orientation, force, and torque of each sphere are written
+as symbolic expressions in the declared variable names. For instance, this is a YAML file used to model a dumbbell composed of two spheres of equal radius, where the design variables are the stiffness and rest length of the spring:
+
+\begin{verbatim}
+dof_names:    [elongation]
+design_names: [rest_length, stiffness]
+defaults:
+  radius: 1.0
+  rest_length: 1.0
+  stiffness: 1.0
+spheres:
+  - radius: radius
+    position: [-radius - rest_length, 0, 0]
+    force: [stiffness * elongation, 0, 0]
+  - radius: radius
+    position: [radius + elongation, 0, 0]
+    force: [-stiffness * elongation, 0, 0]
+\end{verbatim}
+
+The parser automatically classifies each symbol into its variable group,
+and linearizes the force and torque expressions in the inputs to construct
+the coupling matrices $\tC_K$ and $\tC_H$ introduced in
+Eqs.~(\ref{eq.linear_elasticity}) and (\ref{eq.body_force}).
+The YAML string is passed directly to \texttt{SoftBody}, which builds the
+sphere assembly and computes all soft mobility tensors in Eq.~(\ref{eq:soft_mobility_body}).
+
+Input objects are represented by three classes: 
+(1) A \texttt{Flow} object provides the background fluid velocity $\bu_0^\infty$, its gradient $\nabla\bu^\infty$, and the decomposition into vorticity
+$\bomega_0^\infty$ and rate-of-strain $\tE_0^\infty$ required by Eq.~(\ref{eq:soft_mobility_body});
+(2) A \texttt{Field} object returns a time- and position-dependent three-component vector (e.g.\ gravity $\bg$ or a rotating magnetic field $\bB$) and is coupled to the body through the external-field term $\bH$.
+(3) A \texttt{Scalar} object returns a single real value as a function of position and time, suitable for prescribed active controls or time-dependent coefficients.
+
+All numerical operations are implemented with JAX \cite{jax2018github},
+enabling just-in-time compilation (\texttt{jax.jit}) for performance and
+automatic differentiation (\texttt{jax.grad}) through the entire simulation.
+The latter is exploited by \texttt{FlowBodyOptimizer}, which pairs the
+differentiable rollout with gradient-based optimizers from the Optax library
+\cite{optax2020github} to minimize or maximize a user-defined scalar objective
+of the trajectory with respect to the design variables.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results\label{sec.results}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Sinking of a rigid body}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Sinking of a flexible fiber}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Instability of a rotating flexible fiber}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Jeffery orbits for rigid and soft bodies}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Optimisation of a three-sphere microswimmer}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Soft surfer}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion\label{sec.discussion}}
+
+
+
+
+
+
+
+
+
+
+
+
+\appendix
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Continuum mechanics}
+
+%%%%%%%%%%%%%%%%
+\subsection{Surface Jacobian}
+The surface integral can also be expressed in the deformed configuration
+\begin{equation}\label{eq:surface_integral}
+\int_{\partial \Omega_0} \bF_s \cdot \bV^* \, \rmd S = 
+	\int_{\partial \Omega_t} \bff_s \cdot \bV^* \, \rmd s =
+	\int_{\partial \Omega_0} J_s \bff_s \cdot \bV^* \, \rmd S,
+\end{equation}
+with $\bff_s = \tsigma\cdot \bn$ the traction (in the deformed configuration), the force exerted by the fluid on the body,
+where $\tsigma$ is the Cauchy stress tensor. We thus have $\bF_s= J_s \bff_s$ with $J_s$ the Jacobian of the surface deformation
+\begin{equation}\label{eq:surface_Jacobian}
+J_s= \|\tF^{-T}\cdot \bN\| \det(\tF). 
+\end{equation}
+
+%%%%%%%%%%%%%%%%
+\subsection{Boundary integral equation\label{sec:BIE}}
+The hydrodynamic traction $\bff_s(\bz)$ at a point $\bz\in\partial\Omega_t$ is determined by the boundary integral formulation of the Stokes equations \cite{Pozrikidis1992}. By linearity, the surface traction and the surface velocity are related through
+\begin{eqnarray}
+\bu(\bz) & = & 
+	- \frac{1}{4\pi\mu} \int_{\partial \Omega_t}
+		\tG(\by - \bz)\cdot\bff_s(\by)\, \rmd s(\by) 
+	+ \frac{1}{4\pi} \int_{\partial \Omega_t}
+		\bu(\by) \cdot \bT(\by - \bz)\cdot\bn(\by)\, \rmd s(\by), \label{eq:boundary_integral_orig}\\
+		& = & 
+	- \frac{1}{8\pi\mu} \int_{\partial \Omega_t}
+		\tG(\by - \bz)\cdot\bff_s(\by)\, \rmd s(\by) 
+	+ \frac{1}{8\pi} \int_{\partial \Omega_t}
+		\left[\bu(\by)-\bu(\bz)\right] \cdot \bT(\by - \bz)\cdot\bn(\by)\, \rmd s(\by),\label{eq:boundary_integral_nonsingular} 
+\end{eqnarray}
+with 
+\begin{eqnarray}
+\tG(\br) & = & \frac{\tI}{r}  + \frac{\br \otimes \br}{r^3},\\
+\bT(\br) & = & - 6 \frac{\br \otimes \br  \otimes \br}{r^5},
+\end{eqnarray}
+where $\tG$ is the second-order stokeslet Oseen tensor, $\bT$, the corresponding third-order stress tensor, and $r=\|\br\|$. Both Eqs. (\ref{eq:boundary_integral_orig}) and (\ref{eq:boundary_integral_nonsingular}) are equivalent. In Eq. (\ref{eq:boundary_integral_nonsingular}), subtracting $\bu(\bz)$ from $\bu(\by)$ in the double-layer integrand cancels the $1/r^2$ singularity of $\bT$, so the integral is weakly singular and standard Gauss quadrature applies.
+
+Setting $\bu(\bz) = \bV^*(\bz)$ on $\partial\Omega_t$ in Eq.~(\ref{eq:boundary_integral_nonsingular}) yields the virtual traction $\bff_s^*$ required in the reciprocal theorem (\ref{eq:reciprocity}).
+
+%\begin{eqnarray}
+%G_{ij}^\epsilon(\br) & = & \frac{r^2+2\epsilon^2}{(r^2+\epsilon^2)^{3/2}} \delta_{ij} + \frac{r_i r_j}{(r^2+\epsilon^2)^{3/2}},\\
+%T_{ijk}^\epsilon(\br) & = & - 6 \frac{r_i r_j r_k}{(r^2+\epsilon^2)^{5/2}} - 3 \epsilon^2 \frac{r_i\delta_{jk} + r_j\delta_{ik} + r_k\delta_{ij}}{(r^2+\epsilon^2)^{5/2}},
+%\end{eqnarray}
+%the $\tG^\epsilon$, the regularized Oseen tensor, $\bT^\epsilon$, the regularized stress tensor, $\br=[r_1,r_2,r_3]$ and $r=\|\br\|$. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Sphere assembly kinematics}
+
+%%%%%%%%%%%%%%%
+\subsection{Bortz equation\label{app:bortz}}
+
+The orientation of a rigid body in three dimensions is parameterized by the Rodrigues vector $\bTheta\in\mathbb{R}^3$: its direction $\hTheta = \bTheta/\Theta$ (with $\Theta = \|\bTheta\|$) is the rotation axis and its magnitude $\Theta$ is the rotation angle. The corresponding rotation matrix is given by the Euler--Rodrigues formula
+\begin{equation}\label{eq:Rodrigues_formula}
+\mRot(\bTheta) = \cos\Theta\,\tI + \sin\Theta\,[\hTheta]_\times + (1-\cos\Theta)\,\hTheta\otimes\hTheta,
+\end{equation}
+with $\otimes$ the outer product.
+Laboratory-frame coordinates $\bx$ and body-frame coordinates $\bX$ are related by $\bx = \mRot(\btheta_0)\cdot\bX$.
+This parameterization is singularity-free for $\Theta\in[0,2\pi)$, unlike Euler angles, which suffer from gimbal lock.
+
+A natural but incorrect assumption would be that the  velocity $\bOmega$ equals $\bThetad$. The correct relation follows from differentiating the Euler--Rodrigues formula with respect to time \cite{Bortz1971}\begin{equation}\label{eq.Bortz_kinematics}
+\bOmega = \tB_\Omega(\bTheta) \cdot \bThetad,
+\end{equation}
+with the $3\times 3$ Bortz matrix
+\begin{equation}\label{eq.Bortz_one_sphere}
+\tB_\Omega(\bTheta) =
+	\frac{\Theta}{2}\cotan\!\left(\frac{\Theta}{2}\right)\tI
+	- \frac{\Theta}{2}\left[\hTheta\right]_\times
+	+ \left(1 - \frac{\Theta}{2}\cotan\!\left(\frac{\Theta}{2}\right)\right)\hTheta\otimes\hTheta.
+\end{equation}
+In the limit $\Theta\to 0$, $\tB_\Omega\to\tI$ (using $\frac{\Theta}{2}\cotan\frac{\Theta}{2}\to 1$), recovering the expected identity $\bOmega\to\bThetad$.
+
+This relation is used to compute the six-component velocity $\bV_i$ of the $i$-th sphere from the time-derivative of its six-component position $\bX_i$ in \S\ref{sec.kinematics}.
+The translational velocity of the sphere center follows directly from its position, $\bU_i = \bRd_i$. For the rotational part, $\bOmega_i = \tB_\Omega(\bTheta_i) \cdot \bThetad_i$.
+Stacking translation and rotation, the Bortz Jacobian for sphere $i$ is the $6\times 6$ block-diagonal matrix
+\begin{equation}
+\tB_i(\bTheta_i) =
+\begin{bmatrix} \tI & \mathbf{0} \\ \mathbf{0} & \tB_\Omega(\bTheta_i) \end{bmatrix},
+\quad\text{so that}\quad
+\bV_i = [\bU_i, \bOmega_i] = \tB_i(\bTheta_i)\cdot[\bRd_i,\bThetad_i].
+\end{equation}
+
+
+The Bortz matrix $\tB_\Omega$ becomes singular as $\Theta\to 2\pi$, where $\cotan(\Theta/2)\to\pm\infty$. To keep the integration well-conditioned, the Rodrigues vector is remapped after each time step: whenever $\|\bTheta\|\geq\pi$,
+\begin{equation}
+\bTheta \;\leftarrow\; \bTheta - 2\pi\,\hTheta.
+\end{equation}
+This subtracts one full turn along the rotation axis. Since a rotation by $\Theta$ and a rotation by $\Theta - 2\pi$ about the same axis produce the same orientation, the physical state is unchanged. The remapping reduces the angle magnitude to $2\pi - \Theta \leq \pi$, keeping $\|\bTheta\|$ bounded away from the singularity at $2\pi$ throughout the simulation.
+
+%%%%%%%%%%%%%%%
+\subsection{Rate-of-strain vectorization\label{app:strain_vec}}
+
+The rate-of-strain tensor $\tE_0^\infty$ is symmetric and traceless. Symmetry reduces its nine components to six independent entries, and the tracelessness condition $\mathrm{tr}(\tE_0^\infty) = 0$ removes one further degree of freedom, leaving five independent components. We parameterize them as the vector
+\begin{equation}\label{eq:strain_vec}
+\bE = [E_{xx},\, E_{xy},\, E_{xz},\, E_{yy},\, E_{yz}],
+\end{equation}
+from which the full tensor is recovered as
+\begin{equation}\label{eq:strain_mat}
+\tE_0^\infty =
+\begin{pmatrix}
+E_{xx} & E_{xy} & E_{xz} \\
+E_{xy} & E_{yy} & E_{yz} \\
+E_{xz} & E_{yz} & -E_{xx}-E_{yy}
+\end{pmatrix},
+\end{equation}
+with the $(3,3)$ entry $E_{zz} = -E_{xx}-E_{yy}$ enforcing tracelessness.
+
+The double contractions $\hat{\tC}_E:\tE_0^\infty$ and $\tC_E:\tE_0^\infty$ appearing in Eqs.~(\ref{eq:galerkin_system}) and (\ref{eq:soft_mobility}) can each be expressed as a matrix-vector product with $\bE$. Because every entry $(\tE_0^\infty)_{jk}$ is a linear combination of the five components $E_l$ [Eq.~(\ref{eq:strain_mat})], the double contraction
+\begin{equation}
+\left(\tC_E:\tE_0^\infty\right)_i = \sum_{j,k}(C_E)_{ijk}\,(\tE_0^\infty)_{jk}
+\end{equation}
+is linear in $\bE$, so it can be written as $\tC_E^{(5)}\cdot\bE$ for an equivalent $N_q\times 5$ matrix $\tC_E^{(5)}$. The entries of $\tC_E^{(5)}$ are obtained by substituting Eq.~(\ref{eq:strain_mat}) and collecting coefficients of each $E_l$. Because the sum runs over all nine $(j,k)$ pairs and $\tE_0^\infty$ is symmetric, each off-diagonal component (e.g.\ $E_{xy}$) contributes through both $(j,k)=(1,2)$ and $(j,k)=(2,1)$, automatically yielding the correct factor of two without requiring explicit prefactors in $\bE$.
+
+% Create the reference section using BibTeX:
+\bibliography{splank.bib}
+
+\end{document}
