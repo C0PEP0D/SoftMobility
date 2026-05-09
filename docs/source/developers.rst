@@ -151,7 +151,7 @@ Reporting issues
 ================
 
 Bugs and feature requests are tracked in the GitHub issue tracker:
-https://github.com/celoy/SoftMobility/issues.
+https://github.com/C0PEP0D/SoftMobility/issues.
 
 When opening a bug report, please include:
 

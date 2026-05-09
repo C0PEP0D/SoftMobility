@@ -26,7 +26,7 @@ With venv
 
 .. code-block:: bash
 
-    git clone https://github.com/celoy/SoftMobility.git
+    git clone https://github.com/C0PEP0D/SoftMobility.git
     cd SoftMobility
     python -m venv .venv
     source .venv/bin/activate
@@ -43,7 +43,7 @@ when installed from PyPI than from conda-forge:
 
 .. code-block:: bash
 
-    git clone https://github.com/celoy/SoftMobility.git
+    git clone https://github.com/C0PEP0D/SoftMobility.git
     cd SoftMobility
     conda create -n softmobility python=3.11
     conda activate softmobility
@@ -56,7 +56,7 @@ the ``-e .`` editable install:
 
 .. code-block:: bash
 
-    git clone https://github.com/celoy/SoftMobility.git
+    git clone https://github.com/C0PEP0D/SoftMobility.git
     cd SoftMobility
     conda env create -f environment.yml
     conda activate softmobility
@@ -90,10 +90,10 @@ that installs ``SoftMobility`` from GitHub when it detects a Colab runtime;
 locally the cell is a no-op.
 
 To open a notebook in Colab, either click the corresponding badge in the
-`README on GitHub <https://github.com/celoy/SoftMobility#try-the-tutorials-online>`_,
+`README on GitHub <https://github.com/C0PEP0D/SoftMobility#try-the-tutorials-online>`_,
 or build the URL by hand by replacing the GitHub URL prefix
-``https://github.com/celoy/SoftMobility/blob/`` with
-``https://colab.research.google.com/github/celoy/SoftMobility/blob/``.
+``https://github.com/C0PEP0D/SoftMobility/blob/`` with
+``https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/``.
 
 Troubleshooting
 ---------------
