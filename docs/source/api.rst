@@ -59,6 +59,6 @@ and are mostly useful for advanced users working directly with Rodrigues vectors
 .. autosummary::
    :toctree: autosummary
 
-   softmobility.rescale_orientation
-   softmobility.compute_bortz_operator
-   softmobility.rotation_matrix
+   softmobility.classes.solver.rescale_orientation
+   softmobility.classes.solver.compute_bortz_operator
+   softmobility.classes.solver.rotation_matrix

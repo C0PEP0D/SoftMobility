@@ -18,10 +18,12 @@ class FlexibleFiber(SoftBody):
     Implements the Gears Model of Delmotte, Climent & Plouraboué 2015
     (J. Comput. Phys. 286, 14–37, §2.3) with a **linearized** version of the
     paper's bending torque (eq. 32+34 expanded to first order in joint
-    angles, §2.4). Bond length is exactly ``2a`` (sphere surfaces touching);
-    bead positions are derived from bead orientations via the recurrence
-    ``r_{i+1} = r_i + a (p_i + p_{i+1})`` with ``p_i = R(rod_i) · ê_x``, so
-    rigid bonds are satisfied by construction — no Lagrange multipliers.
+    angles, §2.4). Bond length is exactly ``2a`` for any configuration
+    (sphere surfaces touching); bead positions are derived from bead
+    orientations via the recurrence
+    ``r_{i+1} = r_i + 2a · (p_i + p_{i+1}) / |p_i + p_{i+1}|``
+    with ``p_i = R(rod_i) · ê_x``, so rigid bonds are satisfied by
+    construction — no Lagrange multipliers.
 
     The linearization keeps the bending torque linear in the orientation
     DOFs, so the framework's exact ``C_K = jacfwd(T)`` extraction continues
@@ -180,14 +182,17 @@ def _rodrigues_to_tangent(rod):
 def _make_all_positions_callable(n_beads, planar, i_radius):
     """Return a function ``(dofs, design) -> (n_beads, 3)`` of bead positions.
 
-    Bond length is exactly ``2a``; bead k+1 is at
-    ``r_k + a · (p_k + p_{k+1})`` where ``p_j = R(rod_j) · ê_x``. The
-    expression collapses to ``2a · (cos((θ_{k+1}+θ_k)/2)) · ê_bond`` in the
-    planar limit, equal to ``2a`` only when ``θ_k = θ_{k+1}``; this is the
-    Joint-Model parameterization and is geometrically exact for the
-    rigid-bond constraint at each individual bond, with the bond length
-    equal to ``2a`` for the straight-chain default.
+    Bond length is exactly ``2a`` for any configuration; bead k+1 is at
+
+        r_{k+1} = r_k + 2a · (p_k + p_{k+1}) / |p_k + p_{k+1}|
+
+    where ``p_j = R(rod_j) · ê_x``. The bond direction is the average of the
+    two bead tangents, normalized; the normalization enforces the
+    rigid-bond ("touching gears") constraint exactly regardless of joint
+    angle. Singular only at δ = π (consecutive tangents antiparallel —
+    fiber folded onto itself, unphysical); guarded by ``eps``.
     """
+    eps = 1e-12
 
     def all_positions(dofs, design):
         a = design[i_radius]
@@ -203,7 +208,9 @@ def _make_all_positions_callable(n_beads, planar, i_radius):
         else:
             rod = dofs[: 3 * n_beads].reshape(n_beads, 3)
             ps = jax.vmap(_rodrigues_to_tangent)(rod)
-        deltas = a * (ps[:-1] + ps[1:])  # (n_beads-1, 3)
+        bond_dirs = ps[:-1] + ps[1:]  # (n_beads-1, 3)
+        norms = jnp.linalg.norm(bond_dirs, axis=1, keepdims=True)
+        deltas = 2.0 * a * bond_dirs / (norms + eps)
         return jnp.concatenate([jnp.zeros((1, 3)), jnp.cumsum(deltas, axis=0)], axis=0)
 
     return all_positions
