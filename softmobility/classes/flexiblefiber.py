@@ -56,9 +56,19 @@ class FlexibleFiber(SoftBody):
 
     Notes
     -----
-    DOFs are named ``theta_{i}`` (planar) or ``theta_{i}_x``,
-    ``theta_{i}_y``, ``theta_{i}_z`` (3D). All default to zero, giving a
-    straight fiber along ``ê_x`` rooted at the origin.
+    Sphere 0 sits at the body origin **with its tangent identified with
+    the body frame's** ``ê_x``: it has no per-bead Rodrigues DOF. The
+    chain is also treated as torsionally infinitely stiff, so the
+    "twist" component of each bead's Rodrigues vector (its projection
+    on ``ê_x``, which leaves the bead tangent invariant under
+    Rodrigues rotation) is structurally zero, not a DOF. Only the
+    ``N − 1`` distal beads carry their two bending components, giving
+    ``Ndof = (N − 1)`` (planar) or ``2 (N − 1)`` (3D) configurational
+    degrees of freedom — the correct count for a slender, inextensible,
+    torsion-free bead chain anchored at one end. DOFs are named
+    ``theta_{i}`` (planar) or ``theta_{i}_y``, ``theta_{i}_z`` (3D) for
+    ``i = 1 … N − 1``. All default to zero, giving a straight fiber
+    along ``ê_x`` rooted at the origin.
 
     The gravity field is registered as a 3-D field input named ``gravity``;
     at runtime the solver supplies the body-frame components as
@@ -122,13 +132,24 @@ class FlexibleFiber(SoftBody):
         i_K = self.design_variables.index("K_b")
         i_mass = self.design_variables.index("mass")
 
-        # ---- DOFs: one Rodrigues 3-vector per bead (or one scalar in planar) ----
+        # ---- DOFs: bending components per *distal* bead ----
+        # Sphere 0 has no per-bead orientation DOF: its tangent is
+        # structurally aligned with the body frame's ê_x. This removes
+        # the redundancy between the body orientation and rod_0 that
+        # would otherwise leave a free uniform-rotation mode in the
+        # clamped-anchor problem.
+        #
+        # The chain is treated as torsionally infinitely stiff: for
+        # each distal bead we drop the x-component of its Rodrigues
+        # vector (rotations around ê_x leave the bead tangent
+        # invariant — that mode is the un-physical "twist"). The two
+        # remaining components (y, z) span the two bending directions
+        # perpendicular to the local bond.
         if planar:
-            for i in range(n):
+            for i in range(1, n):
                 self.add_dof(f"theta_{i}", default=0.0)
         else:
-            for i in range(n):
-                self.add_dof(f"theta_{i}_x", default=0.0)
+            for i in range(1, n):
                 self.add_dof(f"theta_{i}_y", default=0.0)
                 self.add_dof(f"theta_{i}_z", default=0.0)
 
@@ -186,28 +207,34 @@ def _make_all_positions_callable(n_beads, planar, i_radius):
 
         r_{k+1} = r_k + 2a · (p_k + p_{k+1}) / |p_k + p_{k+1}|
 
-    where ``p_j = R(rod_j) · ê_x``. The bond direction is the average of the
-    two bead tangents, normalized; the normalization enforces the
-    rigid-bond ("touching gears") constraint exactly regardless of joint
-    angle. Singular only at δ = π (consecutive tangents antiparallel —
-    fiber folded onto itself, unphysical); guarded by ``eps``.
+    where ``p_j = R(rod_j) · ê_x``. Sphere 0's tangent is structurally
+    fixed to ``p_0 = ê_x``; only spheres ``1 … N−1`` have orientation
+    DOFs. The bond direction is the average of the two bead tangents,
+    normalized; the normalization enforces the rigid-bond ("touching
+    gears") constraint exactly regardless of joint angle. Singular only
+    at δ = π (consecutive tangents antiparallel — fiber folded onto
+    itself, unphysical); guarded by ``eps``.
     """
     eps = 1e-12
+    e_x = jnp.array([[1.0, 0.0, 0.0]])  # sphere 0's tangent, fixed
 
     def all_positions(dofs, design):
         a = design[i_radius]
         if planar:
-            thetas = dofs[:n_beads]
-            # Sign convention matches the original 2-D parameterization
-            # (chain bends in the xz-plane, θ measured CCW from ê_x when
-            # viewed from +ê_y). The orientation_callable returns
-            # ``(0, θ, 0)`` consistent with the Rodrigues vector that
-            # generates *this* tangent through the body's rotation
-            # composition.
-            ps = jnp.stack([jnp.cos(thetas), jnp.zeros(n_beads), jnp.sin(thetas)], axis=1)
+            thetas = dofs[: n_beads - 1]
+            ps_distal = jnp.stack(
+                [jnp.cos(thetas), jnp.zeros(n_beads - 1), jnp.sin(thetas)],
+                axis=1,
+            )
         else:
-            rod = dofs[: 3 * n_beads].reshape(n_beads, 3)
-            ps = jax.vmap(_rodrigues_to_tangent)(rod)
+            # Two bending components per distal bead. Reconstruct the
+            # full Rodrigues vector with x-component (twist) = 0.
+            yz = dofs[: 2 * (n_beads - 1)].reshape(n_beads - 1, 2)
+            rod = jnp.concatenate(
+                [jnp.zeros((n_beads - 1, 1)), yz], axis=1
+            )
+            ps_distal = jax.vmap(_rodrigues_to_tangent)(rod)
+        ps = jnp.concatenate([e_x, ps_distal], axis=0)  # (n_beads, 3)
         bond_dirs = ps[:-1] + ps[1:]  # (n_beads-1, 3)
         norms = jnp.linalg.norm(bond_dirs, axis=1, keepdims=True)
         deltas = 2.0 * a * bond_dirs / (norms + eps)
@@ -222,10 +249,25 @@ def _make_position_callable(i, all_positions):
 
 
 def _make_orientation_callable(i, planar):
-    """Sphere orientation callable returning a Rodrigues 3-vector."""
+    """Sphere orientation callable returning a Rodrigues 3-vector.
+
+    Sphere 0's tangent is structurally aligned with the body frame, so
+    its orientation is the zero Rodrigues vector regardless of ``dofs``.
+    Distal spheres (``i = 1 … N − 1``) reconstruct their Rodrigues vector
+    from the bending DOFs:
+
+    - planar: one DOF ``θ_i`` per bead, vector ``(0, θ_i, 0)``;
+    - 3-D: two bending DOFs ``(θ_i^y, θ_i^z)`` per bead, vector
+      ``(0, θ_i^y, θ_i^z)``. The twist component (along ``ê_x``) is
+      structurally zero — see the class docstring.
+    """
+    if i == 0:
+        return lambda dofs, design, time: jnp.zeros(3)
     if planar:
-        return lambda dofs, design, time: jnp.array([0.0, dofs[i], 0.0])
-    return lambda dofs, design, time: dofs[3 * i : 3 * (i + 1)]
+        return lambda dofs, design, time: jnp.array([0.0, dofs[i - 1], 0.0])
+    return lambda dofs, design, time: jnp.concatenate(
+        [jnp.zeros(1), dofs[2 * (i - 1) : 2 * i]]
+    )
 
 
 def _make_torque_callable(i, n_beads, planar, i_radius, i_K):
@@ -256,7 +298,10 @@ def _make_torque_callable(i, n_beads, planar, i_radius, i_K):
 
         def torque(dofs, design, inputs):
             coef = design[i_K] / (2.0 * design[i_radius])
-            theta = dofs[:n_beads]
+            # Prepend theta_0 = 0 (no DOF for sphere 0) so the
+            # discrete-Laplacian formulas below stay symmetric in the
+            # bead index.
+            theta = jnp.concatenate([jnp.zeros(1), dofs[: n_beads - 1]])
             if i == 0:
                 ty = coef * (theta[1] - theta[0])
             elif i == n_beads - 1:
@@ -269,16 +314,23 @@ def _make_torque_callable(i, n_beads, planar, i_radius, i_K):
 
     def torque(dofs, design, inputs):
         coef = design[i_K] / (2.0 * design[i_radius])
-        rod_i = dofs[3 * i : 3 * (i + 1)]
+        # Sphere 0 has no orientation DOF (structurally rod_0 = 0); the
+        # distal beads have only their two bending components, with
+        # rod_x ≡ 0 (no twist). Reconstruct the full per-bead Rodrigues
+        # 3-vectors so the discrete-Laplacian formulas below stay
+        # symmetric in the bead index. The torque-around-x component
+        # comes out identically zero for any state, consistent with
+        # treating the chain as torsionally infinitely stiff.
+        yz_distal = dofs[: 2 * (n_beads - 1)].reshape(n_beads - 1, 2)
+        rod_distal = jnp.concatenate(
+            [jnp.zeros((n_beads - 1, 1)), yz_distal], axis=1
+        )
+        rod = jnp.concatenate([jnp.zeros((1, 3)), rod_distal], axis=0)
         if i == 0:
-            rod_p = dofs[3 : 6]
-            return coef * (rod_p - rod_i)
+            return coef * (rod[1] - rod[0])
         if i == n_beads - 1:
-            rod_m = dofs[3 * (i - 1) : 3 * i]
-            return coef * (rod_m - rod_i)
-        rod_m = dofs[3 * (i - 1) : 3 * i]
-        rod_p = dofs[3 * (i + 1) : 3 * (i + 2)]
-        return coef * (rod_m - 2.0 * rod_i + rod_p)
+            return coef * (rod[n_beads - 2] - rod[n_beads - 1])
+        return coef * (rod[i - 1] - 2.0 * rod[i] + rod[i + 1])
 
     return torque
 
