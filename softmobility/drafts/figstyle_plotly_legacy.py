@@ -1,30 +1,14 @@
-"""Unified Plotly styling for scientific paper figures.
+"""Frozen reference: the original plotly-based ``figstyle`` module.
 
-Use it like this in a notebook::
+This file is kept only as a historical reference for the plotly-era API
+and aesthetic. The active project now uses matplotlib via
+:mod:`softmobility.tutorials.figstyle`. Nothing in the codebase imports
+from here; do not import from this module either.
 
-    from softmobility.tutorials import figstyle
-    figstyle.apply()                                  # register + set as default
-
-    fig = figstyle.figure(size="half", aspect=4/3)
-    fig.add_trace(go.Scatter(x=x, y=y,
-                             line=dict(color=figstyle.COLORS["red"])))
-    figstyle.save(fig, "fig_demo")                    # → figures/fig_demo.pdf
-
-    fig3 = figstyle.figure_3d(size="full")
-    figstyle.add_shadow(fig3, xs, ys, zs, plane="xy_low")
-    figstyle.add_box(fig3, (xl, xh), (yl, yh), (zl, zh))
-
-The module configures every plotly figure to obey one paper-wide aesthetic:
-
-- 2D axes : white background, black box, no grid, external ticks,
-            Helvetica labels rendering at ~11 pt in the PDF;
-- 3D scene: orthographic ("isometric") camera, white scene background, axes
-            hidden by default;
-- colour way: a small named palette that is changeable in one place.
-
-After mutating any of the module-level globals (``COLORS``, ``SIZES``,
-``FONT``) call ``figstyle.apply()`` again to propagate the change to
-subsequent figures.
+Reason for retirement: plotly+kaleido cannot emit vector 3D PDFs — every
+3D scene gets baked into a single embedded raster (≈145 DPI at half-column
+width), which defeats the print-ready manuscript use case. matplotlib's
+3D backend produces true vector PDFs at every size.
 """
 
 from __future__ import annotations
@@ -342,6 +326,58 @@ def add_back_panels(
             line=dict(color=color, width=width),
             showlegend=False, hoverinfo="skip",
         ))
+
+
+def cubic_bounds(x, y, z, *, pad: float = 0.0):
+    """Smallest axis-aligned cube containing the ``(x, y, z)`` point cloud,
+    padded by ``pad`` data units on every side.
+
+    The per-axis center is ``(min + max) / 2``; the half-width is the
+    maximum over the three axes of ``(max - min) / 2 + pad``. Pair the
+    result with the template's ``aspectmode='cube'`` to obtain a true
+    isometric view (data ranges equal on all three axes, no silent
+    squashing).
+
+    Parameters
+    ----------
+    x, y, z : array-like
+        Coordinate samples (any matching shape; broadcast over jointly).
+    pad : float, default 0.0
+        Padding in data units, added on each side. Additive (not a
+        fraction), matching the convention of :func:`add_shadow`.
+
+    Returns
+    -------
+    ((xlo, xhi), (ylo, yhi), (zlo, zhi))
+        Suitable as the ``bounds`` argument of :func:`add_shadow`,
+        :func:`add_back_panels`, :func:`add_box`.
+    """
+    xs, ys, zs = (np.asarray(a) for a in (x, y, z))
+    centers = [(a.min() + a.max()) / 2 for a in (xs, ys, zs)]
+    half = max((a.max() - a.min()) / 2 + pad for a in (xs, ys, zs))
+    return tuple((float(c - half), float(c + half)) for c in centers)
+
+
+def add_back_shadows(
+    fig: go.Figure,
+    x,
+    y,
+    z,
+    bounds: tuple,
+    *,
+    color: str | None = None,
+    width: float = 1.0,
+    opacity: float = 0.4,
+) -> None:
+    """Project an ``(x, y, z)`` curve onto the three back panels
+    (``xy_low``, ``xz_low``, ``yz_low``) — one call replaces the typical
+    three-times-:func:`add_shadow` loop.
+    """
+    for plane in ("xy_low", "xz_low", "yz_low"):
+        add_shadow(
+            fig, x, y, z, plane, bounds=bounds,
+            color=color, width=width, opacity=opacity,
+        )
 
 
 def sphere_surface(

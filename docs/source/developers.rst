@@ -25,8 +25,8 @@ This pulls in ``ruff`` (linting), ``isort``, ``pytest`` (+ ``pytest-cov``,
 ``coverage``, ``codecov``), ``pre-commit`` and ``pre-commit-hooks``,
 ``nbstripout``, ``sphinx`` with the documentation extensions
 (``sphinx_rtd_theme``, ``sphinx-copybutton``, ``numpydoc``, ``ipython``),
-``twine``, and ``kaleido`` (used by Plotly to export tutorial figures as
-vector PDFs).
+``twine``, and ``pypdf`` (used by the figstyle tests to assert PDF
+output is vector-only).
 
 Pre-commit hooks
 ----------------
