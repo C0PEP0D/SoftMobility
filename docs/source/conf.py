@@ -181,7 +181,7 @@ if os.environ.get("SOFTMOBILITY_ENABLE_INTERSPHINX") == "1":
         "numpy": ("https://numpy.org/doc/stable", None),
         "jax": ("https://docs.jax.dev/en/latest/", None),
         "sympy": ("https://docs.sympy.org/latest/", None),
-        "plotly": ("https://plotly.com/python-api-reference/", None),
+        "matplotlib": ("https://matplotlib.org/stable/", None),
         "ipywidgets": ("https://ipywidgets.readthedocs.io/en/latest/", None),
     }
 else:
