@@ -13,18 +13,27 @@ from softmobility import FlexibleFiber
 def test_construction_3d():
     body = FlexibleFiber(n_beads=5)
     assert body.Nspheres == 5
-    assert body.Ndof == 15  # 3 per bead
+    # Sphere 0 has no per-bead orientation DOF (its tangent is identified
+    # with the body frame's ê_x), and the chain has no torsional DOF
+    # (the x-component of each Rodrigues vector is structurally zero).
+    # So Ndof = 2 · (N - 1).
+    assert body.Ndof == 8
     assert body.Ndesign == 3  # radius, K_b, mass (no gap)
     assert body.Ninput == 3  # gravity field
     assert body.design_variables == ["radius", "K_b", "mass"]
     assert body.input_variables == ["gravity0", "gravity1", "gravity2"]
+    # DOF naming: theta_{i}_y, theta_{i}_z for distal beads only.
+    assert body.dof_variables == [
+        f"theta_{i}_{c}" for i in range(1, 5) for c in ("y", "z")
+    ]
 
 
 def test_construction_planar():
     body = FlexibleFiber(n_beads=5, planar=True)
     assert body.Nspheres == 5
-    assert body.Ndof == 5  # 1 per bead
-    assert body.dof_variables == [f"theta_{i}" for i in range(5)]
+    # Same convention: only spheres 1 .. N-1 carry orientation DOFs.
+    assert body.Ndof == 4
+    assert body.dof_variables == [f"theta_{i}" for i in range(1, 5)]
 
 
 def test_n_beads_validation():
@@ -51,7 +60,10 @@ def test_planar_bending_kinematics():
     radius = 1.0
     body = FlexibleFiber(n_beads=n, radius=radius, planar=True)
     eps = 0.1
-    dofs = jnp.array([0.0, eps, 0.0])
+    # DOFs are theta_1, theta_2 (sphere 0's orientation is structurally
+    # zero and not a DOF). Pick theta_1 = eps, theta_2 = 0 so bead 1's
+    # tangent is tilted but bead 2's tangent is along ê_x.
+    dofs = jnp.array([eps, 0.0])
     t = jnp.array([0.0])
     a = radius
     # Planar sign convention: p = (cos θ, 0, +sin θ).
@@ -82,7 +94,10 @@ def test_bent_bond_length_invariant():
     body = FlexibleFiber(n_beads=n, radius=radius, planar=True)
     t = jnp.array([0.0])
     for kappa in (0.05, 0.2, 0.5, 1.0):  # up to ~57° per joint
-        dofs = kappa * jnp.arange(n, dtype=jnp.float32)
+        # DOFs cover beads 1 .. N-1; bead 0's tangent is structurally
+        # along ê_x. Linear progression θ_i = i·κ then becomes
+        # dofs = (κ, 2κ, ..., (N-1)·κ).
+        dofs = kappa * jnp.arange(1, n, dtype=jnp.float32)
         positions = jnp.stack(
             [body.spheres[i].position(dofs, body.design_defaults, t) for i in range(n)]
         )
@@ -95,7 +110,14 @@ def test_bent_bond_length_invariant():
 def test_planar_C_K_is_torsional_chain_laplacian():
     """``C_K`` (Ty rows) is the discrete Laplacian on bead orientations
     with coefficient ``K_b / (2a)`` (linearized Gears bending in the
-    implicit-DOF parameterization)."""
+    implicit-DOF parameterization).
+
+    Sphere 0 has no orientation DOF (its tangent is identified with the
+    body frame's ê_x), so the DOF vector is ``Q = (θ_1, …, θ_{N-1})``
+    and ``C_K`` has ``N`` rows but only ``N - 1`` columns. The expected
+    rows are therefore the columns 1.. of the full Laplacian on
+    ``(θ_0=0, θ_1, …, θ_{N-1})``.
+    """
     n = 5
     K_b = 1.0
     a = 1.0
@@ -103,20 +125,24 @@ def test_planar_C_K_is_torsional_chain_laplacian():
     body = FlexibleFiber(n_beads=n, bending_rigidity=K_b, planar=True)
     C_K = np.asarray(body.grand_C_K())
 
-    M = np.zeros((n, n))
-    M[0, 0] = -coef
-    M[0, 1] = coef
+    # Full Laplacian on (θ_0, …, θ_{N-1}); we keep all N rows but drop
+    # the first column (θ_0 is structurally zero, not a DOF).
+    M_full = np.zeros((n, n))
+    M_full[0, 0] = -coef
+    M_full[0, 1] = coef
     for i in range(1, n - 1):
-        M[i, i - 1] = coef
-        M[i, i] = -2.0 * coef
-        M[i, i + 1] = coef
-    M[n - 1, n - 2] = coef
-    M[n - 1, n - 1] = -coef
+        M_full[i, i - 1] = coef
+        M_full[i, i] = -2.0 * coef
+        M_full[i, i + 1] = coef
+    M_full[n - 1, n - 2] = coef
+    M_full[n - 1, n - 1] = -coef
+    M_dofs = M_full[:, 1:]  # drop the θ_0 column → shape (n, n-1)
 
+    assert C_K.shape[1] == n - 1
     for i in range(n):
         row = i * 6 + 4  # Ty row of bead i
-        assert np.allclose(C_K[row], M[i], atol=1e-5), (
-            f"row {row} (Ty bead {i}): expected {M[i]}, got {C_K[row]}"
+        assert np.allclose(C_K[row], M_dofs[i], atol=1e-5), (
+            f"row {row} (Ty bead {i}): expected {M_dofs[i]}, got {C_K[row]}"
         )
 
 
@@ -173,7 +199,7 @@ def test_straight_no_torque():
     """All-zero DOFs ⇒ every bead torque is zero."""
     n = 6
     body = FlexibleFiber(n_beads=n, planar=True)
-    dofs = jnp.zeros(n)
+    dofs = jnp.zeros(n - 1)
     design = body.design_defaults
     inputs = jnp.zeros(body.Ninput)
     for i in range(n):
@@ -191,7 +217,9 @@ def test_planar_uniform_progression_no_interior_torque():
     coef = K_b / (2.0 * a)
     body = FlexibleFiber(n_beads=n, bending_rigidity=K_b, radius=a, planar=True)
     delta = 0.05
-    dofs = jnp.array([i * delta for i in range(n)])
+    # Sphere 0 has no DOF; θ_0 = 0 implicitly. The linear progression
+    # θ_i = i·δθ then becomes dofs = (δθ, 2δθ, …, (N-1)·δθ).
+    dofs = jnp.array([i * delta for i in range(1, n)])
     design = body.design_defaults
     inputs = jnp.zeros(body.Ninput)
 
@@ -205,8 +233,8 @@ def test_planar_uniform_progression_no_interior_torque():
 
 
 def test_planar_3D_consistency_around_y():
-    """A 3D fiber whose only non-zero rod component is the y component should
-    produce the same Ty stencil as the planar fiber."""
+    """A 3D fiber whose only non-zero distal-bead rod component is along
+    ``ê_y`` should produce the same Ty stencil as the planar fiber."""
     n = 6
     K_b = 1.7
     a = 1.0
@@ -214,9 +242,14 @@ def test_planar_3D_consistency_around_y():
     body_3d = FlexibleFiber(n_beads=n, bending_rigidity=K_b, radius=a, planar=False)
 
     rng = np.random.default_rng(1)
-    thetas = rng.uniform(-0.05, 0.05, size=n)
+    # DOFs cover beads 1 .. N-1. Match conventions: planar packs N-1
+    # scalars (θ_i around ê_y); 3D packs (θ_i^y, θ_i^z) per distal bead
+    # — set θ_i^z = 0 so the chain stays in the xz-plane.
+    thetas = rng.uniform(-0.05, 0.05, size=n - 1)
     dofs_planar = jnp.asarray(thetas)
-    dofs_3d = jnp.asarray(np.stack([np.zeros(n), thetas, np.zeros(n)], axis=1).reshape(-1))
+    dofs_3d = jnp.asarray(
+        np.stack([thetas, np.zeros(n - 1)], axis=1).reshape(-1)
+    )
 
     inputs = jnp.zeros(body_planar.Ninput)
     for i in range(n):
@@ -257,17 +290,20 @@ def test_clamp_position_holds():
 
 
 def test_clamp_oscillating_dof():
-    """Clamping ``θ_1(t) = α₀·sin(ζt)`` must reproduce the prescription element-wise."""
+    """Clamping ``θ_1(t) = α₀·sin(ζt)`` must reproduce the prescription
+    element-wise. ``θ_1`` is now ``dofs[0]`` (sphere 0 has no DOF, so
+    the planar DOF vector is ``(θ_1, …, θ_{N-1})``)."""
     n = 5
     fiber, rollout = _quiescent_planar_rollout(n=n)
     alpha0 = 0.1
     zeta = 2.0
-    mask = jnp.zeros(n, dtype=bool).at[1].set(True)
+    ndof = n - 1
+    mask = jnp.zeros(ndof, dtype=bool).at[0].set(True)
     dt = 0.01
     n_steps = 30
 
     def dofs_fn(t):
-        return jnp.zeros(n).at[1].set(alpha0 * jnp.sin(zeta * t))
+        return jnp.zeros(ndof).at[0].set(alpha0 * jnp.sin(zeta * t))
 
     _, _, dofs_traj = rollout.rollout(
         dt=dt,
@@ -278,25 +314,28 @@ def test_clamp_oscillating_dof():
     dofs_traj = np.asarray(dofs_traj)
     times = (np.arange(n_steps) + 1) * dt
     expected_theta1 = alpha0 * np.sin(zeta * times)
-    np.testing.assert_allclose(dofs_traj[:, 1], expected_theta1, atol=1e-7)
+    np.testing.assert_allclose(dofs_traj[:, 0], expected_theta1, atol=1e-7)
 
 
 def test_clamp_unaffected_dofs_evolve():
-    """Clamping ``θ_0`` only must leave the other DOFs free to evolve under
-    bending dynamics — not freeze the entire chain."""
+    """Clamping ``θ_1`` only must leave the other DOFs free to evolve
+    under bending dynamics — not freeze the entire chain. (After the
+    refactor, sphere 0 has no DOF; the first free DOF is ``θ_1`` at
+    ``dofs[0]``.)"""
     n = 5
     fiber, rollout = _quiescent_planar_rollout(n=n, K_b=10.0)
-    init_dofs = jnp.array([0.0, 0.3, -0.2, 0.1, 0.0])
-    mask = jnp.zeros(n, dtype=bool).at[0].set(True)
+    init_dofs = jnp.array([0.3, -0.2, 0.1, 0.0])  # θ_1, …, θ_4
+    ndof = n - 1
+    mask = jnp.zeros(ndof, dtype=bool).at[0].set(True)
     _, _, dofs_traj = rollout.rollout(
         dt=0.01,
         n_steps=50,
         init_dofs=init_dofs,
         clamp_dofs_mask=mask,
-        clamp_dofs_fn=lambda t: jnp.zeros(n),
+        clamp_dofs_fn=lambda t: jnp.zeros(ndof),
     )
     dofs_traj = np.asarray(dofs_traj)
-    # θ_0 stays clamped at 0
+    # θ_1 stays clamped at 0
     np.testing.assert_allclose(dofs_traj[:, 0], 0.0, atol=1e-7)
     # other DOFs change over time (bending relaxation)
     assert np.max(np.abs(dofs_traj[-1, 1:] - init_dofs[1:])) > 1e-3
@@ -307,3 +346,107 @@ def test_clamp_dofs_fn_requires_mask():
     _, rollout = _quiescent_planar_rollout()
     with pytest.raises(ValueError, match="clamp_dofs_fn and clamp_dofs_mask"):
         rollout.rollout(dt=0.01, n_steps=2, clamp_dofs_fn=lambda t: jnp.zeros(5))
+
+
+# ---------------------------------------------------------------------------
+# Clamped-anchor mobility (Article3.tex appendix `app:clamped_anchor`)
+# ---------------------------------------------------------------------------
+
+
+def test_rollout_clamped_anchor_static_relaxation():
+    """Static anchor at the origin, body orientation pinned at zero,
+    initial DOFs perturbed — the final ``max|Q|`` must be at least
+    half the initial value lower (the chain has measurably relaxed)."""
+    n = 4
+    K_b = 30.0
+    a = 1.0
+    init_max = 0.05
+    fiber, rollout = _quiescent_planar_rollout(n=n, K_b=K_b)
+    init_dofs = jnp.array([init_max, -0.04, 0.03])  # θ_1, θ_2, θ_3
+    dt = 0.05 * (2 * a) ** 4 / K_b
+    n_steps = 5000
+
+    def anchor_pos(t):
+        return jnp.zeros(3)
+
+    def anchor_vel(t):
+        return jnp.zeros(6)
+
+    _, _, dofs_traj, _ = rollout.rollout_clamped_anchor(
+        dt=dt,
+        n_steps=n_steps,
+        anchor_position_fn=anchor_pos,
+        anchor_velocity_fn=anchor_vel,
+        init_dofs=init_dofs,
+    )
+    dofs_traj = np.asarray(dofs_traj)
+    final_max = float(np.max(np.abs(dofs_traj[-1])))
+    assert final_max < init_max / 2, (
+        f"chain did not relax: initial max|Q| = {init_max}, "
+        f"final max|Q| = {final_max}"
+    )
+
+
+def test_rollout_clamped_anchor_rotation_drives_dofs():
+    """A rotating anchor must drive the DOFs to a non-zero, body-frame
+    steady state — in contrast to the post-step kinematic-clamp path
+    which leaves the DOFs at exactly zero."""
+    n = 4
+    K_b = 30.0
+    a = 1.0
+    # 3-D fiber: the rotation axis (lab ê_x) is perpendicular to the
+    # local bending plane, so the chain has DOFs that respond to it.
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=False
+    )
+    rollout = sm.FlowBodyRollout(
+        soft_body=fiber,
+        flow=sm.no_flow(),
+        input_map={"gravity": sm.gravity_field(g=0.0)},
+    )
+    psi = 0.2
+    # Sp⁴ = L³ ζ γ⊥ / K_b ≈ 9 with these numbers — modest deformation
+    # well inside the linearisation regime.
+    zeta = 0.1
+    dt = 0.05 * (2 * a) ** 4 / K_b
+    n_steps = 5000
+
+    def anchor_pos(t):
+        return jnp.zeros(3)
+
+    omega_lab = jnp.array([zeta, 0.0, 0.0])
+
+    def anchor_vel(t):
+        return jnp.concatenate([jnp.zeros(3), omega_lab])
+
+    init_orientation = jnp.array([0.0, psi, 0.0])
+
+    _, _, dofs_traj, f_0_traj = rollout.rollout_clamped_anchor(
+        dt=dt,
+        n_steps=n_steps,
+        anchor_position_fn=anchor_pos,
+        anchor_velocity_fn=anchor_vel,
+        init_orientation=init_orientation,
+    )
+    dofs_traj = np.asarray(dofs_traj)
+    f_0_traj = np.asarray(f_0_traj)
+    # The clamped formulation must produce non-zero deformation. (The
+    # broken post-step kinematic-clamp path used to leave dofs at zero.)
+    assert np.max(np.abs(dofs_traj[-1])) > 1e-4, (
+        "rotating actuation did not drive any chain deformation"
+    )
+    # And a non-zero anchor reaction force to hold the rotating chain
+    # against viscous drag.
+    assert np.max(np.abs(f_0_traj[-1])) > 1e-4
+
+
+def test_rollout_clamped_anchor_unknown_scheme_raises():
+    _, rollout = _quiescent_planar_rollout()
+    with pytest.raises(ValueError, match="Unknown integration scheme"):
+        rollout.rollout_clamped_anchor(
+            dt=0.01,
+            n_steps=2,
+            anchor_position_fn=lambda t: jnp.zeros(3),
+            anchor_velocity_fn=lambda t: jnp.zeros(6),
+            scheme="euler",
+        )

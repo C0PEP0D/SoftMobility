@@ -231,17 +231,19 @@ class FlowBodyRollout:
         clamp_position_fn : callable, optional
             Time function ``t -> (3,)`` that returns the prescribed lab
             position of the soft body's frame origin. After each integrator
-            step, the body position is overwritten with this value (the
-            integrator's velocity contribution is discarded). Useful for
-            modeling clamped / kinematically actuated filaments such as
-            those of Delmotte et al. 2015 §3.4 (Figs 12, 13). Default
+            step, the body position is overwritten with this value — a
+            **post-step kinematic override** that does NOT inject any force
+            into the body-frame mobility equation. For an actuator that
+            should drive the chain dynamics (e.g. the rotating-filament
+            problems of Coq et al. 2008 / Delmotte et al. 2015 §3.4
+            fig 13), use :meth:`rollout_clamped_anchor` instead. Default
             ``None`` lets the body translate dynamically.
         clamp_orientation_fn : callable, optional
             Time function ``t -> (3,)`` that returns the prescribed body
-            Rodrigues rotation vector. After each integrator step, the body
-            orientation is overwritten with this value (``rescale_orientation``
-            is skipped — the user's prescription is authoritative). Default
-            ``None`` lets the body rotate dynamically.
+            Rodrigues rotation vector. Same post-step-override semantics
+            as ``clamp_position_fn`` — see :meth:`rollout_clamped_anchor`
+            for the partitioned-mobility actuated-anchor formulation.
+            Default ``None`` lets the body rotate dynamically.
         clamp_dofs_mask : jnp.ndarray of bool, shape (Ndof,), optional
             Static boolean mask of DOFs to clamp. Must have shape
             ``(soft_body.Ndof,)``. Entries set to ``True`` are overridden
@@ -332,6 +334,302 @@ class FlowBodyRollout:
             partial(scan_step, self, design=design, dt=dt), carry, jnp.arange(n_steps)
         )
         return positions, orientations, dofs
+
+    # ------------------------------------------------------------------
+    # Clamped-anchor mobility (Article3.tex appendix `app:clamped_anchor`)
+    # ------------------------------------------------------------------
+
+    def _velocity_clamped(self, design, position, orientation, dofs, time, v_0_lab):
+        """Partitioned-mobility right-hand side for a kinematically
+        actuated anchor.
+
+        Solves the augmented soft-mobility equation
+        (``eq:soft_mobility_clamped`` of the manuscript appendix
+        ``app:clamped_anchor``). The body's lab six-component velocity
+        ``v_0_lab = [u_0_lab, ω_0_lab]`` is supplied by the actuator;
+        the six-component anchor reaction ``f_0 = [F_0, T_0]`` (force +
+        torque applied at sphere 0, in body frame) is solved from the
+        top six rows of the augmented mobility, and the deformation
+        rate ``Q_dot`` is read off the bottom rows.
+
+        Parameters
+        ----------
+        design : jnp.ndarray
+            Design parameter vector, as in :meth:`_velocity`.
+        position : jnp.ndarray of shape (3,)
+            Lab-frame body origin at this evaluation (must match the
+            actuator's prescription at ``time``).
+        orientation : jnp.ndarray of shape (3,)
+            Body-frame Rodrigues rotation at this evaluation
+            (likewise).
+        dofs : jnp.ndarray of shape (Ndof,)
+            Current deformation DOFs.
+        time : jnp.ndarray of shape (1,) or scalar
+            Current time.
+        v_0_lab : jnp.ndarray of shape (6,)
+            Prescribed lab-frame six-component velocity of the body —
+            translation in the first three components, angular in the
+            last three. Typically computed as
+            ``B_0(θ_0) · ẋ_0_prescribed`` (Bortz Jacobian on the time
+            derivative of the actuator's pose); see
+            :meth:`rollout_clamped_anchor` for the standard plumbing.
+
+        Returns
+        -------
+        Q_dot : jnp.ndarray of shape (Ndof,)
+            Body-frame deformation rate.
+        f_0_body : jnp.ndarray of shape (6,)
+            Anchor reaction force/torque, body frame.
+
+        Notes
+        -----
+        The body translation and rotation are *inputs* to this method,
+        not outputs. The integrator must advance ``(x_0, θ_0)`` from
+        the actuator prescription, not from the mobility equation —
+        :meth:`rollout_clamped_anchor` does this automatically.
+        """
+        rot, sixc_rot = rotation_matrix_from_Rodrigues(orientation, Ndof=self.soft_body.Ndof)
+        inputs = self._build_inputs(design, position, time, rot)
+        u_inf = self.flow.velocity(position, time)
+        omega_inf, E_lab = self.flow.omega_rate_of_strain(position, time)
+        E_body = rot.T @ E_lab @ rot
+        E_inf = jnp.array([
+            E_body[0, 0], E_body[0, 1], E_body[0, 2],
+            E_body[1, 1], E_body[1, 2],
+        ])
+        tensors = self.soft_body.compute_tensors(dofs, design, time)
+
+        # Right-hand side of Eq. (★) without the anchor-force term.
+        active = (
+            tensors.M_H @ inputs
+            + tensors.M_K @ dofs
+            + tensors.C_E @ E_inf
+            + tensors.p_act
+        )
+
+        # Convert the prescribed lab-frame v_0 to body frame and subtract
+        # the ambient flow (so the LHS of the body block matches the
+        # ``u_0 − u_0^∞`` form of Eq. (60) of the manuscript).
+        u_0_disturb = rot.T @ (v_0_lab[:3] - u_inf)
+        omega_0_disturb = rot.T @ (v_0_lab[3:6] - omega_inf)
+        rhs = jnp.concatenate([u_0_disturb, omega_0_disturb]) - active[:6]
+
+        f_0_body = jnp.linalg.solve(tensors.M[:6, :6], rhs)
+        Q_dot = active[6:] + tensors.M[6:, :6] @ f_0_body
+        return Q_dot, f_0_body
+
+    def rollout_clamped_anchor(
+        self,
+        dt,
+        n_steps,
+        *,
+        anchor_position_fn,
+        anchor_velocity_fn,
+        init_orientation=None,
+        init_dofs=None,
+        design=None,
+        scheme="rk4",
+    ):
+        """Time-integrate a soft body whose anchor (sphere 0) is
+        kinematically actuated.
+
+        The user supplies the lab-frame **position** of the body origin
+        and the lab-frame **six-component velocity** of the body as
+        functions of time. The body's lab Rodrigues vector
+        ``θ_0(t)`` is integrated forward by the same Bortz scheme as
+        the standard :meth:`rollout` (``θ̇ = B(θ) · ω_lab``, with
+        :func:`rescale_orientation` remapping when ``|θ| ≥ π``), so it
+        stays singularity-free even for unbounded rotations. The
+        partitioned mobility equation
+        (manuscript appendix ``app:clamped_anchor``) is solved at every
+        substep for the anchor reaction
+        ``f_0 = [F_0, T_0]`` and the deformation rate
+        ``Q̇``; only ``Q`` and ``θ_0`` are stepped forward, the
+        translation comes directly from ``anchor_position_fn``.
+
+        Parameters
+        ----------
+        dt : float
+            Integrator step.
+        n_steps : int
+            Number of integrator steps.
+        anchor_position_fn : callable
+            Lab-frame position of the body origin (= sphere 0) as a
+            function of time, signature ``t -> jnp.ndarray of shape
+            (3,)``. Must be JAX-traceable so that :func:`jax.jacfwd`
+            can compute its time derivative.
+        anchor_velocity_fn : callable
+            Lab-frame six-component velocity of the body as a function
+            of time: ``t -> jnp.ndarray of shape (6,)``. The first
+            three entries are the translational velocity ``u_lab(t)``
+            and the last three are the angular velocity
+            ``ω_lab(t)``. Both lab-frame. Internally
+            ``θ̇_0 = B(θ_0) · ω_lab`` is integrated forward to track
+            the body orientation. Must be JAX-traceable.
+        init_orientation : jnp.ndarray of shape (3,), optional
+            Initial body Rodrigues rotation (lab frame). Defaults to
+            the zero vector (body axes coincide with lab axes at
+            ``t = 0``).
+        init_dofs : jnp.ndarray of shape (Ndof,), optional
+            Initial deformation. Defaults to the soft body's
+            ``dof_defaults`` (zero deformation).
+        design : jnp.ndarray, optional
+            Design parameter vector. Defaults to the soft body's
+            ``design_defaults``.
+        scheme : {"rk4", "rk2"}, default "rk4"
+            Time-integration scheme for ``(θ_0, Q)``. See
+            :meth:`rollout` for the trade-off between the two.
+
+        Returns
+        -------
+        tuple of jnp.ndarray
+            - positions : jnp.ndarray of shape (n_steps, 3)
+                Lab-frame body origin at each step end (= anchor
+                position prescription).
+            - orientations : jnp.ndarray of shape (n_steps, 3)
+                Lab-frame body Rodrigues rotation at each step end,
+                Bortz-integrated and remapped into ``[-π, π]``.
+            - dofs : jnp.ndarray of shape (n_steps, Ndof)
+                Body-frame deformation DOFs after each step.
+            - f_0 : jnp.ndarray of shape (n_steps, 6)
+                Anchor reaction force/torque, body frame.
+                ``f_0[:, :3]`` is the force the anchor exerts on
+                sphere 0; ``f_0[:, 3:]`` is the accompanying torque.
+
+        Raises
+        ------
+        ValueError
+            If ``scheme`` is not ``"rk4"`` or ``"rk2"``.
+
+        Notes
+        -----
+        - Stateless and pure-functional, like :meth:`rollout`. Wrap
+          with :func:`jax.jit` for repeated calls.
+        - For a simple "static anchor" (chain pinned to the lab
+          origin with no rotation), pass
+          ``lambda t: jnp.zeros(3)`` as ``anchor_position_fn`` and
+          ``lambda t: jnp.zeros(6)`` as ``anchor_velocity_fn``.
+
+        Examples
+        --------
+        Rotating-filament setup of Coq et al. 2008 / Delmotte 2015
+        fig 13: anchor on the rotation axis, body rotating around lab
+        ``ê_x`` at angular rate ``ζ``, with an initial tilt ``ψ``
+        around ``ê_y`` (so the chain precesses on a cone of half-angle
+        ``ψ`` around ``ê_x``)::
+
+            import jax.numpy as jnp
+            import softmobility as sm
+
+            fiber = sm.FlexibleFiber(n_beads=8, planar=False, ...)
+            rollout = sm.FlowBodyRollout(soft_body=fiber, flow=sm.no_flow(),
+                                          input_map={"gravity": sm.gravity_field(g=0.0)})
+
+            psi, zeta = 0.262, 0.05
+            omega_lab = jnp.array([zeta, 0.0, 0.0])  # constant in lab frame
+
+            def anchor_pos(t):
+                return jnp.zeros(3)
+
+            def anchor_vel(t):
+                return jnp.concatenate([jnp.zeros(3), omega_lab])
+
+            positions, orientations, dofs, f_0 = rollout.rollout_clamped_anchor(
+                dt=0.01, n_steps=10000,
+                anchor_position_fn=anchor_pos,
+                anchor_velocity_fn=anchor_vel,
+                init_orientation=jnp.array([0.0, psi, 0.0]),
+            )
+        """
+        init_orientation = (
+            jnp.zeros(3)
+            if init_orientation is None
+            else jnp.asarray(init_orientation, dtype=float)
+        )
+        init_dofs = (
+            jnp.asarray(self.soft_body.dof_defaults, dtype=float)
+            if init_dofs is None
+            else jnp.asarray(init_dofs, dtype=float)
+        )
+        design = (
+            jnp.asarray(self.soft_body.design_defaults, dtype=float)
+            if design is None
+            else jnp.asarray(design, dtype=float)
+        )
+        dt = jnp.asarray(dt, dtype=float)
+
+        if scheme not in ("rk4", "rk2"):
+            raise ValueError(
+                f"Unknown integration scheme {scheme!r}; "
+                "rollout_clamped_anchor supports 'rk4' and 'rk2'."
+            )
+
+        def deriv(theta_0, dofs_local, t):
+            v_0 = anchor_velocity_fn(t)
+            omega_lab = v_0[3:6]
+            theta_dot = compute_bortz_operator(theta_0) @ omega_lab
+            Q_dot, f_0 = self._velocity_clamped(
+                design,
+                anchor_position_fn(t),
+                theta_0,
+                dofs_local,
+                t,
+                v_0,
+            )
+            return theta_dot, Q_dot, f_0
+
+        if scheme == "rk4":
+            def step(carry, t_idx):
+                theta_0, dofs_local, dt_local = carry
+                t = t_idx * dt_local
+                do1, dq1, _ = deriv(theta_0, dofs_local, t)
+                do2, dq2, _ = deriv(
+                    theta_0 + 0.5 * dt_local * do1,
+                    dofs_local + 0.5 * dt_local * dq1,
+                    t + 0.5 * dt_local,
+                )
+                do3, dq3, _ = deriv(
+                    theta_0 + 0.5 * dt_local * do2,
+                    dofs_local + 0.5 * dt_local * dq2,
+                    t + 0.5 * dt_local,
+                )
+                do4, dq4, f_0 = deriv(
+                    theta_0 + dt_local * do3,
+                    dofs_local + dt_local * dq3,
+                    t + dt_local,
+                )
+                theta_0_new = rescale_orientation(
+                    theta_0 + dt_local / 6.0 * (do1 + 2 * do2 + 2 * do3 + do4)
+                )
+                dofs_new = dofs_local + dt_local / 6.0 * (dq1 + 2 * dq2 + 2 * dq3 + dq4)
+                pos_new = anchor_position_fn((t_idx + 1) * dt_local)
+                return (
+                    (theta_0_new, dofs_new, dt_local),
+                    (pos_new, theta_0_new, dofs_new, f_0),
+                )
+        else:  # rk2
+            def step(carry, t_idx):
+                theta_0, dofs_local, dt_local = carry
+                t = t_idx * dt_local
+                do1, dq1, _ = deriv(theta_0, dofs_local, t)
+                do2, dq2, f_0 = deriv(
+                    theta_0 + 0.5 * dt_local * do1,
+                    dofs_local + 0.5 * dt_local * dq1,
+                    t + 0.5 * dt_local,
+                )
+                theta_0_new = rescale_orientation(theta_0 + dt_local * do2)
+                dofs_new = dofs_local + dt_local * dq2
+                pos_new = anchor_position_fn((t_idx + 1) * dt_local)
+                return (
+                    (theta_0_new, dofs_new, dt_local),
+                    (pos_new, theta_0_new, dofs_new, f_0),
+                )
+
+        carry = (init_orientation, init_dofs, dt)
+        _, (positions, orientations, dofs, f_0) = jax.lax.scan(
+            step, carry, jnp.arange(n_steps)
+        )
+        return positions, orientations, dofs, f_0
 
     def _validate_inputs(self, input_dict: dict):
         """

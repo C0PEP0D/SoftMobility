@@ -181,7 +181,7 @@ Owing to the linearity of the Stokes equations, the six-component velocity of a 
 The mobility tensors entering this relation depend only on the body's shape and incorporate all the hydrodynamic complexity of the Stokes equations into a finite set of geometric coefficients. 
 These tensors can be computed with different methods: boundary integral methods~\cite{Pozrikidis1992} that exploit Lorentz reciprocal theorem~\cite{Happel2012}, multiblob methods that discretize body surfaces with ``blobs''~\cite{Balboa-Usabiaga2017,Balboa-Usabiaga2022,Broms2023}, or slender-body theory for filaments and fibers~\cite{Tornberg2004,Nazockdast2017,Maxian2022}.
 This formulation has recently been revived for complex-shaped macromolecules~\cite{Garcia-de-la-Torre1981,Zuk2014,Zuk2018} and reinterpreted as a low-dimensional dynamical system describing rigid-body sinking trajectories~\cite{Gonzalez2004,Witten2020}.
-Its appeal, from the standpoint of the inverse problem, is the explicit, shape-dependent linear relation it provides between velocities and loads~\cite{Moreau2023}.
+Its appeal, from the standpoint of the inverse problem, is the explicit, shape-dependent linear relation it provides between velocities and loads~\cite{Moreau2022}.
 
 For $N$ rigid bodies, the same linear relationship extends to a $6N\times 6N$ grand mobility tensor encoding both single-body mobility and many-body hydrodynamic interactions. 
 This tensor is at the core of Stokesian dynamics, which aims to simulate a large ensemble of rigid bodies interacting in a flow~\cite{Brady1988,Ichiki2002,Fiore2019,Swan2016}. 
@@ -260,7 +260,9 @@ Under the action of the flow and internal stresses, a material point $\bX\in\Ome
 \end{center}
 \end{figure}
 
-The material is assumed hyperelastic, so that the second Piola–Kirchhoff stress tensor $\tS$ derives from a strain energy density $W(\tE)$ as $\tS = \partial W/\partial\tE$, where $\tE = (\tF^T\cdot\tF - \tI)/2$ is the Lagrangian Green strain tensor. The outward unit normals to the body surface in the reference and deformed configurations are denoted $\bN(\bX)$ and $\bn(\bx)$, respectively. 
+The material is assumed hyperelastic, so that the second Piola–Kirchhoff stress tensor $\tS$ derives from a strain energy density $W(\tE)$ as $\tS = \partial W/\partial\tE$, where $\tE = (\tF^T\cdot\tF - \tI)/2$ is the Lagrangian Green strain tensor. 
+\new{For instance, ... .} 
+The outward unit normals to the body surface in the reference and deformed configurations are denoted $\bN(\bX)$ and $\bn(\bx)$, respectively. 
 The first Piola–Kirchhoff stress tensor $\tP = \tF\cdot\tS$ provides the traction $\bF_s$ in the reference configuration: $\bF_s = \tP\cdot\bN$ is the force per unit reference area exerted on a surface element with outward normal $\bN$, so that the surrounding fluid exerts a force $\bF_s$ on the body. 
 
 %%%%%%%%%%%%%%%%
@@ -347,8 +349,8 @@ But to do that, we need to calculate the virtual traction $\bF_s^* = J_s \bff_s^
 \subsection{Summary}
 Using Eqs. (\ref{eq:virtual_power}), (\ref{eq:reciprocity}), and (\ref{eq:reciprocity_ref}), we find the weak formulation of the problem on the space $V$ of kinematically admissible velocity fields: one seeks $\bxd\in V$ satisfying 
 \begin{equation}\label{eq:weak_form}
-\int_{\partial \Omega_0} \bF_s^* \cdot \bxd \, \rmd S =
-	\int_{\partial \Omega_0} \bF_s^* \cdot  \bu^\infty \, \rmd S + 
+\int_{\partial \Omega_0} \bxd  \cdot \bF_s^*\, \rmd S =
+	\int_{\partial \Omega_0}   \bu^\infty \cdot \bF_s^* \, \rmd S + 
 	\int_{\Omega_0} \tS : \tEd^* \, \rmd V -
 	\int_{\Omega_0} \bF_v \cdot \bV^* \, \rmd V,
 \end{equation}
@@ -608,6 +610,8 @@ of the trajectory with respect to the design variables.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Instability of a rotating flexible fiber}
 
+\cite{Coq2009}\cite{Coq2008}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Jeffery orbits for rigid and soft bodies}
 
@@ -748,6 +752,68 @@ The double contractions $\hat{\tC}_E:\tE_0^\infty$ and $\tC_E:\tE_0^\infty$ appe
 \left(\tC_E:\tE_0^\infty\right)_i = \sum_{j,k}(C_E)_{ijk}\,(\tE_0^\infty)_{jk}
 \end{equation}
 is linear in $\bE$, so it can be written as $\tC_E^{(5)}\cdot\bE$ for an equivalent $N_q\times 5$ matrix $\tC_E^{(5)}$. The entries of $\tC_E^{(5)}$ are obtained by substituting Eq.~(\ref{eq:strain_mat}) and collecting coefficients of each $E_l$. Because the sum runs over all nine $(j,k)$ pairs and $\tE_0^\infty$ is symmetric, each off-diagonal component (e.g.\ $E_{xy}$) contributes through both $(j,k)=(1,2)$ and $(j,k)=(2,1)$, automatically yielding the correct factor of two without requiring explicit prefactors in $\bE$.
+
+%%%%%%%%%%%%%%%
+\section{Kinematic actuation of a single anchor\label{app:clamped_anchor}}
+
+In several applications one prescribes the velocity of a single sphere of the assembly --- the \emph{anchor} --- rather than letting the assembly translate and rotate freely under external forces. Examples include tethered filaments, the rotating elastic filament of \cite{Coq2008,Coq2009}, and kinematically actuated swimmers. We extend here the soft mobility equation~(\ref{eq:soft_mobility_body}) to such a clamped-anchor problem.
+
+\paragraph{Choice of frame.}
+We choose the body's frame so that its origin coincides with the centre of sphere $0$ and its axis $\bE_1$ aligns with sphere $0$'s body-frame orientation: $\bX_0 = \bm{0}$ and $\bTheta_0 = \bm{0}$ for all time. The body's lab-frame position $\br_0$ and orientation $\btheta_0$ are then identified with sphere $0$'s lab-frame position and orientation, and the actuation imposes them through two prescribed time-functions,
+\begin{equation}\label{eq:anchor_prescription}
+\br_0(t) = \br_0^\mathrm{prescr}(t),\qquad
+\btheta_0(t) = \btheta_0^\mathrm{prescr}(t).
+\end{equation}
+The body's six-component velocity $\bv_0 = [\bu_0,\bomega_0]$ in the laboratory frame follows from the prescription via the Bortz Jacobian~(\ref{eq.Bortz_one_sphere}) of sphere~$0$,
+\begin{equation}\label{eq:anchor_vel}
+\bv_0 \;=\; \tB_0(\btheta_0)\cdot\bm{\dot{x}}_0^\mathrm{prescr}
+\;=\;
+\begin{bmatrix} \tI & \bm{0} \\ \bm{0} & \tB_\Omega(\btheta_0) \end{bmatrix}
+\begin{bmatrix} \bRd_0^\mathrm{prescr} \\[0.4ex] \bThetad_0^\mathrm{prescr} \end{bmatrix},
+\end{equation}
+so that $\bu_0 = \bRd_0^\mathrm{prescr}$ and $\bomega_0 = \tB_\Omega(\btheta_0)\cdot\bThetad_0^\mathrm{prescr}$ are both expressed in the laboratory frame, consistent with the convention introduced after Eq.~(\ref{eq:soft_mobility_body}).
+
+\paragraph{Augmented mobility equation.}
+The clamped-anchor problem is a \emph{mixed} mobility problem: $\bv_0$ is now a known input rather than a velocity solved for, while the six-component reaction force $\bff_0 = [\bF_0,\bT_0]$ that the anchor exerts on sphere $0$ becomes an unknown. We re-introduce $\bff_0$ as an additional grand external force concentrated on sphere $0$. The associated contribution to the right-hand side of the soft mobility equation~(\ref{eq:soft_mobility_body}) is $\tM\cdot(\bff_0\,\delta_{i,0})$, which simplifies to $\tM_0\cdot\bff_0$ with
+\begin{equation}\label{eq:M_anchor}
+\tM_0 \;=\; \tM[:,1{:}6]
+\end{equation}
+the first six columns of the $N_q\times 6N$ soft mobility tensor (size $N_q\times 6$). The augmented soft mobility equation reads
+\begin{equation}\label{eq:soft_mobility_clamped}
+\bp - \bp_0^\infty
+=
+\tM_K\cdot\bQ + \tM_H\cdot\bH + \tC_E:\tE_0^\infty - \tPi\cdot\bV_\mathrm{act}
++ \tM_0\cdot\bff_0,
+\end{equation}
+where $\bp = [\bu_0, \bomega_0, \bQd]$ stacks the body's six-component velocity and the deformation rate.
+
+\paragraph{Partitioning and solve.}
+Splitting $\tM_0$ in a $6\times 6$ velocity block and an $N_Q\times 6$ deformation block,
+\begin{equation}\label{eq:M_anchor_partition}
+\tM_0 =
+\begin{bmatrix} \tM_0^{vv} \\[0.5ex] \tM_0^{Qv} \end{bmatrix},
+\end{equation}
+the top six rows of Eq.~(\ref{eq:soft_mobility_clamped}) form a $6\times 6$ linear system for the unknown $\bff_0$,
+\begin{equation}\label{eq:f_anchor_solve}
+\tM_0^{vv}\cdot\bff_0
+\;=\;
+\bv_0 - \bv_0^\infty
+- \left[\tM_K\cdot\bQ + \tM_H\cdot\bH + \tC_E:\tE_0^\infty - \tPi\cdot\bV_\mathrm{act}\right]_{1{:}6},
+\end{equation}
+inverted at every integrator substep to produce $\bff_0$. The remaining $N_Q$ rows then yield the deformation rate
+\begin{equation}\label{eq:Qdot_clamped}
+\bQd
+\;=\;
+\left[\tM_K\cdot\bQ + \tM_H\cdot\bH + \tC_E:\tE_0^\infty - \tPi\cdot\bV_\mathrm{act}\right]_{7{:}N_q}
++ \tM_0^{Qv}\cdot\bff_0.
+\end{equation}
+The body's lab-frame coordinates $(\br_0,\btheta_0)$ are advanced directly through the prescription~(\ref{eq:anchor_prescription}) rather than integrated.
+
+\paragraph{Coordinate redundancy.}
+With the body frame attached to sphere $0$, the per-sphere DOFs that parameterize sphere $0$'s body-frame position and orientation become structurally redundant and must be held at zero throughout the simulation. For the bead-rod fibre of \S\ref{sec.kinematics}, this corresponds to clamping the Rodrigues triplet of sphere $0$ to $\bTheta_0 = \bm{0}$. The constraint is purely geometric, not kinematic, and is not associated with a reaction force.
+
+\paragraph{Cross-check by shooting.}
+Equation~(\ref{eq:f_anchor_solve}) admits a direct shooting check that swaps the role of knowns and unknowns: given any candidate $\bff_0$, applying it through the unmodified soft mobility equation~(\ref{eq:soft_mobility_body})---that is, treating $\bff_0\,\delta_{i,0}$ as an additional external load and letting $\bv_0$ be solved for---must reproduce the velocity~(\ref{eq:anchor_vel}) under which it was originally derived. Any drift between the recovered $\bv_0$ and the prescription signals an inconsistency in the partitioning or in the body-frame conversion.
 
 % Create the reference section using BibTeX:
 \bibliography{splank.bib}
