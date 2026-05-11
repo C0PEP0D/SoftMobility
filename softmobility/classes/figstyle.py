@@ -2,7 +2,7 @@
 
 Use it like this in a notebook::
 
-    from softmobility.tutorials import figstyle
+    from softmobility.classes import figstyle
     figstyle.apply()                                  # set rcParams
 
     fig, ax = figstyle.figure(size="half", aspect=4/3)
