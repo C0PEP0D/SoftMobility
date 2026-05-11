@@ -450,3 +450,97 @@ def test_rollout_clamped_anchor_unknown_scheme_raises():
             anchor_velocity_fn=lambda t: jnp.zeros(6),
             scheme="euler",
         )
+
+
+# ---------------------------------------------------------------------------
+# Analytical validation: Euler–Bernoulli tip deflection pins k_t = K_b/(2a)
+# ---------------------------------------------------------------------------
+
+
+def test_static_cantilever_matches_euler_bernoulli():
+    """Clamped planar cantilever under uniform transverse gravity must
+    relax to the static bead-chain equilibrium obtained from
+    ``γ_int + γ_ext = 0``, which in the small-angle limit reduces to a
+    tridiagonal linear system with the bending coefficient
+    ``k_t = K_b/(2a)``. We solve that system in-test to get the
+    discrete reference, then run the rollout to steady state and
+    require the tip deflection to match within 5 %. Any factor-of-2
+    error in ``k_t`` would scale every DOF (and hence ``δ_tip``) by
+    2× and trip the assertion.
+
+    Sanity-check: the discrete prediction agrees with the continuum
+    Euler–Bernoulli answer ``q · L⁴ / (8 · K_b)`` up to the expected
+    ``O((a/L)²)`` discretisation residual.
+    """
+    n = 6
+    K_b = 30.0
+    a = 1.0
+    m = 1.0
+    g = 1e-3  # small enough to stay in the small-angle (linear) regime
+    L = (n - 1) * 2.0 * a
+    q = m * g / (2.0 * a)
+    alpha = 2.0 * m * g * a**2 / K_b
+
+    # Discrete static balance on the bead-orientation DOFs
+    # (θ_1, …, θ_{N-1}): K_lap · θ = α · (2N - 2j - 1), where K_lap is
+    # the (N-1)×(N-1) discrete Laplacian with a clamped row at j=0
+    # (interior stencil) and the free-tip row [1, -1] at j=N-2.
+    K_lap = np.zeros((n - 1, n - 1))
+    for j in range(n - 1):
+        K_lap[j, j] = -2.0
+        if j > 0:
+            K_lap[j, j - 1] = 1.0
+        if j < n - 2:
+            K_lap[j, j + 1] = 1.0
+    K_lap[n - 2, n - 2] = -1.0  # free-tip boundary
+    rhs = alpha * np.array(
+        [2 * n - 2 * (j + 1) - 1 for j in range(n - 1)], dtype=float
+    )
+    theta_discrete = np.linalg.solve(K_lap, rhs)
+    # Planar-code kinematic recurrence (p_z = +sin θ_i ⇒
+    # z_{i+1} − z_i = +a · (θ_i + θ_{i+1}), with θ_0 = 0):
+    delta_discrete = abs(
+        a * (2.0 * np.sum(theta_discrete[:-1]) + theta_discrete[-1])
+    )
+    delta_continuum = q * L**4 / (8.0 * K_b)
+
+    # Discrete ↔ continuum stay within the O((a/L)²) discretisation
+    # residual — guards against subtle changes in the kinematics.
+    assert abs(delta_discrete - delta_continuum) / delta_continuum < 0.4, (
+        f"discrete {delta_discrete:.4g} and continuum {delta_continuum:.4g} "
+        "tip deflections disagree by more than 40 % — kinematics or "
+        "γ_ext projection has drifted."
+    )
+
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, bending_rigidity=K_b, mass=m, planar=True
+    )
+    rollout = sm.FlowBodyRollout(
+        soft_body=fiber,
+        flow=sm.no_flow(),
+        input_map={"gravity": sm.gravity_field(g=g)},
+    )
+
+    dt = 0.05 * (2.0 * a) ** 4 / K_b
+    n_steps = 50000  # ≳ 5 τ_1 of slowest-mode relaxation for N=6
+
+    _, _, dofs_traj, _ = rollout.rollout_clamped_anchor(
+        dt=dt,
+        n_steps=n_steps,
+        anchor_position_fn=lambda t: jnp.zeros(3),
+        anchor_velocity_fn=lambda t: jnp.zeros(6),
+    )
+    final_dofs = jnp.asarray(dofs_traj[-1])
+
+    tip_pos = fiber.spheres[n - 1].position(
+        final_dofs, fiber.design_defaults, jnp.array([0.0])
+    )
+    delta_sim = float(jnp.abs(tip_pos[2]))
+
+    rel_err = abs(delta_sim - delta_discrete) / delta_discrete
+    assert rel_err < 0.05, (
+        f"sim tip deflection {delta_sim:.6g} differs from the discrete "
+        f"static-balance prediction {delta_discrete:.6g} by "
+        f"{rel_err * 100:.1f} % (> 5 %); k_t = K_b/(2a) prefactor "
+        "is likely wrong"
+    )
