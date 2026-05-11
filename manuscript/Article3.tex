@@ -260,8 +260,14 @@ Under the action of the flow and internal stresses, a material point $\bX\in\Ome
 \end{center}
 \end{figure}
 
-The material is assumed hyperelastic, so that the second Piola–Kirchhoff stress tensor $\tS$ derives from a strain energy density $W(\tE)$ as $\tS = \partial W/\partial\tE$, where $\tE = (\tF^T\cdot\tF - \tI)/2$ is the Lagrangian Green strain tensor. 
-\new{For instance, ... .} 
+The material is assumed hyperelastic, so that the second Piola–Kirchhoff stress tensor $\tS$ derives from a strain energy density $W(\tE)$ as $\tS = \partial W/\partial\tE$, where $\tE = (\tF^T\cdot\tF - \tI)/2$ is the Green--Lagrange strain tensor. 
+The simplest hyperelastic model is the Saint Venant--Kirchhoff model, in which $\tS$ depends linearly on $\tE$
+\begin{equation}
+\tS=\lambda_s\,\mathrm{tr}(\tE)\,\tI + 2\mu_s\tE, 
+\end{equation}
+with $\tI$ the identity tensor, and $\lambda_s$ and $\mu_s$ the Lamé coefficients.
+It coincides with classical linear elasticity in the limit of infinitesimal strain, but, being formulated in terms of $\tE$, it remains frame-invariant under arbitrarily large rotations and displacements.
+
 The outward unit normals to the body surface in the reference and deformed configurations are denoted $\bN(\bX)$ and $\bn(\bx)$, respectively. 
 The first Piola–Kirchhoff stress tensor $\tP = \tF\cdot\tS$ provides the traction $\bF_s$ in the reference configuration: $\bF_s = \tP\cdot\bN$ is the force per unit reference area exerted on a surface element with outward normal $\bN$, so that the surrounding fluid exerts a force $\bF_s$ on the body. 
 
@@ -302,8 +308,9 @@ where $\tC_H(\bx)$ is a configuration-dependent coupling tensor. The second equa
 The fluid occupies the exterior domain $\bar\Omega_t$ and its motion satisfies the Stokes equations,
 \begin{eqnarray}
 \nabla p & = & \mu \nabla^2 \bu, \quad \mbox{in }\bar\Omega_t,\\
-\nabla \cdot \bu & = & 0, \quad \mbox{in }\bar\Omega_t.
+\nabla \cdot \bu & = & 0, \quad \mbox{in }\bar\Omega_t,
 \end{eqnarray}
+with $\mu$ the dynamic viscosity and $p$ the pressure field.
 We introduce two Stokes solutions that share the same geometry but differ in their boundary conditions on $\partial\Omega_t$ (Fig.~\ref{fig:two_stokes}). The physical solution $(\bu, p)$ represents the disturbance flow due to the moving body; the total fluid velocity is $\bu + \bu^\infty$, with boundary condition
 \begin{equation}
 \bu = \bxd - \bu^\infty \quad \mbox{on }\partial\Omega_t.
@@ -362,11 +369,9 @@ The structure of Eq.~(\ref{eq:weak_form}) becomes transparent through the decomp
 \begin{equation}\label{eq:velocity_decomp}
 \bxd(\bX,t) = \bu_0 + \bomega_0\times\left(\bchi(\bx,t)-\br_0\right) + \bV_\mathrm{def}(\bX,t),
 \end{equation}
-where $\tU(\br)$ is the transport tensor of Eq.~(\ref{eq:bg_flow}) and $\bV_\mathrm{def}$ is the velocity due to shape change at fixed $\bv_0$.
-
-Two structural consequences follow. First, for any rigid-body virtual velocity $\bV^* = \tU(\bchi-\br_0)\cdot\bv_0^*$, the hyperelastic term in Eq.~(\ref{eq:weak_form}) vanishes. This is because  $\tF^T \cdot \nabla \bV^*$ is then skew-symmetric in Eq.~(\ref{eq:virtual_strain_rate}) when $\nabla\bV^* = [\bomega_0^*]_\times\cdot\tF$.
-Second, comparing Eq.~(\ref{eq:velocity_decomp}) with the background flow linearization~(\ref{eq:bg_flow}), the same transport operator $\tU(\bchi-\br_0)$ couples $\bv_0$ on the left of Eq.~(\ref{eq:weak_form}) and $\bv_0^\infty$ on the right. Only the relative velocity $\bv_0 - \bv_0^\infty$ therefore drives the hydrodynamic coupling, consistent with Galilean invariance.
-
+where $\bV_\mathrm{def}$ is the velocity due to shape only.
+Two structural consequences follow. First, for any rigid-body virtual velocity $\bV^* = \bu_0^* + \bomega_0^*\times\left(\bchi(\bx,t)-\br_0\right)$, the hyperelastic term in Eq.~(\ref{eq:weak_form}) vanishes. This is because  $\tF^T \cdot \nabla \bV^*$ is then skew-symmetric in Eq.~(\ref{eq:virtual_strain_rate}) when $\nabla\bV^* = [\bomega_0^*]_\times\cdot\tF$.
+Second, comparing Eq.~(\ref{eq:velocity_decomp}) with the background flow linearization~(\ref{eq:bg_flow}), the same operator couples $\bu_0$ and $\bomega_0$ on the left of Eq.~(\ref{eq:weak_form}) and $\bv_0^\infty$ and $\bomega_0^\infty$ on the right. Only the relative velocities $(\bu_0 - \bu_0^\infty)$ and $(\bomega_0 - \bomega_0^\infty)$ therefore drive the hydrodynamic coupling. This is consistent with Galilean invariance.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -374,17 +379,16 @@ Second, comparing Eq.~(\ref{eq:velocity_decomp}) with the background flow linear
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Galerkin discretization}
-Equation~(\ref{eq:weak_form}) is a weak formulation on infinite-dimensional space $V$. Because the background flow $\bu^\infty$ is linear in $\bv_0^\infty=[\bu_0^\infty, \bomega_0^\infty]$ and $\tE_0^\infty$ [Eq.~(\ref{eq:bg_flow})], and the problem is linear in $\bxd$, the solution decomposes into contributions driven by each input separately.
-
+Equation~(\ref{eq:weak_form}) is a weak formulation on infinite-dimensional space $V$. 
 To obtain a finite-dimensional system, we restrict $\bxd$ to a subspace $V_n\subset V$ spanned by $n$ basis functions $\{\bV_j\}$ and write
 \begin{equation}
 \bxd (\bX,t) =  \sum_{j=1}^n \dot{a}_j(t)\, \bV_j(\bX).
 \end{equation}
-Testing Eq.~(\ref{eq:weak_form}) with each $\bV_i$ and using the linearity in $\bv_0^\infty$ and $\tE_0^\infty$ yields the projected system
+Testing Eq.~(\ref{eq:weak_form}) with each $\bV_i$ and using the linearity in $\bu_0^\infty$, $\bomega_0^\infty$, and $\tE_0^\infty$ yields the projected system
 \begin{equation}\label{eq:galerkin_system}
 \hat{\tR} \cdot \dot{\ba} + \hat{\tK}_{NL} - \hat{\tC}_H\cdot\bH + \hat{\tC}_V \cdot \bv_0^\infty + \hat{\tC}_E : \tE_0^\infty = 0,
 \end{equation}
-where $\ba = [a_1,\dots a_n]$ and $\tE_0^\infty$ is the $3\times3$ symmetric traceless rate-of-strain tensor, which in practice is represented as a 5-component vector (see Appendix~\ref{app:strain_vec}). All tensors depend on the current configuration $\bchi(\bX,t)$. The resistance matrix $\hat{\tR}$ is symmetric positive definite by virtue of the reciprocal theorem. The nonlinear stiffness $\hat{\tK}_{NL}$ is symmetric positive semi-definite by its relation to the elastic energy.
+where $\ba = [a_1,\dots a_n]$, $\bv_0^\infty$ is the six-component flow velocity $[\bu_0^\infty,\bomega_0^\infty]$, and $\tE_0^\infty$ is rate-of-strain tensor, which in practice is represented as a 5-component vector (see Appendix~\ref{app:strain_vec}). All tensors depend on the current configuration $\bchi(\bX,t)$. The resistance matrix $\hat{\tR}$ is symmetric positive definite by virtue of the reciprocal theorem. The nonlinear stiffness $\hat{\tK}_{NL}$ is symmetric positive semi-definite by its relation to the elastic energy.
 
 Inverting Eq. \eqref{eq:galerkin_system} allows one to compute $\dot{\ba}$ and thus to simulate through time integration the transport and deformation of a soft body in a background flow. 
 The difficulty is that all tensors in Eq. \eqref{eq:galerkin_system} depend on the current shape through the vector $\ba$. An efficient method would be to project the deformation onto the most meaningful modes $V_n$, for instance, by computing the least attenuated viscous eigenmodes of the system with no background flow and no body forces. 
@@ -734,7 +738,7 @@ This subtracts one full turn along the rotation axis. Since a rotation by $\Thet
 
 The rate-of-strain tensor $\tE_0^\infty$ is symmetric and traceless. Symmetry reduces its nine components to six independent entries, and the tracelessness condition $\mathrm{tr}(\tE_0^\infty) = 0$ removes one further degree of freedom, leaving five independent components. We parameterize them as the vector
 \begin{equation}\label{eq:strain_vec}
-\bE = [E_{xx},\, E_{xy},\, E_{xz},\, E_{yy},\, E_{yz}],
+\bE^\infty_\mathrm{vect} = [E_{xx},\, E_{xy},\, E_{xz},\, E_{yy},\, E_{yz}],
 \end{equation}
 from which the full tensor is recovered as
 \begin{equation}\label{eq:strain_mat}
@@ -747,11 +751,11 @@ E_{xz} & E_{yz} & -E_{xx}-E_{yy}
 \end{equation}
 with the $(3,3)$ entry $E_{zz} = -E_{xx}-E_{yy}$ enforcing tracelessness.
 
-The double contractions $\hat{\tC}_E:\tE_0^\infty$ and $\tC_E:\tE_0^\infty$ appearing in Eqs.~(\ref{eq:galerkin_system}) and (\ref{eq:soft_mobility}) can each be expressed as a matrix-vector product with $\bE$. Because every entry $(\tE_0^\infty)_{jk}$ is a linear combination of the five components $E_l$ [Eq.~(\ref{eq:strain_mat})], the double contraction
+The double contractions $\hat{\tC}_E:\tE_0^\infty$ and $\tC_E:\tE_0^\infty$ appearing in Eqs.~(\ref{eq:galerkin_system}) and (\ref{eq:soft_mobility}) can each be expressed as a matrix-vector product with $\bE^\infty_\mathrm{vect}$. Because every entry $(\tE_0^\infty)_{jk}$ is a linear combination of the five components $E_l$ [Eq.~(\ref{eq:strain_mat})], the double contraction
 \begin{equation}
 \left(\tC_E:\tE_0^\infty\right)_i = \sum_{j,k}(C_E)_{ijk}\,(\tE_0^\infty)_{jk}
 \end{equation}
-is linear in $\bE$, so it can be written as $\tC_E^{(5)}\cdot\bE$ for an equivalent $N_q\times 5$ matrix $\tC_E^{(5)}$. The entries of $\tC_E^{(5)}$ are obtained by substituting Eq.~(\ref{eq:strain_mat}) and collecting coefficients of each $E_l$. Because the sum runs over all nine $(j,k)$ pairs and $\tE_0^\infty$ is symmetric, each off-diagonal component (e.g.\ $E_{xy}$) contributes through both $(j,k)=(1,2)$ and $(j,k)=(2,1)$, automatically yielding the correct factor of two without requiring explicit prefactors in $\bE$.
+is linear in $\bE^\infty_\mathrm{vect}$, so it can be written as $\tC_E^{(5)}\cdot\bE^\infty_\mathrm{vect}$ for an equivalent $N_q\times 5$ matrix $\tC_E^{(5)}$. The entries of $\tC_E^{(5)}$ are obtained by substituting Eq.~(\ref{eq:strain_mat}) and collecting coefficients of each $E_l$. Because the sum runs over all nine $(j,k)$ pairs and $\tE_0^\infty$ is symmetric, each off-diagonal component (e.g.\ $E_{xy}$) contributes through both $(j,k)=(1,2)$ and $(j,k)=(2,1)$, automatically yielding the correct factor of two without requiring explicit prefactors in $\bE^\infty_\mathrm{vect}$.
 
 %%%%%%%%%%%%%%%
 \section{Kinematic actuation of a single anchor\label{app:clamped_anchor}}

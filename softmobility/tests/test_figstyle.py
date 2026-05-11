@@ -12,7 +12,7 @@ import numpy as np
 import pypdf
 import pytest
 
-from softmobility.tutorials import figstyle
+from softmobility.classes import figstyle
 
 # ---------------------------------------------------------------------------
 # Globals & rcParams

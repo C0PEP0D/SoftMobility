@@ -120,6 +120,7 @@ The tutorials are grouped into three layers. Numbering reflects the layer
 - ``03_soft_mobility_simulation.ipynb`` — soft mobility tensors and
   simulation of a trajectory
 - ``04_optimization.ipynb`` — optimization principles
+- ``05_figure_styling.ipynb`` — paper-figure aesthetics with ``figstyle``
 
 **Validation cases (1X)**
 
@@ -129,12 +130,13 @@ The tutorials are grouped into three layers. Numbering reflects the layer
 - ``13_rotating_fiber_3d.ipynb`` — 3-D filament: bending and rotational
   relaxation (Coq et al. 2008; Wiggins et al. 1998)
 - ``14_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid body
+- ``15_three_sphere_swimmer.ipynb`` — three-sphere swimmer
+  (Najafi & Golestanian 2004)
 
 **Original case studies (2X)**
 
 - ``21_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
-- ``22_three_sphere_swimmer.ipynb`` — three-sphere swimmer optimization
-- ``23_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
+- ``22_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
 
 API Reference
 -------------

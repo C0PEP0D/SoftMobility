@@ -4,4 +4,5 @@ __all__ = [
     "softbody",
     "inputs",
     "solver",
+    "figstyle",
 ]
