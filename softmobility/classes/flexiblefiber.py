@@ -16,7 +16,7 @@ class FlexibleFiber(SoftBody):
     Chain of identical beads representing a flexible fiber with bending elasticity.
 
     Implements the Gears Model of Delmotte, Climent & Plouraboué 2015
-    (J. Comput. Phys. 286, 14–37, §2.3) with a **linearized** version of the
+    (J. Comput. Phys. 286, 14-37, §2.3) with a **linearized** version of the
     paper's bending torque (eq. 32+34 expanded to first order in joint
     angles, §2.4). Bond length is exactly ``2a`` for any configuration
     (sphere surfaces touching); bead positions are derived from bead
@@ -28,10 +28,7 @@ class FlexibleFiber(SoftBody):
     The linearization keeps the bending torque linear in the orientation
     DOFs, so the framework's exact ``C_K = jacfwd(T)`` extraction continues
     to work and the per-step cost is unchanged. The approximation is
-    accurate for joint angles ≲ π/4. Large-deformation regimes (e.g. the
-    paper's Fig 8b buckling at ``κ_eq ≠ 0`` or Fig 10b ``B = 10000``
-    horseshoe) require the full geometric ``κ`` formula and are out of
-    scope.
+    accurate for joint angles ≲ π/4.
 
     Parameters
     ----------
@@ -40,10 +37,17 @@ class FlexibleFiber(SoftBody):
     radius : float, default 1.0
         Sphere radius ``a``. Bond length is exactly ``2a``.
     bending_rigidity : float, default 1.0
-        Bending modulus ``K_b``. The linearized joint moment is
-        ``m_j = (K_b / 4a) · (rod_{j+1} − rod_{j-1})`` (with the x-component
-        zeroed; only y and z components carry torque) and the bead torque
-        is ``γ^b_i = m_{i+1} − m_{i-1}`` with ``m_0 = m_{N-1} = 0``.
+        Bending modulus ``K_b ≡ B = (π/4) E a⁴`` (Euler–Bernoulli,
+        cylindrical cross-section of radius ``a``). The bending energy
+        is the nearest-neighbor torsional-spring chain on the bead
+        orientation DOFs,
+        ``E_bend = (1/2) · (K_b / 2a) · Σ (θ_{i+1} - θ_i)²``, so the
+        torsional-spring stiffness between adjacent beads is
+        ``k_t = K_b / 2a`` (≡ ``B / 2a``) and the bead torque is the
+        discrete Laplacian
+        ``γ^b_i = (K_b / 2a) · (θ_{i-1} - 2 θ_i + θ_{i+1})``
+        with first-difference end terms (see ``_make_torque_callable``).
+        The twist component (around ``ê_x``) is structurally zero.
     mass : float, default 1.0
         Per-bead mass; the gravity force on each bead is ``mass · g``.
     planar : bool, default False
@@ -62,12 +66,12 @@ class FlexibleFiber(SoftBody):
     "twist" component of each bead's Rodrigues vector (its projection
     on ``ê_x``, which leaves the bead tangent invariant under
     Rodrigues rotation) is structurally zero, not a DOF. Only the
-    ``N − 1`` distal beads carry their two bending components, giving
-    ``Ndof = (N − 1)`` (planar) or ``2 (N − 1)`` (3D) configurational
+    ``N - 1`` distal beads carry their two bending components, giving
+    ``Ndof = (N - 1)`` (planar) or ``2 (N - 1)`` (3D) configurational
     degrees of freedom — the correct count for a slender, inextensible,
     torsion-free bead chain anchored at one end. DOFs are named
     ``theta_{i}`` (planar) or ``theta_{i}_y``, ``theta_{i}_z`` (3D) for
-    ``i = 1 … N − 1``. All default to zero, giving a straight fiber
+    ``i = 1 … N - 1``. All default to zero, giving a straight fiber
     along ``ê_x`` rooted at the origin.
 
     The gravity field is registered as a 3-D field input named ``gravity``;
@@ -75,7 +79,7 @@ class FlexibleFiber(SoftBody):
     ``gravity0``, ``gravity1``, ``gravity2``.
 
     Sign convention (planar): ``θ_i`` is the Rodrigues angle around ``+ê_y``,
-    so ``p_i = R_y(θ_i) · ê_x = (cos θ_i, 0, −sin θ_i)``. The chain bends
+    so ``p_i = R_y(θ_i) · ê_x = (cos θ_i, 0, -sin θ_i)``. The chain bends
     in the xz-plane.
     """
 
@@ -274,24 +278,21 @@ def _make_torque_callable(i, n_beads, planar, i_radius, i_K):
     """Linearized bending torque on bead ``i`` (Delmotte 2015, eq. 32+34).
 
     In the implicit-DOF parameterization where each bead carries an
-    orientation DOF and bond directions are derived as ``e_{j,j+1} = (p_j +
-    p_{j+1})/|·|``, the linearized bending energy is
+    orientation DOF, the linearized bending energy is the nearest-neighbor
+    torsional-spring chain on the bead orientations,
 
-        E_bend ≈ (K_b / (2a)) · Σ (θ_{i+1} − θ_i)²
+        E_bend ≈ (1/2) · (K_b / 2a) · Σ (θ_{i+1} − θ_i)² ,
 
-    (i.e., a torsional-spring chain on the bead orientations — the
-    small-angle limit of the joint-angle bending energy from eq. 32+34).
-    The generalized force is the discrete Laplacian on the orientation
-    DOFs:
+    i.e. a per-pair torsional-spring stiffness ``k_t = K_b / 2a``
+    (≡ ``B / 2a`` when ``K_b ≡ B = (π/4) E a⁴``). This is the small-angle
+    limit of the joint-angle bending energy from eq. 32+34. The
+    generalized force is the discrete Laplacian on the orientation DOFs:
 
-        γ^b_i = (K_b / (2a)) · (θ_{i-1} − 2 θ_i + θ_{i+1})  (interior)
-              = (K_b / (2a)) · (θ_{i+1} − θ_i)               (i = 0)
-              = (K_b / (2a)) · (θ_{i-1} − θ_i)               (i = N-1)
+        γ^b_i = (K_b / 2a) · (θ_{i-1} − 2 θ_i + θ_{i+1})  (interior)
+              = (K_b / 2a) · (θ_{i+1} − θ_i)               (i = 0)
+              = (K_b / 2a) · (θ_{i-1} − θ_i)               (i = N-1)
 
-    The end-bead first-difference matches Fig. 5 of the paper
-    (``γ^b_1 = m(s_2)``, ``γ^b_N = −m(s_{N-1})``) in this parameterization
-    where ``m(s_j) ∝ θ_j − θ_{j-1}``. Linear in DOFs ⇒ exact ``C_K`` from a
-    single ``jax.jacfwd``.
+    Linear in DOFs ⇒ exact ``C_K`` from a single ``jax.jacfwd``.
     """
 
     if planar:

@@ -27,7 +27,6 @@ Click a badge below to launch the corresponding notebook in Colab:
 * |colab-02| ``02_rigid_mobility``
 * |colab-03| ``03_soft_mobility_simulation``
 * |colab-04| ``04_optimization``
-* |colab-05| ``05_figure_styling``
 * |colab-11| ``11_sinking_rigid_body``
 * |colab-12| ``12_flexible_fiber_2d``
 * |colab-13| ``13_rotating_fiber_3d``
