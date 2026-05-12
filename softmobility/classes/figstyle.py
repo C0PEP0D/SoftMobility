@@ -28,6 +28,7 @@ After mutating any of the module-level globals (``COLORS``, ``SIZES``,
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import matplotlib as mpl
@@ -606,5 +607,14 @@ def save(
     figdir = Path(figdir)
     figdir.mkdir(parents=True, exist_ok=True)
     path = figdir / f"{name}.pdf"
-    fig.savefig(path, format="pdf", bbox_inches="tight", pad_inches=0.02)
+    with warnings.catch_warnings():
+        # fontTools emits these two benign messages when embedding the
+        # system Helvetica font (macOS) as Type-42 in the PDF.
+        warnings.filterwarnings(
+            "ignore", message="extra bytes in post.stringData array"
+        )
+        warnings.filterwarnings(
+            "ignore", message="'created' timestamp seems very low"
+        )
+        fig.savefig(path, format="pdf", bbox_inches="tight", pad_inches=0.02)
     return path
