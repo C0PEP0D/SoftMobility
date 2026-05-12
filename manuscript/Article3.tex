@@ -607,27 +607,139 @@ of the trajectory with respect to the design variables.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Sinking of a rigid body}
-\cite{Gonzalez2004}
-\cite{Marsden2013} (section 15.8)
+\new{We first consider the gravity-driven sinking of a rigid four-sphere
+assembly in an otherwise quiescent fluid. This is the simplest non-trivial
+case of Eq.~(\ref{eq:soft_mobility}): the soft degrees of freedom $\bQ$ are
+absent, the background flow vanishes, and only the $6\times 6$ rigid-body
+mobility block, together with the Bortz operator for orientation
+(Appendix~\ref{app:bortz}), is exercised. The geometry is chosen chiral so
+that the rotation--translation coupling block of the mobility tensor is
+non-trivial, and the masses of the four spheres are redistributed so that
+the centre of mass coincides with the hydrodynamic mobility centre. At this
+special configuration, the orientation dynamics decouples from the
+translation and admits a closed-form solution in terms of Jacobi elliptic
+functions~\cite{Gonzalez2004,Marsden2013}. We integrate the equation of
+motion with a fourth-order Runge--Kutta scheme over ten Jacobi periods for
+sixteen initial orientations distributed on the unit sphere following a
+Fibonacci pattern, and compare to the analytical orbit. The numerical and
+analytical trajectories agree to better than $10^{-8}$, and the symmetry of
+the rotation--translation coupling block is preserved at machine precision
+throughout the simulation.}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Sinking of a flexible fiber}
-\cite{Delmotte2015}
-\cite{Li2013}
+\new{We now allow internal deformation. A planar fiber, discretised as ten
+beads joined by linear bending springs, settles under transverse gravity. The
+problem activates the soft degrees of freedom $\bQ$ and the elastic
+stiffness $\tK$ for the first time, while the background flow remains
+absent. The relevant non-dimensional parameter is the elasto-gravitational
+number $\beta = K_b / (F_\perp L^2)$, where $K_b$ is the bending modulus and
+$F_\perp$ the gravitational force per unit length normal to the
+fiber~\cite{Li2013,Delmotte2015}. Starting from a straight horizontal
+configuration, the fiber relaxes to a steady horseshoe shape whose curvature
+increases as $\beta$ decreases. We perform a warm-started rigidity sweep
+across $\beta \in \{2\times 10^{-2}, 10^{-2}, 5\times 10^{-3},
+2.5\times 10^{-3}\}$, recovering the progression from a nearly straight rod
+to a tightly curled U reported in~\cite{Li2013,Delmotte2015}. The joint
+angles remain in the small-deformation regime ($|\theta| \lesssim \pi/4$)
+over which the linearised bending operator is justified.}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Instability of a rotating flexible fiber}
 
-\cite{Coq2009}\cite{Coq2008}
+\new{We next break planarity and introduce prescribed kinematics. An
+eight-bead elastic filament is clamped at one end to an off-axis support
+that is forced to rotate around a fixed axis. The clamp acts as a kinematic
+constraint and generates an internal reaction force; it is handled through
+the partitioned mobility system derived in Appendix~\ref{app:clamped_anchor},
+which exercises the active-velocity coupling $\bV_\mathrm{act}$ and the
+projection tensor $\tPi$ of Eq.~(\ref{eq:soft_mobility}). The control
+parameter is the Sperm number
+$\mathrm{Sp}^4 = \mu_\perp \omega L^4 / K_b$, comparing viscous transverse
+drag to elastic restoring forces. As $\mathrm{Sp}^4$ is increased from $0.5$
+to $35$, the filament progresses from a nearly straight rotating rod through
+a steady chiral shape that progressively wraps onto the rotation axis,
+reproducing the regimes documented experimentally and numerically
+in~\cite{Coq2008,Coq2009}. Steady state is assessed by the body-frame
+condition $\max\|\dot{\bQ}\|\,\tau_\mathrm{el}\ll 1$, where
+$\tau_\mathrm{el} = (2a)^4\mu / K_b$ is the elastic relaxation time.}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Jeffery orbits for rigid and soft bodies}
 
+\new{We now activate the coupling to the background flow. A two-sphere rigid
+dumbbell is immersed in a simple shear flow
+$\bu^\infty = \dot\gamma\,y\,\bm{\hat x}$. This is the first case in which the
+coupling tensors $\tC_U$ and $\tC_E$ of Eq.~(\ref{eq:grandflowvelocity})
+enter the dynamics. Jeffery~\cite{Jeffery1922} showed that a rigid
+axisymmetric particle in such a flow tumbles on a closed orbit whose period
+and shape are set by a single shape parameter, later generalised by
+Bretherton~\cite{Bretherton1962} to arbitrary axisymmetric bodies through an
+equivalent aspect ratio. The dumbbell's equivalent aspect ratio is recovered
+from its mobility tensor and substituted into the analytical orbit. We
+integrate the orientation dynamics in spherical coordinates
+$(\varphi,\theta)$ over five tumbling periods and find that the numerical
+trajectory tracks the analytical Jeffery orbit to within numerical noise,
+confirming that the flow-coupling tensors are correctly assembled and that
+the orientation update through the Bortz operator remains consistent in the
+presence of an ambient strain rate.}
+
+\new{We then relax the rigidity assumption. The inter-sphere distance becomes
+a degree of freedom $\bQ$ coupled to a linear spring of stiffness $k$, while
+the rest of the configuration is unchanged. In the stiff limit ($k=100$) the
+tumbling period and orbit are preserved, the stretching mode remains small
+($\max|\delta d|\approx 7\times 10^{-2}$), and a stiffness sweep recovers
+the rigid Jeffery result as $k\to\infty$. For a compliant dumbbell ($k=2$)
+the strain-rate forcing on the connector drives the stretching mode at
+twice the tumbling frequency, with an amplitude scaling as
+$\mathcal{O}(k^{-1})$. This breathing signature is a direct consequence of
+the bilinear coupling between the rate-of-strain tensor $\tE_0^\infty$ and
+the soft degree of freedom in Eq.~(\ref{eq:soft_mobility}), and provides a
+minimal model of how internal elasticity reshapes the response of a
+deformable body to shear --- a feature absent from the rigid-body theory of
+Jeffery and Bretherton.}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Optimisation of a three-sphere microswimmer}
 
+\new{We next turn to active swimming and inverse design. Najafi and
+Golestanian's three-sphere swimmer~\cite{Najafi2004} is a textbook example
+of a minimal low-Reynolds-number swimmer: three colinear spheres connected
+by deformable links, breaking time-reversal symmetry through a
+non-reciprocal actuation cycle. Here we drive the swimmer by a sinusoidal
+axial force on the outer sphere, with the central sphere acting as anchor,
+and treat the link rest lengths, sphere radii and spring stiffness as design
+parameters. Because every operator in Eq.~(\ref{eq:soft_mobility}) is a
+smooth function of the generalised coordinates and of the design parameters,
+the full simulation rollout is differentiable end-to-end. We pass the
+rollout to a JAX-based Adam optimiser, with the objective being the net
+axial displacement per actuation period averaged over a transient of six
+periods. After $10^3$ optimisation steps the swimmer's net velocity is
+improved by nearly two orders of magnitude. This case validates the
+active-force pathway through $\bff_\mathrm{ext}$ and, crucially, demonstrates
+property~(3) of the framework: smooth dependence on design parameters and
+gradient-based inverse design through the entire mobility pipeline.}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Soft surfer}
+
+\new{The final case combines every feature exercised above and adds
+sensorimotor feedback. A two-sphere soft robot --- a large body coupled by a
+linear spring to a small orientable body --- sinks under gravity through a
+Taylor--Green vortex
+$\bu^\infty = (\sin y\cos z,\sin z\cos x,\sin x\cos y)$. The robot can choose
+between two strategies: a \emph{soft surfer} in which the spring stiffness
+and orientation rest angle are co-optimised across an ensemble of initial
+conditions, and an \emph{active surfer} in which the orientation follows a
+feedback law tracking a deformed reference direction with an alignment time
+$\tau_\mathrm{align}$. Both strategies are compared against a rigid baseline
+of identical geometry. The optimised soft surfer reaches twice the mean
+transport velocity of its rigid counterpart at no energetic cost, purely by
+exploiting passive compliance with the local strain field; the active surfer
+matches that performance with a minimal closed-loop policy. This case
+illustrates how the soft-mobility framework supports the joint design of
+body and controller envisaged by morphological computation and physical
+intelligence~\cite{Pfeifer2006,Pfeifer2014,Sitti2021,Hauser2023}.}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
