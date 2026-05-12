@@ -6,7 +6,7 @@
 %Control: page (0) single
 %Control: year (1) truncated
 %Control: production of eprint (0) enabled
-\begin{thebibliography}{74}%
+\begin{thebibliography}{81}%
 \makeatletter
 \providecommand \@ifxundefined [1]{%
  \@ifx{#1\undefined}
@@ -745,6 +745,90 @@
   and symmetry: a basic exposition of classical mechanical systems}}},\
   Vol.~\bibinfo {volume} {17}\ (\bibinfo  {publisher} {Springer Science \&
   Business Media},\ \bibinfo {year} {2013})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Weinberger}(1972)}]{Weinberger1972}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Weinberger}},\ }\bibfield  {title} {\bibinfo {title} {Variational properties
+  of steady fall in stokes flow},\ }\href@noop {} {\bibfield  {journal}
+  {\bibinfo  {journal} {Journal of Fluid Mechanics}\ }\textbf {\bibinfo
+  {volume} {52}},\ \bibinfo {pages} {321} (\bibinfo {year} {1972})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Weber}\ \emph {et~al.}(2013)\citenamefont {Weber},
+  \citenamefont {Carlen}, \citenamefont {Dietler}, \citenamefont {Rawdon},\
+  and\ \citenamefont {Stasiak}}]{Weber2013}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {Weber}}, \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont {Carlen}},
+  \bibinfo {author} {\bibfnamefont {G.}~\bibnamefont {Dietler}}, \bibinfo
+  {author} {\bibfnamefont {E.~J.}\ \bibnamefont {Rawdon}},\ and\ \bibinfo
+  {author} {\bibfnamefont {A.}~\bibnamefont {Stasiak}},\ }\bibfield  {title}
+  {\bibinfo {title} {Sedimentation of macroscopic rigid knots and its relation
+  to gel electrophoretic mobility of dna knots},\ }\href@noop {} {\bibfield
+  {journal} {\bibinfo  {journal} {Scientific reports}\ }\textbf {\bibinfo
+  {volume} {3}},\ \bibinfo {pages} {1091} (\bibinfo {year} {2013})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Palusa}\ \emph {et~al.}(2018)\citenamefont {Palusa},
+  \citenamefont {De~Graaf}, \citenamefont {Brown},\ and\ \citenamefont
+  {Morozov}}]{Palusa2018}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {M.}~\bibnamefont
+  {Palusa}}, \bibinfo {author} {\bibfnamefont {J.}~\bibnamefont {De~Graaf}},
+  \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Brown}},\ and\ \bibinfo
+  {author} {\bibfnamefont {A.}~\bibnamefont {Morozov}},\ }\bibfield  {title}
+  {\bibinfo {title} {Sedimentation of a rigid helix in viscous media},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Physical Review
+  Fluids}\ }\textbf {\bibinfo {volume} {3}},\ \bibinfo {pages} {124301}
+  (\bibinfo {year} {2018})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Braverman}\ \emph {et~al.}(2020)\citenamefont
+  {Braverman}, \citenamefont {Mowitz},\ and\ \citenamefont
+  {Witten}}]{Braverman2020}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {L.}~\bibnamefont
+  {Braverman}}, \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Mowitz}},\
+  and\ \bibinfo {author} {\bibfnamefont {T.~A.}\ \bibnamefont {Witten}},\
+  }\bibfield  {title} {\bibinfo {title} {Chiral motion in colloidal
+  electrophoresis},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Physical Review E}\ }\textbf {\bibinfo {volume} {101}},\ \bibinfo {pages}
+  {062608} (\bibinfo {year} {2020})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Miara}\ \emph {et~al.}(2024)\citenamefont {Miara},
+  \citenamefont {Vaquero-Stainer}, \citenamefont {Pihler-Puzovi{\'c}},
+  \citenamefont {Heil},\ and\ \citenamefont {Juel}}]{Miara2024}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {T.}~\bibnamefont
+  {Miara}}, \bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {Vaquero-Stainer}}, \bibinfo {author} {\bibfnamefont {D.}~\bibnamefont
+  {Pihler-Puzovi{\'c}}}, \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont
+  {Heil}},\ and\ \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont {Juel}},\
+  }\bibfield  {title} {\bibinfo {title} {Dynamics of inertialess sedimentation
+  of a rigid u-shaped disk},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
+  {journal} {Communications Physics}\ }\textbf {\bibinfo {volume} {7}},\
+  \bibinfo {pages} {47} (\bibinfo {year} {2024})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Huseby}\ \emph {et~al.}(2025)\citenamefont {Huseby},
+  \citenamefont {Gissinger}, \citenamefont {Candelier}, \citenamefont {Pujara},
+  \citenamefont {Verhille}, \citenamefont {Mehlig},\ and\ \citenamefont
+  {Voth}}]{Huseby2025}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {E.}~\bibnamefont
+  {Huseby}}, \bibinfo {author} {\bibfnamefont {J.}~\bibnamefont {Gissinger}},
+  \bibinfo {author} {\bibfnamefont {F.}~\bibnamefont {Candelier}}, \bibinfo
+  {author} {\bibfnamefont {N.}~\bibnamefont {Pujara}}, \bibinfo {author}
+  {\bibfnamefont {G.}~\bibnamefont {Verhille}}, \bibinfo {author}
+  {\bibfnamefont {B.}~\bibnamefont {Mehlig}},\ and\ \bibinfo {author}
+  {\bibfnamefont {G.}~\bibnamefont {Voth}},\ }\bibfield  {title} {\bibinfo
+  {title} {Helical ribbons: Simple chiral sedimentation},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Physical Review Fluids}\ }\textbf
+  {\bibinfo {volume} {10}},\ \bibinfo {pages} {024101} (\bibinfo {year}
+  {2025})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Joshi}\ and\ \citenamefont
+  {Govindarajan}(2025)}]{Joshi2025}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Joshi}}\ and\ \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Govindarajan}},\ }\bibfield  {title} {\bibinfo {title} {Sedimentation
+  dynamics of bodies with two planes of symmetry},\ }\href@noop {} {\bibfield
+  {journal} {\bibinfo  {journal} {Physical Review Letters}\ }\textbf {\bibinfo
+  {volume} {134}},\ \bibinfo {pages} {014002} (\bibinfo {year}
+  {2025})}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Li}\ \emph {et~al.}(2013)\citenamefont {Li},
   \citenamefont {Manikantan}, \citenamefont {Saintillan},\ and\ \citenamefont
   {Spagnolie}}]{Li2013}%
@@ -757,18 +841,6 @@
   filaments},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
   {Journal of Fluid Mechanics}\ }\textbf {\bibinfo {volume} {735}},\ \bibinfo
   {pages} {705} (\bibinfo {year} {2013})}\BibitemShut {NoStop}%
-\bibitem [{\citenamefont {Coq}\ \emph {et~al.}(2009)\citenamefont {Coq},
-  \citenamefont {Roure}, \citenamefont {Fermigier},\ and\ \citenamefont
-  {Bartolo}}]{Coq2009}%
-  \BibitemOpen
-  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {N.}~\bibnamefont
-  {Coq}}, \bibinfo {author} {\bibfnamefont {O.~d.}\ \bibnamefont {Roure}},
-  \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont {Fermigier}},\ and\
-  \bibinfo {author} {\bibfnamefont {D.}~\bibnamefont {Bartolo}},\ }\bibfield
-  {title} {\bibinfo {title} {Helical beating of an actuated elastic filament},\
-  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Journal of
-  Physics: Condensed Matter}\ }\textbf {\bibinfo {volume} {21}},\ \bibinfo
-  {pages} {204109} (\bibinfo {year} {2009})}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Coq}\ \emph {et~al.}(2008)\citenamefont {Coq},
   \citenamefont {Du~Roure}, \citenamefont {Marthelot}, \citenamefont
   {Bartolo},\ and\ \citenamefont {Fermigier}}]{Coq2008}%
@@ -782,6 +854,18 @@
   propulsive forces},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
   {journal} {Physics of Fluids}\ }\textbf {\bibinfo {volume} {20}} (\bibinfo
   {year} {2008})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Coq}\ \emph {et~al.}(2009)\citenamefont {Coq},
+  \citenamefont {Roure}, \citenamefont {Fermigier},\ and\ \citenamefont
+  {Bartolo}}]{Coq2009}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {N.}~\bibnamefont
+  {Coq}}, \bibinfo {author} {\bibfnamefont {O.~d.}\ \bibnamefont {Roure}},
+  \bibinfo {author} {\bibfnamefont {M.}~\bibnamefont {Fermigier}},\ and\
+  \bibinfo {author} {\bibfnamefont {D.}~\bibnamefont {Bartolo}},\ }\bibfield
+  {title} {\bibinfo {title} {Helical beating of an actuated elastic filament},\
+  }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Journal of
+  Physics: Condensed Matter}\ }\textbf {\bibinfo {volume} {21}},\ \bibinfo
+  {pages} {204109} (\bibinfo {year} {2009})}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Jeffery}(1922)}]{Jeffery1922}%
   \BibitemOpen
   \bibfield  {author} {\bibinfo {author} {\bibfnamefont {G.~B.}\ \bibnamefont
