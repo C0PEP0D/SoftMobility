@@ -640,9 +640,9 @@ class SphereAssembly:
 
             DIGIT_SUFFIX = r"(?:\d+)?"
 
-            dof_patterns = [re.compile(r"(?:" + p + r")" + DIGIT_SUFFIX) for p in dof_prefixes]
-            design_patterns = [re.compile(r"(?:" + p + r")" + DIGIT_SUFFIX) for p in design_prefixes]
-            input_patterns = [re.compile(r"(?:" + p + r")" + DIGIT_SUFFIX) for p in input_prefixes]
+            dof_patterns = [re.compile(r"\b(?:" + p + r")" + DIGIT_SUFFIX + r"\b") for p in dof_prefixes]
+            design_patterns = [re.compile(r"\b(?:" + p + r")" + DIGIT_SUFFIX + r"\b") for p in design_prefixes]
+            input_patterns = [re.compile(r"\b(?:" + p + r")" + DIGIT_SUFFIX + r"\b") for p in input_prefixes]
 
             for expr in sphere_exprs:
                 for pat in dof_patterns:

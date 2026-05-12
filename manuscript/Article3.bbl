@@ -6,7 +6,7 @@
 %Control: page (0) single
 %Control: year (1) truncated
 %Control: production of eprint (0) enabled
-\begin{thebibliography}{69}%
+\begin{thebibliography}{74}%
 \makeatletter
 \providecommand \@ifxundefined [1]{%
  \@ifx{#1\undefined}
@@ -782,6 +782,51 @@
   propulsive forces},\ }\href@noop {} {\bibfield  {journal} {\bibinfo
   {journal} {Physics of Fluids}\ }\textbf {\bibinfo {volume} {20}} (\bibinfo
   {year} {2008})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Jeffery}(1922)}]{Jeffery1922}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {G.~B.}\ \bibnamefont
+  {Jeffery}},\ }\bibfield  {title} {\bibinfo {title} {The motion of ellipsoidal
+  particles immersed in a viscous fluid},\ }\href@noop {} {\bibfield  {journal}
+  {\bibinfo  {journal} {Proceedings of the Royal Society of London. Series A,
+  Containing papers of a mathematical and physical character}\ }\textbf
+  {\bibinfo {volume} {102}},\ \bibinfo {pages} {161} (\bibinfo {year}
+  {1922})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Bretherton}(1962)}]{Bretherton1962}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {F.~P.}\ \bibnamefont
+  {Bretherton}},\ }\bibfield  {title} {\bibinfo {title} {The motion of rigid
+  particles in a shear flow at low {R}eynolds number},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Journal of Fluid Mechanics}\
+  }\textbf {\bibinfo {volume} {14}},\ \bibinfo {pages} {284} (\bibinfo {year}
+  {1962})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Thorp}\ and\ \citenamefont
+  {Lister}(2019)}]{Thorp2019}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {I.~R.}\ \bibnamefont
+  {Thorp}}\ and\ \bibinfo {author} {\bibfnamefont {J.~R.}\ \bibnamefont
+  {Lister}},\ }\bibfield  {title} {\bibinfo {title} {Motion of a
+  non-axisymmetric particle in viscous shear flow},\ }\href@noop {} {\bibfield
+  {journal} {\bibinfo  {journal} {Journal of Fluid Mechanics}\ }\textbf
+  {\bibinfo {volume} {872}},\ \bibinfo {pages} {532} (\bibinfo {year}
+  {2019})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Ishimoto}(2023)}]{Ishimoto2023}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {K.}~\bibnamefont
+  {Ishimoto}},\ }\bibfield  {title} {\bibinfo {title} {Jeffery's orbits and
+  microswimmers in flows: A theoretical review},\ }\href@noop {} {\bibfield
+  {journal} {\bibinfo  {journal} {Journal of the Physical Society of Japan}\
+  }\textbf {\bibinfo {volume} {92}},\ \bibinfo {pages} {062001} (\bibinfo
+  {year} {2023})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Montino}\ and\ \citenamefont
+  {DeSimone}(2015)}]{Montino2015}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Montino}}\ and\ \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {DeSimone}},\ }\bibfield  {title} {\bibinfo {title} {Three-sphere
+  low-reynolds-number swimmer with a passive elastic arm},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {The European Physical Journal E}\
+  }\textbf {\bibinfo {volume} {38}},\ \bibinfo {pages} {1} (\bibinfo {year}
+  {2015})}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Bortz}(1971)}]{Bortz1971}%
   \BibitemOpen
   \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.~E.}\ \bibnamefont

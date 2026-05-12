@@ -60,6 +60,7 @@
 \newcommand{\bC}{\bm{C}}
 \newcommand{\bE}{\bm{E}}
 \newcommand{\bF}{\bm{F}}
+\newcommand{\bG}{\bm{G}}
 \newcommand{\bH}{\bm{H}}
 \newcommand{\bI}{\bm{I}}
 \newcommand{\bK}{\bm{K}}
@@ -610,21 +611,109 @@ of the trajectory with respect to the design variables.
 \cite{Gonzalez2004}
 \cite{Marsden2013} (section 15.8)
 
+%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[scale=0.66]{./Figures/Fig4}
+\caption{
+	Sinking dynamics of a chiral rigid body.
+	(a) Geometry of the body, with body's frame $(\bE_1, \bE_2, \bE_3)$ centered on the center of mass (identical to the hydrodynamic center of mobility).
+	(b) Example of trajectory $\br_0$ of the center of mass in the laboratory frame (the vertical axis $\be_3$ is compressed by a factor 300). 
+	(c) Periodic orbits of the unit gravity vector $\bG$ in the body's frame (lines: simulation, dots: analytical solution). 
+	(d) Example of a periodic of orbits: the three components of $\bG$ are shown as a function of time.  
+}
+\label{fig:sinking_rigid}
+\end{center}
+\end{figure}
+%%%%%%%%%%%%%%%%%
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Sinking of a flexible fiber}
 \cite{Delmotte2015}
 \cite{Li2013}
 
+%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[scale=0.66]{./Figures/Fig5}
+\caption{
+	Sinking dynamics of a flexible fiber ($N=10$ beads of radius $a$) The torsional spring stiffness is $k=K_b/2a$, with $K_b$ the equivalent beam rigidity and dimensionless rigidity $\beta = K_b / F_\perp L^2$, with $F_\perp = N m g$ the total weight.
+	(a) For an initial angle of $\pi/32$ with respect to the vertical, the graph shows the position of the center of mass of the fiber in the laboratory frame.  
+	(b) Snapshots showing the deformation of the fiber along the trajectory shown in (a). 
+	(c) Final shape for fiber of decreasing rigidity as labelled. 
+}
+\label{fig:sinking_fiber}
+\end{center}
+\end{figure}
+%%%%%%%%%%%%%%%%%
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Instability of a rotating flexible fiber}
+\subsection{Rotating flexible fiber}
 
 \cite{Coq2009}\cite{Coq2008}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Jeffery orbits for rigid and soft bodies}
+%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[scale=0.66]{./Figures/Fig6}
+\caption{
+	Shape of a rotating flexible filament. 
+	The filament is made of $N=8$ beads and is set at an angle $\psi=15^\circ$ with an offset of $\delta_0/L=0.05$ with respect to the horizontal rotating axis. 
+	The only dimensionless number is the Sperm number  
+	$\mathrm{Sp} = {L}/{L_\omega}$, with
+	$L_\omega = \left({K_b}/{\mu_\perp\,\omega}\right)^{1/4}$ and
+	$\mu_\perp = {4\pi\mu}/{\ln(L/a) + 1/2}$, the sleder-body transverse drag.
+}
+\label{fig:rotating_fiber}
+\end{center}
+\end{figure}
+%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Optimisation of a three-sphere microswimmer}
+\subsection{Jeffery orbits for a rigid body}
+
+\cite{Jeffery1922,Bretherton1962,Thorp2019,Ishimoto2023}
+
+%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[scale=0.66]{./Figures/Fig7}
+\caption{
+	Jeffery orbits of a rigid dumbbell in a pure shear flow of unit shear rate in the $\be_1$-$\be_2$ plane: $\bu^\infty_0 = [e_2, 0, 0]$.
+	(a) Geometry of the rigid body considered in the body's frame.
+	(b) Jeffery periodic orbits of $\bE_1$ in the laboratory's frame for different initial conditions (lines: simulation, dots: analytical solution).
+	(c) Example of an orbit of $\bE_1$ as a function of time in the spherical coordinate $(r, \theta, \phi)$.	
+}
+\label{fig:Jeffery_rigid}
+\end{center}
+\end{figure}
+%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Optimisation of a three-sphere swimmer}
+
+\cite{Montino2015}
+
+%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[scale=0.66]{./Figures/Fig8}
+\caption{
+	Optimization of the three-sphere swimmer.
+	(a) Default geometry with $L_2 = l_2(1+\varepsilon\sin(\omega t))$, spring rest length $l_1=l_2$, and sphere radius $a_i=0.05 l_2$.
+	(b) Optimized geometry for fixed $a_0=a_2=0.05$.
+	(c) Orbits of the swimmer in the $L_2$-$L_1$ plane for different values of the dimensionless frequency $\Omega = \omega \mu (l_1 + l_2) / k$, with $k$ the spring stiffness. 
+	(d) Swimming displacement over one period $|x_0|$ as a function of $\Omega$, for the default geometry and $\varepsilon = 0.1$ (line: simulation, dots: analytical asymptotics in the limit of small $\varepsilon$).
+	(e) Orbits of the swimmer at optimal frequency $\Omega = G_0$ for different values of the forcing amplitude $\varepsilon$, as labelled. 
+}
+\label{fig:three_sphere}
+\end{center}
+\end{figure}
+%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Jeffery orbits for a soft body}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Soft surfer}
