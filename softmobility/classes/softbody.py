@@ -62,18 +62,44 @@ class SoftBody(SphereAssembly):
 
     Notes
     -----
-    - The grand mobility tensor is computed using the far-field Rotne–
-      Prager–Yamakawa (GRPY) approximation. Spheres must **not** overlap;
-      call :meth:`validate_no_overlap` to verify the geometry before
-      simulation.
+    - The grand mobility tensor is computed using the Rotne–Prager–
+      Yamakawa (GRPY) approximation across three pairwise regimes:
+      far-field (``R > a_i + a_j``), partial overlap
+      (``|a_i − a_j| < R ≤ a_i + a_j``), and full immersion
+      (``R ≤ |a_i − a_j|``). Strict overlap is permitted but emits a
+      one-shot :class:`UserWarning` per regime; call
+      :meth:`reset_overlap_warnings` to re-enable, or use
+      :meth:`validate_no_overlap` for an explicit Python-side check
+      before simulation.
     - Inherits all functionality from ``SphereAssembly``, including sphere
       management and degree of freedom handling.
     - Compatible with JAX transformations
       (``jax.jit``, ``jax.grad``, ``jax.vmap``).
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, allow_overlap: bool = False, **kwargs):
+        """Build the SoftBody.
+
+        Parameters
+        ----------
+        allow_overlap : bool, default False
+            When ``False`` (default), the grand mobility uses the
+            single-branch far-field Rotne–Prager–Yamakawa formulas — fast,
+            but unphysical (and producing NaN at exact coincidence) if any
+            pair drifts into overlap. When ``True``, the three GRPY
+            regimes (far-field, partial overlap, full immersion) are
+            traced through ``lax.cond``; ~15–20 % slower per
+            ``compute_fast_tensors`` call but correct under overlap.
+
+            In *both* modes, a post-rollout scan
+            (:meth:`scan_trajectory_for_overlap`) emits at most one
+            ``UserWarning`` per regime per process if overlap is
+            detected. The message text differs: ``False`` flags
+            unphysical results and points at ``allow_overlap=True``;
+            ``True`` just notes the regime entered.
+        """
         super().__init__(*args, **kwargs)
+        self.allow_overlap = bool(allow_overlap)
         self._validate_default_geometry()
         self.compute_fast_tensors = jax.jit(self.compute_tensors)
 
@@ -182,8 +208,11 @@ class SoftBody(SphereAssembly):
         """
         Compute the grand hydrodynamic mobility tensor.
 
-        Uses the far-field Rotne–Prager–Yamakawa (GRPY) approximation.
-        Spheres must not overlap; see :meth:`validate_no_overlap`.
+        Uses the Rotne–Prager–Yamakawa (GRPY) approximation across three
+        regimes (far-field, partial overlap, full immersion). Direct calls
+        are silent; overlap detection happens in
+        :meth:`scan_trajectory_for_overlap`, called automatically by
+        :meth:`FlowBodyRollout.rollout` after the trajectory is computed.
 
         The computation is vectorised with ``jax.vmap``: JAX compiles a
         single pairwise block function and maps it over all N² sphere pairs,
@@ -211,12 +240,14 @@ class SoftBody(SphereAssembly):
         positions = jnp.stack([s.position(dofs, design, time) for s in self.spheres])  # (N, 3)
         radii = jnp.stack([jnp.asarray(s.radius(dofs, design)) for s in self.spheres])  # (N,)
 
+        off_diag_fn = _grpy_off_diag_block_all if self.allow_overlap else _grpy_off_diag_block_far
+
         def block_fn(pos_i, r_i, pos_j, r_j):
             """6×6 GRPY block for one pair; handles diagonal (i==j) via lax.cond."""
             return lax.cond(
                 jnp.linalg.norm(pos_i - pos_j) < 1e-9,
                 lambda _: _grpy_self_block(r_i),
-                lambda _: _grpy_off_diag_block(pos_i, r_i, pos_j, r_j),
+                lambda _: off_diag_fn(pos_i, r_i, pos_j, r_j),
                 None,
             )
 
@@ -264,6 +295,139 @@ class SoftBody(SphereAssembly):
                         "GRPY mobility requires non-overlapping spheres."
                     )
 
+    @staticmethod
+    def reset_overlap_warnings() -> None:
+        """Clear the set of issued GRPY overlap warnings so they fire again."""
+        _OVERLAP_WARN_SEEN.clear()
+
+    @staticmethod
+    def silence_overlap_warnings(silence: bool = True) -> None:
+        """Disable (or re-enable) the runtime overlap warning.
+
+        Parameters
+        ----------
+        silence : bool, default True
+            If True, suppress all subsequent GRPY overlap warnings. Pass
+            ``False`` to re-enable.
+        """
+        global _OVERLAP_WARN_ENABLED
+        _OVERLAP_WARN_ENABLED = not silence
+
+    def scan_trajectory_for_overlap(
+        self,
+        dofs_traj,
+        design=None,
+        times=None,
+    ) -> None:
+        """Scan a rollout's DOF trajectory and warn if spheres ever overlap.
+
+        Computes pairwise body-frame distances at every step and emits at
+        most one :class:`UserWarning` per regime (partial overlap or full
+        immersion). Skips silently when called from inside a JAX trace
+        (the inputs would be tracers, not concrete arrays).
+
+        Parameters
+        ----------
+        dofs_traj : array-like, shape ``(n_steps, Ndof)``
+            DOF trajectory returned by ``FlowBodyRollout.rollout``.
+        design : array-like, optional
+            Design parameters. Defaults to ``design_defaults``.
+        times : array-like, shape ``(n_steps,)``, optional
+            Time at each step. Defaults to ``arange(n_steps)`` (only matters
+            for time-dependent sphere expressions).
+        """
+        if not _OVERLAP_WARN_ENABLED:
+            return
+        # Short-circuit if the relevant warning key has already fired.
+        if self.allow_overlap:
+            if {"partial-overlap", "full-immersion"} <= _OVERLAP_WARN_SEEN:
+                return
+        else:
+            if "invalid-overlap" in _OVERLAP_WARN_SEEN:
+                return
+
+        try:
+            dofs_np = np.asarray(dofs_traj, dtype=float)
+        except Exception:
+            return  # under tracing — can't materialise
+
+        if dofs_np.ndim != 2:
+            return  # nothing meaningful to scan
+
+        n_steps = dofs_np.shape[0]
+        if design is None:
+            design = np.asarray(self.design_defaults, dtype=float)
+        else:
+            try:
+                design = np.asarray(design, dtype=float)
+            except Exception:
+                return
+        if times is None:
+            times = np.arange(n_steps, dtype=float)
+        else:
+            try:
+                times = np.asarray(times, dtype=float).reshape(-1)
+            except Exception:
+                return
+            if times.shape[0] != n_steps:
+                times = np.arange(n_steps, dtype=float)
+
+        # Radii: assumed constant in time (the design vector is constant).
+        radii = np.asarray(
+            [float(s.radius(dofs_np[0], design)) for s in self.spheres],
+            dtype=float,
+        )
+        r_sum = radii[:, None] + radii[None, :]
+        r_diff = np.abs(radii[:, None] - radii[None, :])
+        # Tolerance comfortably above float32 machine epsilon (~1.2e-7) so
+        # exact-touching beads in the Gears Model do not register as
+        # overlap after the rotation/recurrence drift.
+        tol = 1e-5 * float(np.max(radii))
+        eye = np.eye(self.Nspheres, dtype=bool)
+
+        # Subsample large trajectories to keep the scan cheap.
+        max_samples = 256
+        if n_steps > max_samples:
+            stride = max(1, n_steps // max_samples)
+            sample_idx = np.arange(0, n_steps, stride)
+        else:
+            sample_idx = np.arange(n_steps)
+
+        # Vectorise the position evaluation across the trajectory: one JAX
+        # call covers every sampled step, avoiding per-step Python dispatch.
+        try:
+            dofs_jax = jnp.asarray(dofs_np[sample_idx])
+            times_jax = jnp.asarray(times[sample_idx].reshape(-1, 1))
+            design_jax = jnp.asarray(design)
+
+            def _positions_at(dofs_t, t_t):
+                return jnp.stack([s.position(dofs_t, design_jax, t_t) for s in self.spheres])
+
+            pos_all = np.asarray(jax.vmap(_positions_at)(dofs_jax, times_jax))
+        except Exception:
+            return
+
+        # pos_all shape: (n_samples, N, 3). Compute pairwise distances per step.
+        # Skip steps that already have NaN positions (a separate overflow warning
+        # would be more accurate, but the strict-overlap step *before* NaN
+        # arrives is what we want to flag).
+        finite_mask = np.all(np.isfinite(pos_all), axis=(1, 2))
+        diff = pos_all[:, :, None, :] - pos_all[:, None, :, :]
+        dist = np.linalg.norm(diff, axis=-1)  # (n_samples, N, N)
+        # Off-diagonal mask
+        offdiag = ~eye[None, :, :]
+        strict = (dist < r_sum[None, :, :] - tol) & offdiag
+        near = (dist < r_diff[None, :, :] + tol) & offdiag
+        # Only count steps where positions are finite.
+        strict &= finite_mask[:, None, None]
+        near &= finite_mask[:, None, None]
+
+        saw_near = bool(near.any())
+        saw_medium = bool(strict.any()) and not saw_near
+
+        if saw_medium or saw_near:
+            _emit_overlap_warning(saw_medium, saw_near, allow_overlap=self.allow_overlap)
+
     def _compute_composition_of_strain(self, *args):
         C_S = jnp.block(
             [[self._individual_composition_of_strain(self.spheres[i], *args)] for i in range(self.Nspheres)]
@@ -296,7 +460,7 @@ class SoftBody(SphereAssembly):
         rs = jnp.einsum("ijk,jkl->il", ge, svecmat)
         return rs
 
-    # GRPY tensor helpers (far-field only) ####################################
+    # GRPY tensor helpers (three regimes; strict overlap warned at runtime) ###
 
     def _2spheres_grpy_quantities(self, sphere_i: Sphere, sphere_j: Sphere, dofs=None, design=None, time=None):
         dofs, design, time = self._setup_params(dofs, design, time)
@@ -312,11 +476,59 @@ class SoftBody(SphereAssembly):
         return rnorm, runit, ai, aj
 
     def _compute_mu_td_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
-        """Far-field translation–deformation mobility (3×3×3 tensor)."""
-        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
+        """Translation–deformation mobility (3×3×3 tensor).
 
+        Dispatches at Python (trace) time to the single-branch far-field
+        helper or the three-regime helper, based on ``self.allow_overlap``.
+        """
+        if self.allow_overlap:
+            return self._compute_mu_td_ij_all(sphere_i, sphere_j, *args)
+        return self._compute_mu_td_ij_far(sphere_i, sphere_j, *args)
+
+    def _compute_mu_td_ij_far(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
+        """Far-field-only mu_td (no ``lax.cond``)."""
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
         hat1_pf = (5.0 * aj / 6.0) * (-2.0 * (5.0 * ai**2 * aj**2 + 3.0 * aj**4)) / (5.0 * Rij**4)
         hat3_pf = (5.0 * aj / 6.0) * aj**2 * (5.0 * ai**2 + 3.0 * aj**2 - 3.0 * Rij**2) / Rij**4
+        matrix = hat1_pf * jnp.outer(jnp.eye(3), Rij_hat).reshape(3, 3, 3) + hat3_pf * jnp.outer(
+            Rij_hat, jnp.outer(Rij_hat, Rij_hat)
+        ).reshape(3, 3, 3)
+        return matrix
+
+    def _compute_mu_td_ij_all(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
+        """Three-regime mu_td (case_far / case_medium / case_near)."""
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
+        a_inf = jnp.minimum(ai, aj)
+        a_sup = jnp.maximum(ai, aj)
+
+        def case_far(_):
+            hat1 = (5.0 * aj / 6.0) * (-2.0 * (5.0 * ai**2 * aj**2 + 3.0 * aj**4)) / (5.0 * Rij**4)
+            hat3 = (5.0 * aj / 6.0) * aj**2 * (5.0 * ai**2 + 3.0 * aj**2 - 3.0 * Rij**2) / Rij**4
+            return hat1, hat3
+
+        def case_medium(_):
+            calC = (
+                10.0 * Rij**6
+                - 24.0 * Rij**5 * ai
+                - 15.0 * Rij**4 * (aj**2 - ai**2)
+                + (aj - ai) ** 5 * (ai + 5.0 * aj)
+            ) / (40.0 * ai * aj * Rij**4)
+            calD = (((ai - aj) ** 2 - Rij**2) ** 2 * ((ai - aj) * (ai + 5.0 * aj) - Rij**2)) / (
+                16.0 * ai * aj * Rij**4
+            )
+            return (5.0 * aj / 6.0) * calC, (5.0 * aj / 6.0) * calD
+
+        def case_near(_):
+            hat1 = -jnp.heaviside(aj - ai, 0.0) * Rij
+            hat3 = jnp.zeros_like(Rij)
+            return hat1, hat3
+
+        hat1_pf, hat3_pf = lax.cond(
+            Rij > ai + aj,
+            case_far,
+            lambda _: lax.cond(Rij > a_sup - a_inf, case_medium, case_near, None),
+            None,
+        )
 
         matrix = hat1_pf * jnp.outer(jnp.eye(3), Rij_hat).reshape(3, 3, 3) + hat3_pf * jnp.outer(
             Rij_hat, jnp.outer(Rij_hat, Rij_hat)
@@ -324,10 +536,46 @@ class SoftBody(SphereAssembly):
         return matrix
 
     def _compute_mu_rd_ij(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
-        """Far-field rotation–deformation mobility (3×3×3 tensor)."""
-        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
+        """Rotation–deformation mobility (3×3×3 tensor).
 
+        Dispatches on ``self.allow_overlap`` like :meth:`_compute_mu_td_ij`.
+        """
+        if self.allow_overlap:
+            return self._compute_mu_rd_ij_all(sphere_i, sphere_j, *args)
+        return self._compute_mu_rd_ij_far(sphere_i, sphere_j, *args)
+
+    def _compute_mu_rd_ij_far(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
+        """Far-field-only mu_rd (no ``lax.cond``)."""
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
         prefactor = -(5.0 / 2.0) * (aj / Rij) ** 3
+        matrix = prefactor * jnp.outer(jnp.cross(-jnp.eye(3), Rij_hat), Rij_hat).reshape(3, 3, 3)
+        return matrix
+
+    def _compute_mu_rd_ij_all(self, sphere_i: Sphere, sphere_j: Sphere, *args) -> jnp.ndarray:
+        """Three-regime mu_rd."""
+        Rij, Rij_hat, ai, aj = self._2spheres_grpy_quantities(sphere_i, sphere_j, *args)
+        a_inf = jnp.minimum(ai, aj)
+        a_sup = jnp.maximum(ai, aj)
+
+        def case_far(_):
+            return -(5.0 / 2.0) * (aj / Rij) ** 3
+
+        def case_medium(_):
+            calB = (3.0 * ((ai - aj) ** 2 - Rij**2) ** 2 * (ai**2 + 4.0 * ai * aj + aj**2 - Rij**2)) / (
+                64.0 * Rij**3
+            )
+            return -5.0 * calB / (3.0 * ai**3)
+
+        def case_near(_):
+            return jnp.zeros_like(Rij)
+
+        prefactor = lax.cond(
+            Rij > ai + aj,
+            case_far,
+            lambda _: lax.cond(Rij > a_sup - a_inf, case_medium, case_near, None),
+            None,
+        )
+
         matrix = prefactor * jnp.outer(jnp.cross(-jnp.eye(3), Rij_hat), Rij_hat).reshape(3, 3, 3)
         return matrix
 
@@ -367,8 +615,8 @@ class SoftBody(SphereAssembly):
                 warnings.warn(
                     f"Default configuration produces NaN/Inf in: {issues}. "
                     f"Check that default DOFs and design parameters describe a "
-                    f"physically valid, non-degenerate geometry (e.g. spheres not "
-                    f"overlapping or at zero separation).\n"
+                    f"physically valid, non-degenerate geometry (e.g. spheres "
+                    f"at zero separation).\n"
                     f"  dof_defaults    = {list(self.dof_defaults)}\n"
                     f"  design_defaults = {dict(self.design_defaults)}"
                     f"  time_default    = {[0.0]}",
@@ -384,8 +632,76 @@ class SoftBody(SphereAssembly):
             )
 
 
-# Pure module-level functions for far-field GRPY mobility tensors ##############
+# Module-level functions and state for GRPY mobility tensors ##################
 # These operate on plain arrays (no Sphere objects) so they are vmappable.
+#
+# Three regimes per pair, selected at trace time by nested ``lax.cond``:
+#   case_far    : R > a_i + a_j                  (far-field Rotne–Prager)
+#   case_medium : |a_i - a_j| < R ≤ a_i + a_j    (GRPY partial-overlap, WMZS)
+#   case_near   : R ≤ |a_i - a_j|                (full immersion)
+
+
+# Host-side state for runtime overlap warnings. The warning is fired once
+# per regime per process; call ``SoftBody.reset_overlap_warnings()`` to clear.
+_OVERLAP_WARN_SEEN: set[str] = set()
+_OVERLAP_WARN_ENABLED: bool = True
+
+
+def _emit_overlap_warning(any_medium: bool, any_near: bool, allow_overlap: bool = True) -> None:
+    """Emit at most one ``UserWarning`` per regime per process.
+
+    Parameters
+    ----------
+    any_medium, any_near : bool
+        Whether any sampled timestep entered the corresponding regime.
+    allow_overlap : bool, default True
+        Selects the warning text. ``True`` → the SoftBody was constructed
+        with ``allow_overlap=True`` and the regime is handled correctly by
+        the three-regime GRPY helpers; the warning is informational.
+        ``False`` → the SoftBody was constructed with the default
+        (far-field-only) mobility, so the overlap step produced
+        unphysical / NaN values — the warning carries an "invalid
+        results" message and points the user at ``allow_overlap=True``.
+    """
+    if not _OVERLAP_WARN_ENABLED:
+        return
+    if allow_overlap:
+        if any_near and "full-immersion" not in _OVERLAP_WARN_SEEN:
+            _OVERLAP_WARN_SEEN.add("full-immersion")
+            warnings.warn(
+                "GRPY mobility entered the full-immersion regime "
+                "(R ≤ |a_i − a_j|, one sphere fully inside another) during a "
+                "rollout. Further occurrences are suppressed; call "
+                "SoftBody.reset_overlap_warnings() to re-enable.",
+                UserWarning,
+                stacklevel=2,
+            )
+        if any_medium and "partial-overlap" not in _OVERLAP_WARN_SEEN:
+            _OVERLAP_WARN_SEEN.add("partial-overlap")
+            warnings.warn(
+                "GRPY mobility entered the partial-overlap regime "
+                "(|a_i − a_j| < R < a_i + a_j, spheres strictly overlapping) "
+                "during a rollout. Further occurrences are suppressed; call "
+                "SoftBody.reset_overlap_warnings() to re-enable.",
+                UserWarning,
+                stacklevel=2,
+            )
+    else:
+        if (any_medium or any_near) and "invalid-overlap" not in _OVERLAP_WARN_SEEN:
+            _OVERLAP_WARN_SEEN.add("invalid-overlap")
+            warnings.warn(
+                "Spheres overlapped during a rollout (R < a_i + a_j) but "
+                "this SoftBody was built with allow_overlap=False — "
+                "far-field-only GRPY gives unphysical / NaN mobility "
+                "there, so the trajectory is invalid past the first "
+                "overlap. Pass allow_overlap=True to SoftBody(...) to "
+                "enable the GRPY partial-overlap and full-immersion "
+                "formulas, or shrink the design parameters that cause the "
+                "overlap. Further occurrences are suppressed; call "
+                "SoftBody.reset_overlap_warnings() to re-enable.",
+                UserWarning,
+                stacklevel=2,
+            )
 
 
 def _grpy_self_block(r_i: float) -> jnp.ndarray:
@@ -396,20 +712,17 @@ def _grpy_self_block(r_i: float) -> jnp.ndarray:
     return jnp.block([[mu_tt, zeros], [zeros, mu_rr]])
 
 
-def _grpy_off_diag_block(pos_i: jnp.ndarray, r_i: float, pos_j: jnp.ndarray, r_j: float) -> jnp.ndarray:
-    """Far-field GRPY 6×6 block for a non-overlapping sphere pair (i ≠ j).
+def _grpy_off_diag_block_far(
+    pos_i: jnp.ndarray, r_i: float, pos_j: jnp.ndarray, r_j: float
+) -> jnp.ndarray:
+    """Far-field Rotne–Prager 6×6 block (no overlap branches).
 
-    Parameters
-    ----------
-    pos_i, pos_j : jnp.ndarray, shape (3,)
-        Centre positions of spheres i and j.
-    r_i, r_j : float
-        Radii of spheres i and j.
-
-    Returns
-    -------
-    jnp.ndarray, shape (6, 6)
-        Block ``[[mu_tt, mu_tr], [mu_rt, mu_rr]]``.
+    Selected when ``SoftBody.allow_overlap`` is ``False``. Identical to
+    the pre-three-regime helper on ``main`` — single branch, no
+    ``lax.cond`` overhead. Produces unphysical / NaN values if the pair
+    is in strict overlap; the post-rollout
+    :meth:`SoftBody.scan_trajectory_for_overlap` is responsible for
+    catching that and emitting a ``UserWarning``.
     """
     rvec = pos_i - pos_j
     R = jnp.linalg.norm(rvec)
@@ -426,7 +739,117 @@ def _grpy_off_diag_block(pos_i: jnp.ndarray, r_i: float, pos_j: jnp.ndarray, r_j
     # Rotation–translation and translation–rotation (cross-product matrix form)
     pf_rt = 1.0 / (8.0 * jnp.pi * R**2)
     mu_rt = pf_rt * jnp.cross(-jnp.eye(3), Rhat)
-    # mu_tr(i,j) = mu_rt(j,i)^T  where Rhat_ji = -Rhat_ij
+    # mu_tr(i,j) = mu_rt(j,i)^T  with Rhat_ji = -Rhat_ij  (radii cancel here).
     mu_tr = pf_rt * jnp.cross(-jnp.eye(3), -Rhat).T
+
+    return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])
+
+
+def _grpy_off_diag_block_all(
+    pos_i: jnp.ndarray, r_i: float, pos_j: jnp.ndarray, r_j: float
+) -> jnp.ndarray:
+    """GRPY 6×6 block over all three regimes (far / medium / near).
+
+    Selected when ``SoftBody.allow_overlap`` is ``True``. Adds the
+    Wajnryb–Mizerski–Żuk–Szymczak partial-overlap and full-immersion
+    formulas. Branches via nested ``lax.cond``; ~15–20 % slower per
+    ``compute_fast_tensors`` than :func:`_grpy_off_diag_block_far` even
+    when no pair actually overlaps (lax.cond dispatch cost).
+
+    Parameters
+    ----------
+    pos_i, pos_j : jnp.ndarray, shape (3,)
+        Centre positions of spheres i and j.
+    r_i, r_j : float
+        Radii of spheres i and j.
+
+    Returns
+    -------
+    jnp.ndarray, shape (6, 6)
+        Block ``[[mu_tt, mu_tr], [mu_rt, mu_rr]]``.
+    """
+    rvec = pos_i - pos_j
+    R = jnp.linalg.norm(rvec) + 1e-12
+    Rhat = rvec / R
+    a_inf = jnp.minimum(r_i, r_j)
+    a_sup = jnp.maximum(r_i, r_j)
+
+    inv8piR = 1.0 / (8.0 * jnp.pi * R)
+    inv16piR3 = 1.0 / (16.0 * jnp.pi * R**3)
+
+    def case_far(_):
+        # Translation–translation (Rotne–Prager)
+        eye_tt = (1.0 + (r_i**2 + r_j**2) / (3.0 * R**2)) * inv8piR
+        hat_tt = (1.0 - (r_i**2 + r_j**2) / R**2) * inv8piR
+        # Rotation–rotation
+        eye_rr = -inv16piR3
+        hat_rr = 3.0 * inv16piR3
+        # Rotation–translation (symmetric in i↔j)
+        pf_rt_ij = 1.0 / (8.0 * jnp.pi * R**2)
+        pf_rt_ji = pf_rt_ij
+        return eye_tt, hat_tt, eye_rr, hat_rr, pf_rt_ij, pf_rt_ji
+
+    def case_medium(_):
+        # Partial overlap |a_i − a_j| < R ≤ a_i + a_j (WMZS 2013)
+        # mu_tt
+        eye_tt = ((16.0 * R**3 * (r_i + r_j) - ((r_i - r_j) ** 2 + 3.0 * R**2) ** 2) / (32.0 * R**3)) / (
+            6.0 * jnp.pi * r_i * r_j
+        )
+        hat_tt = (3.0 * ((r_i - r_j) ** 2 - R**2) ** 2 / (32.0 * R**3)) / (6.0 * jnp.pi * r_i * r_j)
+        # mu_rr
+        calA = (
+            5.0 * R**6
+            - 27.0 * R**4 * (r_i**2 + r_j**2)
+            + 32.0 * R**3 * (r_i**3 + r_j**3)
+            - 9.0 * R**2 * (r_i**2 - r_j**2) ** 2
+            - (r_i - r_j) ** 4 * (r_i**2 + 4.0 * r_i * r_j + r_j**2)
+        ) / (64.0 * R**3)
+        calB = (
+            3.0 * ((r_i - r_j) ** 2 - R**2) ** 2 * (r_i**2 + 4.0 * r_i * r_j + r_j**2 - R**2)
+        ) / (64.0 * R**3)
+        eye_rr = calA / (8.0 * jnp.pi * r_i**3 * r_j**3)
+        hat_rr = calB / (8.0 * jnp.pi * r_i**3 * r_j**3)
+        # mu_rt prefactor: asymmetric in i↔j, compute both orderings.
+        pf_rt_ij = ((r_i - r_j + R) ** 2 * (r_j**2 + 2.0 * r_j * (r_i + R) - 3.0 * (r_i - R) ** 2)) / (
+            8.0 * R**2
+        ) / (16.0 * jnp.pi * r_i**3 * r_j)
+        pf_rt_ji = ((r_j - r_i + R) ** 2 * (r_i**2 + 2.0 * r_i * (r_j + R) - 3.0 * (r_j - R) ** 2)) / (
+            8.0 * R**2
+        ) / (16.0 * jnp.pi * r_j**3 * r_i)
+        return eye_tt, hat_tt, eye_rr, hat_rr, pf_rt_ij, pf_rt_ji
+
+    def case_near(_):
+        # Full immersion R ≤ |a_i − a_j|: the inner sphere is rigidly
+        # carried by the outer one, so its mobility equals that of a
+        # single sphere of radius a_sup.
+        eye_tt = 1.0 / (6.0 * jnp.pi * a_sup)
+        hat_tt = jnp.zeros_like(R)
+        eye_rr = 1.0 / (8.0 * jnp.pi * a_sup**3)
+        hat_rr = jnp.zeros_like(R)
+        # Heaviside-gated direction: only the bigger sphere drags the smaller.
+        pf_rt_ij = jnp.heaviside(r_i - r_j, 0.0) * R / (8.0 * jnp.pi * R**2)
+        pf_rt_ji = jnp.heaviside(r_j - r_i, 0.0) * R / (8.0 * jnp.pi * R**2)
+        return eye_tt, hat_tt, eye_rr, hat_rr, pf_rt_ij, pf_rt_ji
+
+    eye_tt, hat_tt, eye_rr, hat_rr, pf_rt_ij, pf_rt_ji = lax.cond(
+        R > r_i + r_j,
+        case_far,
+        lambda _: lax.cond(R > a_sup - a_inf, case_medium, case_near, None),
+        None,
+    )
+
+    # No per-pair runtime warning here: ``jax.debug.callback`` under
+    # ``lax.scan`` forces a host roundtrip per step and tanks performance
+    # by ~75× on small bodies.  Overlap detection now happens once after
+    # a rollout via :meth:`SoftBody.scan_trajectory_for_overlap`, called
+    # automatically by :meth:`FlowBodyRollout.rollout` and the clamped
+    # variant.  Direct (non-rollout) callers may invoke
+    # :meth:`validate_no_overlap` or scan_trajectory_for_overlap by hand.
+
+    mu_tt = eye_tt * jnp.eye(3) + hat_tt * jnp.outer(Rhat, Rhat)
+    mu_rr = eye_rr * jnp.eye(3) + hat_rr * jnp.outer(Rhat, Rhat)
+    mu_rt = pf_rt_ij * jnp.cross(-jnp.eye(3), Rhat)
+    # mu_tr(i,j) = mu_rt(j,i)^T  with Rhat_ji = -Rhat_ij  (and swapped radii).
+    mu_tr = pf_rt_ji * jnp.cross(-jnp.eye(3), -Rhat).T
 
     return jnp.block([[mu_tt, mu_tr], [mu_rt, mu_rr]])

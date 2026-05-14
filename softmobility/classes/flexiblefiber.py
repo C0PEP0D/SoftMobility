@@ -91,6 +91,7 @@ class FlexibleFiber(SoftBody):
         mass: float = 1.0,
         planar: bool = False,
         verbose: bool = False,
+        allow_overlap: bool = False,
     ):
         if n_beads < 2:
             raise ValueError("n_beads must be at least 2.")
@@ -103,7 +104,7 @@ class FlexibleFiber(SoftBody):
         # expected at this point and is suppressed.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
-            super().__init__(verbose=False)
+            super().__init__(verbose=False, allow_overlap=allow_overlap)
 
         self._n_beads = int(n_beads)
         self._planar = bool(planar)

@@ -333,6 +333,11 @@ class FlowBodyRollout:
         _, (positions, orientations, dofs) = jax.lax.scan(
             partial(scan_step, self, design=design, dt=dt), carry, jnp.arange(n_steps)
         )
+        # Post-rollout: scan the DOF trajectory for sphere overlap and warn
+        # once per regime. Skips silently when the inputs are JAX tracers
+        # (e.g. under outer jit/grad) — see SoftBody.scan_trajectory_for_overlap.
+        times = (jnp.arange(n_steps) + 1) * dt
+        self.soft_body.scan_trajectory_for_overlap(dofs, design=design, times=times)
         return positions, orientations, dofs
 
     # ------------------------------------------------------------------
@@ -629,6 +634,8 @@ class FlowBodyRollout:
         _, (positions, orientations, dofs, f_0) = jax.lax.scan(
             step, carry, jnp.arange(n_steps)
         )
+        times = (jnp.arange(n_steps) + 1) * dt
+        self.soft_body.scan_trajectory_for_overlap(dofs, design=design, times=times)
         return positions, orientations, dofs, f_0
 
     def _validate_inputs(self, input_dict: dict):

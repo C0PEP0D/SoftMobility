@@ -664,24 +664,56 @@ cong_four = np.array(
 cent_four = np.array([0, 0, -1.5])
 
 
-@pytest.mark.skip(reason="Overlapping-sphere GRPY support removed; geometry has touching spheres")
+def _to_pygrpy_layout(mu, n):
+    """Permute SoftBody's sphere-major [T0|R0|T1|R1|...] mobility into the
+    PyGRPY reference layout [Tx_0..Tz_{N-1} | Rx_0..Rz_{N-1}] used by
+    ``gmm_two`` / ``gmm_four``."""
+    mu = np.asarray(mu)
+    perm = np.empty(6 * n, dtype=int)
+    for i in range(n):
+        for a in range(3):
+            perm[i * 3 + a] = i * 6 + a              # translation block
+            perm[3 * n + i * 3 + a] = i * 6 + 3 + a  # rotation block
+    return mu[perm][:, perm]
+
+
 def test_two_spheres():
-    sp = SoftBody()
+    sp = SoftBody(allow_overlap=True)
     sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 1], radius=1))
     mu = sp.compute_grand_mobility()
-    assert np.allclose(mu, gmm_two)
+    assert np.allclose(_to_pygrpy_layout(mu, 2), gmm_two, atol=1e-6)
 
 
-@pytest.mark.skip(reason="Overlapping-sphere GRPY support removed; geometry has touching spheres")
 def test_four_spheres():
-    sp = SoftBody()
+    sp = SoftBody(allow_overlap=True)
     sp.add_sphere(Sphere(position=[0, 0, 0], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 1], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 2], radius=1))
     sp.add_sphere(Sphere(position=[0, 0, 3], radius=1))
     mu = sp.compute_grand_mobility()
-    assert np.allclose(mu, gmm_four)
+    assert np.allclose(_to_pygrpy_layout(mu, 4), gmm_four, atol=1e-6)
+
+
+def test_full_immersion_mobility():
+    """Sphere j entirely inside sphere i ⇒ mu_tt → 1/(6π·a_sup)·I,
+    mu_rr → 1/(8π·a_sup³)·I, off-diagonal coupling regular and finite.
+
+    Requires ``allow_overlap=True`` — the case_near branch only fires under
+    the three-regime helper.
+    """
+    sp = SoftBody(allow_overlap=True)
+    sp.add_sphere(Sphere(position=[0, 0, 0], radius=0.5))
+    sp.add_sphere(Sphere(position=[0.1, 0, 0], radius=0.1))  # R = 0.1 < a_sup - a_inf = 0.4
+    mu = np.asarray(sp.compute_grand_mobility())
+    # Off-diagonal mu_tt block (sphere 0 → sphere 1) should equal (1/(6π·0.5))·I
+    block_tt = mu[0:3, 6:9]
+    assert np.allclose(block_tt, (1.0 / (6.0 * np.pi * 0.5)) * np.eye(3), atol=1e-12)
+    # Off-diagonal mu_rr block should equal (1/(8π·0.5³))·I
+    block_rr = mu[3:6, 9:12]
+    assert np.allclose(block_rr, (1.0 / (8.0 * np.pi * 0.5**3)) * np.eye(3), atol=1e-12)
+    # Result must be finite (no NaN/Inf from division by zero).
+    assert np.all(np.isfinite(mu))
 
 
 def test_validate_no_overlap_raises_on_overlap():
