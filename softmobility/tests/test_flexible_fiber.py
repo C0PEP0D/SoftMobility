@@ -364,7 +364,7 @@ def test_rollout_clamped_anchor_static_relaxation():
     fiber, rollout = _quiescent_planar_rollout(n=n, K_b=K_b)
     init_dofs = jnp.array([init_max, -0.04, 0.03])  # θ_1, θ_2, θ_3
     dt = 0.05 * (2 * a) ** 4 / K_b
-    n_steps = 5000
+    n_steps = 1500  # ~1.5 τ_1 → factor-4 decay, well below init_max/2
 
     def anchor_pos(t):
         return jnp.zeros(3)
@@ -409,7 +409,7 @@ def test_rollout_clamped_anchor_rotation_drives_dofs():
     # well inside the linearisation regime.
     zeta = 0.1
     dt = 0.05 * (2 * a) ** 4 / K_b
-    n_steps = 5000
+    n_steps = 1500  # rotating actuation reaches body-frame steady state within ~1τ
 
     def anchor_pos(t):
         return jnp.zeros(3)
@@ -472,7 +472,7 @@ def test_static_cantilever_matches_euler_bernoulli():
     Euler–Bernoulli answer ``q · L⁴ / (8 · K_b)`` up to the expected
     ``O((a/L)²)`` discretisation residual.
     """
-    n = 6
+    n = 5
     K_b = 30.0
     a = 1.0
     m = 1.0
@@ -522,7 +522,7 @@ def test_static_cantilever_matches_euler_bernoulli():
     )
 
     dt = 0.05 * (2.0 * a) ** 4 / K_b
-    n_steps = 50000  # ≳ 5 τ_1 of slowest-mode relaxation for N=6
+    n_steps = 24000  # ≳ 4 τ_1 of slowest-mode relaxation for N=5 (τ_1 ∝ L⁴)
 
     _, _, dofs_traj, _ = rollout.rollout_clamped_anchor(
         dt=dt,

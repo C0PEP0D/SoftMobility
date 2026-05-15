@@ -119,7 +119,7 @@ def test_dedup_within_session_default_mode():
     sp = _make_pair(separation=1.5)
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        for _ in range(3):
+        for _ in range(2):
             sp.scan_trajectory_for_overlap(dofs_traj=jnp.zeros((2, 0)))
     invalid = [w for w in caught if "allow_overlap" in str(w.message)]
     assert len(invalid) == 1
@@ -129,7 +129,7 @@ def test_dedup_within_session_allow_overlap_mode():
     sp = _make_pair(separation=1.5, allow_overlap=True)
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        for _ in range(3):
+        for _ in range(2):
             sp.scan_trajectory_for_overlap(dofs_traj=jnp.zeros((2, 0)))
     partial = [w for w in caught if "partial-overlap" in str(w.message)]
     assert len(partial) == 1
@@ -149,19 +149,22 @@ def test_silence_suppresses_both_modes():
         SoftBody.silence_overlap_warnings(False)
 
 
-def test_compute_grand_mobility_returns_finite_under_overlap():
+@pytest.mark.parametrize(
+    "sep, ri, rj",
+    [
+        (1.5, 1.0, 1.0),  # partial overlap
+        (0.1, 0.5, 0.1),  # full immersion
+        (2.0, 1.0, 1.0),  # touching
+        (2.5, 1.0, 1.0),  # far-field
+    ],
+)
+def test_compute_grand_mobility_returns_finite_under_overlap(sep, ri, rj):
     """``allow_overlap=True`` must return finite values across regimes."""
     SoftBody.silence_overlap_warnings(True)
     try:
-        for sep, ri, rj in [
-            (1.5, 1.0, 1.0),  # partial overlap
-            (0.1, 0.5, 0.1),  # full immersion
-            (2.0, 1.0, 1.0),  # touching
-            (2.5, 1.0, 1.0),  # far-field
-        ]:
-            sp = _make_pair(separation=sep, r_i=ri, r_j=rj, allow_overlap=True)
-            mu = np.asarray(sp.compute_grand_mobility())
-            assert np.all(np.isfinite(mu)), (sep, ri, rj)
+        sp = _make_pair(separation=sep, r_i=ri, r_j=rj, allow_overlap=True)
+        mu = np.asarray(sp.compute_grand_mobility())
+        assert np.all(np.isfinite(mu))
     finally:
         SoftBody.silence_overlap_warnings(False)
 

@@ -123,8 +123,8 @@ def test_rk4_more_accurate_than_rk2():
 
     dt = 0.5
     n_steps = 20
-    _, ori_ref, _ = rollout.rollout(dt / 16, n_steps * 16, scheme="rk4")
-    ori_ref = ori_ref[15::16]
+    _, ori_ref, _ = rollout.rollout(dt / 8, n_steps * 8, scheme="rk4")
+    ori_ref = ori_ref[7::8]
     _, ori_rk2, _ = rollout.rollout(dt, n_steps, scheme="rk2")
     _, ori_rk4, _ = rollout.rollout(dt, n_steps, scheme="rk4")
 

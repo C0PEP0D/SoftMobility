@@ -102,6 +102,7 @@ class SoftBody(SphereAssembly):
         self.allow_overlap = bool(allow_overlap)
         self._validate_default_geometry()
         self.compute_fast_tensors = jax.jit(self.compute_tensors)
+        self.compute_fast_rigid_tensors = jax.jit(self.compute_rigid_tensors)
 
     def compute_tensors(self, dofs=None, design=None, time=None):
         """
@@ -130,9 +131,9 @@ class SoftBody(SphereAssembly):
               Maps generalized forces (force/torque at :math:`O` and internal
               forces conjugate to the DOFs) to generalized velocities
               :math:`(\\mathbf{U}, \\boldsymbol{\\Omega}, \\dot{q})`.
-              For a rigid body (``Ndof = 0``) the first :math:`6 \times 6`
-              block is the effective mobility; use :meth:`compute_rigid_mobility`
-              to obtain it directly.
+              For the rigid-body limit (DOFs frozen), use
+              :meth:`compute_rigid_tensors` whose ``Mred`` field is the
+              corresponding ``6 × 6`` effective mobility.
             - M_K : elastic mobility (dofs coupling).
             - M_H : input mobility (field/scalar coupling).
             - C_E : strain coupling matrix.
@@ -168,18 +169,23 @@ class SoftBody(SphereAssembly):
 
         return SoftMobilityTensors(M=M, Mred=Mred, M_K=M_K, M_H=M_H, C_E=C_E, Pi=Pi, p_act=p_act)
 
-    def compute_rigid_mobility(self, dofs=None, design=None, time=None) -> jnp.ndarray:
+    def compute_rigid_tensors(self, dofs=None, design=None, time=None):
         """
-        Compute the rigid-body equivalent mobility matrix.
+        Compute the rigid-body counterpart of :meth:`compute_tensors`.
 
-        Returns the 6×6 effective mobility of the assembly treated as a
-        perfectly rigid body: all spring stiffnesses are taken to infinity and
-        all degrees of freedom are frozen.  Only the six rigid-body modes
-        (three translations, three rotations of the reference point) are
-        retained.
+        Returns the same set of tensors as :meth:`compute_tensors`, but with
+        all deformation degrees of freedom frozen. Mathematically, the full
+        Jacobian ``J = [C_U | J_assembly]`` is replaced by its first six
+        columns ``C_U``, so the leading dimension shrinks from
+        ``6 + Ndof`` to ``6``.
 
-        This is equivalent to ``compute_tensors().Mred`` when the body has no
-        degrees of freedom, and gives the rigid-body limit for soft bodies.
+        Use this method for analyses that treat the body as rigid by
+        construction (Jeffery orbits, Bretherton coefficient,
+        fiber-in-shear comparisons). The ``Mred`` field is the
+        ``6 × 6`` effective mobility of the assembly treated as
+        perfectly rigid; the remaining fields give the coupling tensors
+        ``C_E``, ``M_H`` and the active velocity contribution ``p_act``
+        in the same rigid limit.
 
         Parameters
         ----------
@@ -193,16 +199,49 @@ class SoftBody(SphereAssembly):
 
         Returns
         -------
-        jnp.ndarray, shape ``(6, 6)``
-            Symmetric positive-definite mobility matrix relating a force/torque
-            applied at the assembly reference point to its translational and
-            rotational velocity.
+        SoftMobilityTensors
+            A named tuple containing:
+
+            - M : shape ``(6, 6N)``, ``Mred @ C_U.T``.
+            - Mred : shape ``(6, 6)``, ``inv(C_U.T @ Rgrand @ C_U)``.
+            - M_K : shape ``(6, Ndof)``, ``M @ C_K``. Mathematically defined
+              even when DOFs are frozen; physically the would-be response to
+              internal DOF forces, kept for API symmetry with
+              :meth:`compute_tensors`.
+            - M_H : shape ``(6, Ninput)``, ``M @ C_H``.
+            - C_E : shape ``(6, 5)``, ``Pi @ C_S + M @ R_S``.
+            - Pi : shape ``(6, 6N)``, ``M @ Rgrand``.
+            - p_act : shape ``(6,)``, ``-Pi @ v_act``.
+
+        See Also
+        --------
+        compute_tensors : full deformable mobility problem.
+
+        Notes
+        -----
+        Use ``compute_fast_rigid_tensors`` for repeated calls — it is a
+        ``jax.jit``-compiled version of this method.
         """
         dofs, design, time = self._setup_params(dofs, design, time)
+
+        _J, v_act = self.compute_Jacobian_matrix(dofs, design, time)
         Mgrand = self.compute_grand_mobility(dofs, design, time)
         Rgrand = jnp.linalg.inv(Mgrand)
         C_U = self.compute_C_U(dofs, design, time)
-        return jnp.linalg.inv(C_U.T @ Rgrand @ C_U)
+        C_S = self._compute_composition_of_strain(dofs, design, time)
+        R_S = self._compute_coupling_with_strain(dofs, design, time)
+        C_H = self.grand_C_H(dofs, design, time)
+        C_K = self.grand_C_K(dofs, design, time)
+
+        Mred = jnp.linalg.inv(C_U.T @ Rgrand @ C_U)
+        M = Mred @ C_U.T
+        Pi = M @ Rgrand
+        C_E = Pi @ C_S + M @ R_S
+        M_K = M @ C_K
+        M_H = M @ C_H
+        p_act = -Pi @ v_act.squeeze()
+
+        return SoftMobilityTensors(M=M, Mred=Mred, M_K=M_K, M_H=M_H, C_E=C_E, Pi=Pi, p_act=p_act)
 
     def compute_grand_mobility(self, dofs=None, design=None, time=None) -> jnp.ndarray:
         """

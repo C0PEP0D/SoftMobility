@@ -733,7 +733,7 @@ Noting $\bE_1 = \bp$ the axis of symmetry, the rigid mobility equation reduces t
 \bpd = \bomega^\infty \times \bp + 
 	B\left[\tE^\infty\cdot\bp - (\bp\cdot\tE^\infty\cdot\bp)\bp\right],
 \end{equation}
-and in a shear flow $\bu^\infty = \dot\gamma\,e_2\,\be_1$, the angular velocity and rate-of-strain tensor reduce to $\bomega^\infty =- \dot\gamma\be_3/2 $ and $\tE^\infty = \dot\gamma(\be_1 \otimes \be_2 + \be_2 \otimes \be_1)$. 
+and in a shear flow $\bu^\infty = \dot\gamma\,y\,\be_1$, the angular velocity and rate-of-strain tensor reduce to $\bomega^\infty =- \dot\gamma\be_3/2 $ and $\tE^\infty = \dot\gamma(\be_1 \otimes \be_2 + \be_2 \otimes \be_1)/2$. 
 In spherical coordinates, $\bp = (\sin\theta\cos\varphi,\sin\theta\sin\varphi,\cos\theta)$ and the Jeffery's orbit admits an analytical solution such that
 \begin{equation}\label{eq:Jeffery_solution}
 \tan\varphi(t) = -\frac{1}{c} \tan\left(\frac{\dot\gamma t}{c+1/c} + \varphi_0 \right), \quad
@@ -753,7 +753,7 @@ In Figure~\ref{fig:Jeffery_rigid}, we compare the orbits computed from the libra
 \begin{center}
     \includegraphics[scale=0.66]{./Figures/Fig7}
 \caption{
-	Jeffery orbits of a rigid dumbbell in a pure shear flow of unit shear rate in the $\be_1$-$\be_2$ plane: $\bu^\infty = [e_2, 0, 0]$.
+	Jeffery orbits of a rigid dumbbell in a pure shear flow of unit shear rate in the $\be_1$-$\be_2$ plane: $\bu^\infty = [y, 0, 0]$.
 	(a) Geometry of the rigid body considered in the body's frame.
 	(b) Jeffery periodic orbits of $\bE_1$ in the laboratory's frame for different initial conditions (lines: simulation, dots: analytical solution).
 	(c) Example of an orbit of $\bE_1$ as a function of time in the spherical coordinate $(r, \theta, \varphi)$.	
@@ -810,42 +810,43 @@ To test the optimization method further, we optimize three design parameters: $k
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Jeffery orbits for a soft body}
-\new{We then relax the rigidity assumption. The inter-sphere distance becomes
-a degree of freedom $\bQ$ coupled to a linear spring of stiffness $k$, while
-the rest of the configuration is unchanged. In the stiff limit ($k=100$) the
-tumbling period and orbit are preserved, the stretching mode remains small
-($\max|\delta d|\approx 7\times 10^{-2}$), and a stiffness sweep recovers
-the rigid Jeffery result as $k\to\infty$. For a compliant dumbbell ($k=2$)
-the strain-rate forcing on the connector drives the stretching mode at
-twice the tumbling frequency, with an amplitude scaling as
-$\mathcal{O}(k^{-1})$. This breathing signature is a direct consequence of
-the bilinear coupling between the rate-of-strain tensor $\tE_0^\infty$ and
-the soft degree of freedom in Eq.~(\ref{eq:soft_mobility}), and provides a
-minimal model of how internal elasticity reshapes the response of a
-deformable body to shear --- a feature absent from the rigid-body theory of
-Jeffery and Bretherton.}
+
+We now consider a ``near sphere'' as depicted in Fig.~XXX, placed in a shear flow  $\bu^\infty = \dot\gamma\,y\,\be_1$. 
+
+In the body's frame $(\bE_1, \bE_2, \bE_3)$, the soft body is made of a two spheres: the sphere 0 with unit radius $a_0=1$ fixed at the body's frame origin $\br_0$; and the sphere 1 of radius $a_1=\ell/10$, rotating around $[1,0,0]$ with an angle $\theta$ in the plane $\bE_1$--$\bE_2$, such that its position is $\bR_1=[1 + \ell \cos\theta, \ell \sin\theta,0]$ and orientation is $\bTheta_1=[0, 0, \theta]$, with a torsional spring exerting a torque $\bT_1=[0, 0, -k\theta]$. 
+
+Our goal is to find how the orbit of such a soft body is modified compared to a rigid Jeferry's body in the limit of small $\ell$. We look for the trajectory of $\btheta_0(t)$ or equivalently $\bE_1(t)$ in the lab's frame. 
+
+The analysis make the hypothesis that the flow that the small sphere experience the sum of the background flow and the flow due to the main sphere. In particular, around $\bE_1$, the flow  in the body's frame reads
+\begin{equation}
+\bU(X) \approx 3 (X-1) (\bomega_0^\infty - \bomega_0)\times \bE_1 + 5 (X-1) (\tI - \bE_1 \otimes \bE_1) \cdot \tE_0^\infty \cdot \bE_1 = U_2 \bE_2 + U_3 \bE_3.
+\end{equation}
+This local flow exerts on the small sphere a force $\bff_1 = 6 \pi \mu a_1 \bU$, with $X-1 = \ell \cos\theta$, which yield a torque with respect to the point O
+\begin{equation}
+\tau_3 = \bE_3\cdot(\bR_1 - \bE_1) \times 6 \pi \mu a_1 \bU = 6 \pi \mu a_1 \ell U_2 \cos\theta ,
+\end{equation}
+which has to balance the spring torque of torsional stiffness $k$, such that
+\begin{equation}
+\xi U_2 \cos\theta  = \theta, \quad
+	\mbox{with } \xi = 6 \pi \mu a_1 \ell / k.
+\end{equation}
+
+The main sphere is subject to two torques that balance 
+\begin{equation}
+8 \pi \mu a_0^3 \left(\bomega_0^\infty - \bomega_0 + \epsilon \bE_1 \times \bff_1 \right).
+\end{equation}
+The equivalent Bretherton parameter is $B = 5\epsilon / (1 + 3 \epsilon)$, with $\epsilon = 3 a_1 \ell \cos \theta/4 a_0^2$. 
+
+ 
+%Zuk et al. (2014) notations :
+%For $a_i + a_j < R_{ij}$, with $i$ sphere 1 and $j$ sphere 0: $1=a_j \gg a_i$ and 
+%$$\mu_{ij}^{td} = - \frac{\tI \otimes \tR_{ij}}{R_{ij}^4} \approx - \tI \otimes\bE_1,$$
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Soft surfer}
 
-\new{The final case combines every feature exercised above and adds
-sensorimotor feedback. A two-sphere soft robot --- a large body coupled by a
-linear spring to a small orientable body --- sinks under gravity through a
-Taylor--Green vortex
-$\bu^\infty = (\sin y\cos z,\sin z\cos x,\sin x\cos y)$. The robot can choose
-between two strategies: a \emph{soft surfer} in which the spring stiffness
-and orientation rest angle are co-optimised across an ensemble of initial
-conditions, and an \emph{active surfer} in which the orientation follows a
-feedback law tracking a deformed reference direction with an alignment time
-$\tau_\mathrm{align}$. Both strategies are compared against a rigid baseline
-of identical geometry. The optimised soft surfer reaches twice the mean
-transport velocity of its rigid counterpart at no energetic cost, purely by
-exploiting passive compliance with the local strain field; the active surfer
-matches that performance with a minimal closed-loop policy. This case
-illustrates how the soft-mobility framework supports the joint design of
-body and controller envisaged by morphological computation and physical
-intelligence~\cite{Pfeifer2006,Pfeifer2014,Sitti2021,Hauser2023}.}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -960,18 +961,18 @@ This subtracts one full turn along the rotation axis. Since a rotation by $\Thet
 
 The rate-of-strain tensor $\tE_0^\infty$ is symmetric and traceless. Symmetry reduces its nine components to six independent entries, and the tracelessness condition $\mathrm{tr}(\tE_0^\infty) = 0$ removes one further degree of freedom, leaving five independent components. We parameterize them as the vector
 \begin{equation}\label{eq:strain_vec}
-\bE^\infty_\mathrm{vect} = [E_{xx},\, E_{xy},\, E_{xz},\, E_{yy},\, E_{yz}],
+\bE^\infty_\mathrm{vect} = [E_{11},\, E_{12},\, E_{13},\, E_{22},\, E_{23}],
 \end{equation}
 from which the full tensor is recovered as
 \begin{equation}\label{eq:strain_mat}
 \tE_0^\infty =
 \begin{pmatrix}
-E_{xx} & E_{xy} & E_{xz} \\
-E_{xy} & E_{yy} & E_{yz} \\
-E_{xz} & E_{yz} & -E_{xx}-E_{yy}
+E_{11} & E_{12} & E_{13} \\
+E_{12} & E_{22} & E_{23} \\
+E_{13} & E_{23} & -E_{11}-E_{22}
 \end{pmatrix},
 \end{equation}
-with the $(3,3)$ entry $E_{zz} = -E_{xx}-E_{yy}$ enforcing tracelessness.
+with the $(3,3)$ entry $E_{33} = -E_{11}-E_{22}$ enforcing tracelessness.
 
 The double contractions $\hat{\tC}_E:\tE_0^\infty$ and $\tC_E:\tE_0^\infty$ appearing in Eqs.~(\ref{eq:galerkin_system}) and (\ref{eq:soft_mobility}) can each be expressed as a matrix-vector product with $\bE^\infty_\mathrm{vect}$. Because every entry $(\tE_0^\infty)_{jk}$ is a linear combination of the five components $E_l$ [Eq.~(\ref{eq:strain_mat})], the double contraction
 \begin{equation}
