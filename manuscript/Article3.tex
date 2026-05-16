@@ -609,7 +609,7 @@ of the trajectory with respect to the design variables.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Validation\label{sec.validation}}
+\section{Results\label{sec.results}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Sinking of a rigid body}
@@ -666,7 +666,9 @@ analytical trajectories of the unit vector $\bG$ agree to better than numerical 
 %%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Sinking of a flexible fiber}
+\subsection{Flexible fiber}
+
+%Sinking
 We now allow internal deformation to test the code implementation of elasticity. 
 We consider a planar fiber, discretised as $N=10$ spheres joined by linear torsional springs of stiffness $k=K_b/2a$, with $K_b$ the equivalent beam rigidity ($K_b = (\pi/4) E a^4$ for a beam of radius $a$, with $E$ the Young's modulus). 
 The problem is governed by the dimensionless rigidity $\beta = K_b / F_\perp L^2$, with $F_\perp = N m g$ the total weight of the fiber, $m$ being the weight of each sphere~\cite{Li2013,Delmotte2015}. 
@@ -692,9 +694,7 @@ to a tightly curled U reported in Refs~\cite{Li2013,Delmotte2015} with slight di
 \end{figure}
 %%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Rotating flexible fiber}
-
+% Rotating
 We next break planarity and introduce prescribed kinematics. 
 We consider a flexible fiber made of $N=8$ spheres, clamped at one end to an off-axis support
 that is forced to rotate around a fixed axis~\cite{Wiggins1998,Coq2008,Coq2009}. 
@@ -721,9 +721,11 @@ Steady state is assessed by the body-frame condition $\max\|\bQd\|\,\tau_\mathrm
 \end{figure}
 %%%%%%%%%%%%%%%%%
 
+% Tumbling
+...
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Jeffery's orbits for a rigid body}
+\subsection{Jeffery's orbits}
 
 To test the coupling to the background flow, we implement the Jeffery's orbits in shear flow~\cite{Jeffery1922, Bretherton1962, Thorp2019, Ishimoto2023}. 
 Jeffery~\cite{Jeffery1922} showed that such a rigid axisymmetric particle tumbles on a closed orbit. 
@@ -763,8 +765,42 @@ In Figure~\ref{fig:Jeffery_rigid}, we compare the orbits computed from the libra
 \end{figure}
 %%%%%%%%%%%%%%%%%
 
+
+% Soft
+We now consider a ``near sphere'' as depicted in Fig.~XXX, placed in a shear flow  $\bu^\infty = \dot\gamma\,y\,\be_1$. 
+
+In the body's frame $(\bE_1, \bE_2, \bE_3)$, the soft body is made of a two spheres: the sphere 0 with unit radius $a_0=1$ fixed at the body's frame origin $\br_0$; and the sphere 1 of radius $a_1=\ell/10$, rotating around $[1,0,0]$ with an angle $\theta$ in the plane $\bE_1$--$\bE_2$, such that its position is $\bR_1=[1 + \ell \cos\theta, \ell \sin\theta,0]$ and orientation is $\bTheta_1=[0, 0, \theta]$, with a torsional spring exerting a torque $\bT_1=[0, 0, -k\theta]$. 
+
+Our goal is to find how the orbit of such a soft body is modified compared to a rigid Jeferry's body in the limit of small $\ell$. We look for the trajectory of $\btheta_0(t)$ or equivalently $\bE_1(t)$ in the lab's frame. 
+
+The analysis make the hypothesis that the flow that the small sphere experience the sum of the background flow and the flow due to the main sphere. In particular, around $\bE_1$, the flow  in the body's frame reads
+\begin{equation}
+\bU(X) \approx 3 (X-1) (\bomega_0^\infty - \bomega_0)\times \bE_1 + 5 (X-1) (\tI - \bE_1 \otimes \bE_1) \cdot \tE_0^\infty \cdot \bE_1 = U_2 \bE_2 + U_3 \bE_3.
+\end{equation}
+This local flow exerts on the small sphere a force $\bff_1 = 6 \pi \mu a_1 \bU$, with $X-1 = \ell \cos\theta$, which yield a torque with respect to the point O
+\begin{equation}
+\tau_3 = \bE_3\cdot(\bR_1 - \bE_1) \times 6 \pi \mu a_1 \bU = 6 \pi \mu a_1 \ell U_2 \cos\theta ,
+\end{equation}
+which has to balance the spring torque of torsional stiffness $k$, such that
+\begin{equation}
+\xi U_2 \cos\theta  = \theta, \quad
+	\mbox{with } \xi = 6 \pi \mu a_1 \ell / k.
+\end{equation}
+
+The main sphere is subject to two torques that balance 
+\begin{equation}
+8 \pi \mu a_0^3 \left(\bomega_0^\infty - \bomega_0 + \epsilon \bE_1 \times \bff_1 \right).
+\end{equation}
+The equivalent Bretherton parameter is $B = 5\epsilon / (1 + 3 \epsilon)$, with $\epsilon = 3 a_1 \ell \cos \theta/4 a_0^2$. 
+
+ 
+%Zuk et al. (2014) notations :
+%For $a_i + a_j < R_{ij}$, with $i$ sphere 1 and $j$ sphere 0: $1=a_j \gg a_i$ and 
+%$$\mu_{ij}^{td} = - \frac{\tI \otimes \tR_{ij}}{R_{ij}^4} \approx - \tI \otimes\bE_1,$$
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Optimisation of a three-sphere swimmer}
+\subsection{Three-sphere swimmer}
 
 
 We next turn to active swimming and optimization. 
@@ -804,43 +840,6 @@ To test the optimization method further, we optimize three design parameters: $k
 \end{figure}
 %%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Results\label{sec.results}}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Jeffery orbits for a soft body}
-
-We now consider a ``near sphere'' as depicted in Fig.~XXX, placed in a shear flow  $\bu^\infty = \dot\gamma\,y\,\be_1$. 
-
-In the body's frame $(\bE_1, \bE_2, \bE_3)$, the soft body is made of a two spheres: the sphere 0 with unit radius $a_0=1$ fixed at the body's frame origin $\br_0$; and the sphere 1 of radius $a_1=\ell/10$, rotating around $[1,0,0]$ with an angle $\theta$ in the plane $\bE_1$--$\bE_2$, such that its position is $\bR_1=[1 + \ell \cos\theta, \ell \sin\theta,0]$ and orientation is $\bTheta_1=[0, 0, \theta]$, with a torsional spring exerting a torque $\bT_1=[0, 0, -k\theta]$. 
-
-Our goal is to find how the orbit of such a soft body is modified compared to a rigid Jeferry's body in the limit of small $\ell$. We look for the trajectory of $\btheta_0(t)$ or equivalently $\bE_1(t)$ in the lab's frame. 
-
-The analysis make the hypothesis that the flow that the small sphere experience the sum of the background flow and the flow due to the main sphere. In particular, around $\bE_1$, the flow  in the body's frame reads
-\begin{equation}
-\bU(X) \approx 3 (X-1) (\bomega_0^\infty - \bomega_0)\times \bE_1 + 5 (X-1) (\tI - \bE_1 \otimes \bE_1) \cdot \tE_0^\infty \cdot \bE_1 = U_2 \bE_2 + U_3 \bE_3.
-\end{equation}
-This local flow exerts on the small sphere a force $\bff_1 = 6 \pi \mu a_1 \bU$, with $X-1 = \ell \cos\theta$, which yield a torque with respect to the point O
-\begin{equation}
-\tau_3 = \bE_3\cdot(\bR_1 - \bE_1) \times 6 \pi \mu a_1 \bU = 6 \pi \mu a_1 \ell U_2 \cos\theta ,
-\end{equation}
-which has to balance the spring torque of torsional stiffness $k$, such that
-\begin{equation}
-\xi U_2 \cos\theta  = \theta, \quad
-	\mbox{with } \xi = 6 \pi \mu a_1 \ell / k.
-\end{equation}
-
-The main sphere is subject to two torques that balance 
-\begin{equation}
-8 \pi \mu a_0^3 \left(\bomega_0^\infty - \bomega_0 + \epsilon \bE_1 \times \bff_1 \right).
-\end{equation}
-The equivalent Bretherton parameter is $B = 5\epsilon / (1 + 3 \epsilon)$, with $\epsilon = 3 a_1 \ell \cos \theta/4 a_0^2$. 
-
- 
-%Zuk et al. (2014) notations :
-%For $a_i + a_j < R_{ij}$, with $i$ sphere 1 and $j$ sphere 0: $1=a_j \gg a_i$ and 
-%$$\mu_{ij}^{td} = - \frac{\tI \otimes \tR_{ij}}{R_{ij}^4} \approx - \tI \otimes\bE_1,$$
 
 
 

@@ -109,11 +109,11 @@ design)``:
 Example Notebooks
 -----------------
 
-The tutorials are grouped into three layers. Numbering reflects the layer
-(0X = library introduction, 1X = validation against published results,
-2X = original case studies).
+The notebooks ship in two folders. ``softmobility/tutorials`` contains
+pedagogical walk-throughs of the API. ``softmobility/examples`` collects
+validation cases against published results and original case studies.
 
-**Library introduction (0X)**
+**Tutorials** (``softmobility/tutorials/``)
 
 - ``01_assembly_creation.ipynb`` — methods to create a sphere assembly
 - ``02_rigid_mobility.ipynb`` — mobility properties of a rigid sphere assembly
@@ -122,21 +122,20 @@ The tutorials are grouped into three layers. Numbering reflects the layer
 - ``04_optimization.ipynb`` — optimization principles
 - ``05_figure_styling.ipynb`` — paper-figure aesthetics with ``figstyle``
 
-**Validation cases (1X)**
+**Examples** (``softmobility/examples/``)
 
-- ``11_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
-- ``12_flexible_fiber_2d.ipynb`` — 2-D flexible fiber in shear and gravity
+- ``01_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
+- ``02_sinking_fiber.ipynb`` — settling flexible fiber
   (Delmotte et al. 2015)
-- ``13_rotating_fiber_3d.ipynb`` — 3-D filament: bending and rotational
-  relaxation (Coq et al. 2008; Wiggins et al. 1998)
-- ``14_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid body
-- ``15_three_sphere_swimmer.ipynb`` — three-sphere swimmer
-  (Najafi & Golestanian 2004)
-
-**Original case studies (2X)**
-
-- ``21_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
-- ``22_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
+- ``03_rotating_fiber.ipynb`` — rotating elastic filament
+  (Coq et al. 2008, 2009; Wiggins et al. 1998)
+- ``04_fiber_in_shear.ipynb`` — flexible fiber with intrinsic curvature
+  in shear flow (Delmotte et al. 2015)
+- ``05_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid dumbbell
+- ``06_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
+- ``07_three_sphere_swimmer.ipynb`` — three-sphere swimmer with a
+  passive elastic arm (Najafi & Golestanian 2004; Montino & DeSimone 2015)
+- ``08_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
 
 API Reference
 -------------

@@ -8,7 +8,7 @@ scheme, the release process, and the policy for opening issues and pull
 requests.
 
 If you only want to *use* SoftMobility, see :doc:`installation` and the
-tutorials instead.
+tutorials and examples instead.
 
 Setting up a development environment
 ====================================

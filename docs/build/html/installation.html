@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; Soft Mobility 1.0.0.post29.dev0+g4055e68 documentation</title>
+  <title>Installation &mdash; Soft Mobility 1.0.0.post47.dev0+gfff8baa documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=f67e7fc7"></script>
+      <script src="_static/documentation_options.js?v=d781f4da"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -55,7 +55,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#development-and-documentation-tools">Development and documentation tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#verifying-installation">Verifying Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#running-tutorials-on-google-colab">Running tutorials on Google Colab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tutorials-and-examples-on-google-colab">Running tutorials and examples on Google Colab</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
@@ -106,7 +106,7 @@ It also depends on:</p>
 <li><p>NumPy (array operations)</p></li>
 <li><p>SciPy (scientific computing)</p></li>
 <li><p>Optax (gradient-based optimizers)</p></li>
-<li><p>Plotly (plotting; used by tutorials and rendered figures)</p></li>
+<li><p>matplotlib (plotting; used by tutorials and examples and rendered figures, including vector PDF export)</p></li>
 </ul>
 </section>
 <section id="installation-from-source">
@@ -116,7 +116,7 @@ mode inside an isolated environment. Two equivalent recipes are documented
 below — use whichever matches your existing tooling.</p>
 <section id="with-venv">
 <h3>With venv<a class="headerlink" href="#with-venv" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/celoy/SoftMobility.git
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/C0PEP0D/SoftMobility.git
 <span class="nb">cd</span><span class="w"> </span>SoftMobility
 python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
 <span class="nb">source</span><span class="w"> </span>.venv/bin/activate
@@ -131,7 +131,7 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 management, the recommended pattern is to let conda manage the Python sandbox
 and let pip install the package itself — JAX in particular is more reliable
 when installed from PyPI than from conda-forge:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/celoy/SoftMobility.git
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/C0PEP0D/SoftMobility.git
 <span class="nb">cd</span><span class="w"> </span>SoftMobility
 conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>softmobility<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
 conda<span class="w"> </span>activate<span class="w"> </span>softmobility
@@ -142,7 +142,7 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 <p>Or, equivalently, use the bundled <code class="docutils literal notranslate"><span class="pre">environment.yml</span></code>, which performs the same
 steps in a single command. It must be run from the repository root because of
 the <code class="docutils literal notranslate"><span class="pre">-e</span> <span class="pre">.</span></code> editable install:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/celoy/SoftMobility.git
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/C0PEP0D/SoftMobility.git
 <span class="nb">cd</span><span class="w"> </span>SoftMobility
 conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
 conda<span class="w"> </span>activate<span class="w"> </span>softmobility
@@ -165,17 +165,18 @@ conda<span class="w"> </span>activate<span class="w"> </span>softmobility
 </pre></div>
 </div>
 </section>
-<section id="running-tutorials-on-google-colab">
-<span id="id1"></span><h2>Running tutorials on Google Colab<a class="headerlink" href="#running-tutorials-on-google-colab" title="Link to this heading"></a></h2>
-<p>Tutorials in <code class="docutils literal notranslate"><span class="pre">softmobility/tutorials</span></code> can be run directly in Google Colab —
-no local clone, fork, or install required. Each notebook contains a first cell
-that installs <code class="docutils literal notranslate"><span class="pre">SoftMobility</span></code> from GitHub when it detects a Colab runtime;
-locally the cell is a no-op.</p>
+<section id="running-tutorials-and-examples-on-google-colab">
+<span id="running-notebooks-on-google-colab"></span><h2>Running tutorials and examples on Google Colab<a class="headerlink" href="#running-tutorials-and-examples-on-google-colab" title="Link to this heading"></a></h2>
+<p>Notebooks in <code class="docutils literal notranslate"><span class="pre">softmobility/tutorials</span></code> (library introduction) and
+<code class="docutils literal notranslate"><span class="pre">softmobility/examples</span></code> (validation cases and case studies) can be run
+directly in Google Colab — no local clone, fork, or install required.
+Each notebook contains a first cell that installs <code class="docutils literal notranslate"><span class="pre">SoftMobility</span></code> from
+GitHub when it detects a Colab runtime; locally the cell is a no-op.</p>
 <p>To open a notebook in Colab, either click the corresponding badge in the
-<a class="reference external" href="https://github.com/celoy/SoftMobility#try-the-tutorials-online">README on GitHub</a>,
+<a class="reference external" href="https://github.com/C0PEP0D/SoftMobility#try-the-notebooks-online">README on GitHub</a>,
 or build the URL by hand by replacing the GitHub URL prefix
-<code class="docutils literal notranslate"><span class="pre">https://github.com/celoy/SoftMobility/blob/</span></code> with
-<code class="docutils literal notranslate"><span class="pre">https://colab.research.google.com/github/celoy/SoftMobility/blob/</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">https://github.com/C0PEP0D/SoftMobility/blob/</span></code> with
+<code class="docutils literal notranslate"><span class="pre">https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/</span></code>.</p>
 </section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>

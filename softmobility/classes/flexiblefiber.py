@@ -41,8 +41,8 @@ class FlexibleFiber(SoftBody):
         cylindrical cross-section of radius ``a``). The bending energy
         is the nearest-neighbor torsional-spring chain on the bead
         orientation DOFs,
-        ``E_bend = (1/2) · (K_b / 2a) · Σ (θ_{i+1} - θ_i)²``, so the
-        torsional-spring stiffness between adjacent beads is
+        ``E_bend = (1/2) · (K_b / 2a) · Σ (θ_{i+1} - θ_i - 2a·κ_0)²``,
+        so the torsional-spring stiffness between adjacent beads is
         ``k_t = K_b / 2a`` (≡ ``B / 2a``) and the bead torque is the
         discrete Laplacian
         ``γ^b_i = (K_b / 2a) · (θ_{i-1} - 2 θ_i + θ_{i+1})``
@@ -50,6 +50,18 @@ class FlexibleFiber(SoftBody):
         The twist component (around ``ê_x``) is structurally zero.
     mass : float, default 1.0
         Per-bead mass; the gravity force on each bead is ``mass · g``.
+    intrinsic_curvature : float, default 0.0
+        Preferred curvature ``κ_0`` (units 1/length) of the rest state,
+        around the body-frame ``ê_y`` axis (so the rest shape bends in
+        the body xz-plane — the planar bending plane). Implemented by
+        biasing the two **boundary** torques (i=0 and i=N-1) by
+        ``±K_b · κ_0``; interior torques are unchanged because the
+        bias cancels in the discrete Laplacian. At rest, the uniformly
+        curved configuration with ``Δθ_j = 2a · κ_0`` between every
+        pair of adjacent beads is energy-minimal. ``dof_defaults``
+        stays at zero (straight); to start at the curved rest state,
+        either let the fiber relax under the bending torque or pass an
+        explicit ``init_dofs``.
     planar : bool, default False
         If True, bending is restricted to the xz-plane and there is one
         scalar angle DOF per bead. If False, each bead has a full 3-vector
@@ -92,6 +104,7 @@ class FlexibleFiber(SoftBody):
         planar: bool = False,
         verbose: bool = False,
         allow_overlap: bool = False,
+        intrinsic_curvature: float = 0.0,
     ):
         if n_beads < 2:
             raise ValueError("n_beads must be at least 2.")
@@ -110,10 +123,10 @@ class FlexibleFiber(SoftBody):
         self._planar = bool(planar)
 
         if verbose:
-            self._build_fiber(radius, bending_rigidity, mass)
+            self._build_fiber(radius, bending_rigidity, mass, intrinsic_curvature)
         else:
             with contextlib.redirect_stdout(io.StringIO()):
-                self._build_fiber(radius, bending_rigidity, mass)
+                self._build_fiber(radius, bending_rigidity, mass, intrinsic_curvature)
 
     @property
     def n_beads(self) -> int:
@@ -125,7 +138,7 @@ class FlexibleFiber(SoftBody):
         """True if the fiber is restricted to xz-plane bending."""
         return self._planar
 
-    def _build_fiber(self, radius, bending_rigidity, mass):
+    def _build_fiber(self, radius, bending_rigidity, mass, intrinsic_curvature):
         n = self._n_beads
         planar = self._planar
 
@@ -133,9 +146,11 @@ class FlexibleFiber(SoftBody):
         self.add_design("radius", default=float(radius))
         self.add_design("K_b", default=float(bending_rigidity))
         self.add_design("mass", default=float(mass))
+        self.add_design("kappa_0", default=float(intrinsic_curvature))
         i_radius = self.design_variables.index("radius")
         i_K = self.design_variables.index("K_b")
         i_mass = self.design_variables.index("mass")
+        i_kappa0 = self.design_variables.index("kappa_0")
 
         # ---- DOFs: bending components per *distal* bead ----
         # Sphere 0 has no per-bead orientation DOF: its tangent is
@@ -175,7 +190,7 @@ class FlexibleFiber(SoftBody):
                 position=_make_position_callable(i, all_positions),
                 orientation=_make_orientation_callable(i, planar),
                 force=force_callable,
-                torque=_make_torque_callable(i, n, planar, i_radius, i_K),
+                torque=_make_torque_callable(i, n, planar, i_radius, i_K, i_kappa0),
             )
             self.add_sphere(sphere)
 
@@ -275,39 +290,44 @@ def _make_orientation_callable(i, planar):
     )
 
 
-def _make_torque_callable(i, n_beads, planar, i_radius, i_K):
+def _make_torque_callable(i, n_beads, planar, i_radius, i_K, i_kappa0):
     """Linearized bending torque on bead ``i`` (Delmotte 2015, eq. 32+34).
 
     In the implicit-DOF parameterization where each bead carries an
     orientation DOF, the linearized bending energy is the nearest-neighbor
     torsional-spring chain on the bead orientations,
 
-        E_bend ≈ (1/2) · (K_b / 2a) · Σ (θ_{i+1} − θ_i)² ,
+        E_bend ≈ (1/2) · (K_b / 2a) · Σ (Δθ_j − 2a·κ_0)² ,
 
-    i.e. a per-pair torsional-spring stiffness ``k_t = K_b / 2a``
-    (≡ ``B / 2a`` when ``K_b ≡ B = (π/4) E a⁴``). This is the small-angle
-    limit of the joint-angle bending energy from eq. 32+34. The
-    generalized force is the discrete Laplacian on the orientation DOFs:
+    where ``Δθ_j = θ_j − θ_{j-1}`` is the j-th bond-pair angle and
+    ``κ_0`` is the intrinsic curvature of the rest state (default 0).
+    The generalized force is the discrete Laplacian on the orientation
+    DOFs, plus a boundary bias of ``±K_b·κ_0`` at the two ends — the
+    bias cancels for every interior bead, leaving the small-Δθ
+    Eq.-32+34 form:
 
         γ^b_i = (K_b / 2a) · (θ_{i-1} − 2 θ_i + θ_{i+1})  (interior)
-              = (K_b / 2a) · (θ_{i+1} − θ_i)               (i = 0)
-              = (K_b / 2a) · (θ_{i-1} − θ_i)               (i = N-1)
+              = (K_b / 2a) · (θ_{i+1} − θ_i) − K_b·κ_0    (i = 0)
+              = (K_b / 2a) · (θ_{i-1} − θ_i) + K_b·κ_0    (i = N-1)
 
-    Linear in DOFs ⇒ exact ``C_K`` from a single ``jax.jacfwd``.
+    Linear in DOFs (the κ_0 term is a design-dependent constant) ⇒
+    exact ``C_K`` from a single ``jax.jacfwd``.
     """
 
     if planar:
 
         def torque(dofs, design, inputs):
-            coef = design[i_K] / (2.0 * design[i_radius])
+            a = design[i_radius]
+            coef = design[i_K] / (2.0 * a)
+            bias = design[i_K] * design[i_kappa0]  # K_b · κ_0
             # Prepend theta_0 = 0 (no DOF for sphere 0) so the
             # discrete-Laplacian formulas below stay symmetric in the
             # bead index.
             theta = jnp.concatenate([jnp.zeros(1), dofs[: n_beads - 1]])
             if i == 0:
-                ty = coef * (theta[1] - theta[0])
+                ty = coef * (theta[1] - theta[0]) - bias
             elif i == n_beads - 1:
-                ty = coef * (theta[n_beads - 2] - theta[n_beads - 1])
+                ty = coef * (theta[n_beads - 2] - theta[n_beads - 1]) + bias
             else:
                 ty = coef * (theta[i - 1] - 2.0 * theta[i] + theta[i + 1])
             return jnp.array([0.0, ty, 0.0])
@@ -315,7 +335,12 @@ def _make_torque_callable(i, n_beads, planar, i_radius, i_K):
         return torque
 
     def torque(dofs, design, inputs):
-        coef = design[i_K] / (2.0 * design[i_radius])
+        a = design[i_radius]
+        coef = design[i_K] / (2.0 * a)
+        # Intrinsic curvature is around the body-frame ê_y axis (matches
+        # the planar bending plane in 3D mode). 3-vector bias is then
+        # (0, K_b·κ_0, 0).
+        bias = jnp.array([0.0, design[i_K] * design[i_kappa0], 0.0])
         # Sphere 0 has no orientation DOF (structurally rod_0 = 0); the
         # distal beads have only their two bending components, with
         # rod_x ≡ 0 (no twist). Reconstruct the full per-bead Rodrigues
@@ -329,9 +354,9 @@ def _make_torque_callable(i, n_beads, planar, i_radius, i_K):
         )
         rod = jnp.concatenate([jnp.zeros((1, 3)), rod_distal], axis=0)
         if i == 0:
-            return coef * (rod[1] - rod[0])
+            return coef * (rod[1] - rod[0]) - bias
         if i == n_beads - 1:
-            return coef * (rod[n_beads - 2] - rod[n_beads - 1])
+            return coef * (rod[n_beads - 2] - rod[n_beads - 1]) + bias
         return coef * (rod[i - 1] - 2.0 * rod[i] + rod[i + 1])
 
     return torque

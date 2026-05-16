@@ -4,6 +4,7 @@ from .classes.sphere import Sphere
 from .classes.sphereassembly import SphereAssembly
 from .classes.softbody import SoftBody
 from .classes.flexiblefiber import FlexibleFiber
+from .classes.extensiblefiber import ExtensibleFiber
 from .classes.inputs import (
     Field,  # base classes
     Scalar,

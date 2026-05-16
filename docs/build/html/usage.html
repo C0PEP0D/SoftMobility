@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage &mdash; Soft Mobility 1.0.0.post29.dev0+g4055e68 documentation</title>
+  <title>Usage &mdash; Soft Mobility 1.0.0.post47.dev0+gfff8baa documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=f67e7fc7"></script>
+      <script src="_static/documentation_options.js?v=d781f4da"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -189,31 +189,32 @@ symbols used in sphere expressions.</p>
 </section>
 <section id="example-notebooks">
 <h2>Example Notebooks<a class="headerlink" href="#example-notebooks" title="Link to this heading"></a></h2>
-<p>The tutorials are grouped into three layers. Numbering reflects the layer
-(0X = library introduction, 1X = validation against published results,
-2X = original case studies).</p>
-<p><strong>Library introduction (0X)</strong></p>
+<p>The notebooks ship in two folders. <code class="docutils literal notranslate"><span class="pre">softmobility/tutorials</span></code> contains
+pedagogical walk-throughs of the API. <code class="docutils literal notranslate"><span class="pre">softmobility/examples</span></code> collects
+validation cases against published results and original case studies.</p>
+<p><strong>Tutorials</strong> (<code class="docutils literal notranslate"><span class="pre">softmobility/tutorials/</span></code>)</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">01_assembly_creation.ipynb</span></code> — methods to create a sphere assembly</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">02_rigid_mobility.ipynb</span></code> — mobility properties of a rigid sphere assembly</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">03_soft_mobility_simulation.ipynb</span></code> — soft mobility tensors and
 simulation of a trajectory</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">04_optimization.ipynb</span></code> — optimization principles</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">05_figure_styling.ipynb</span></code> — paper-figure aesthetics with <code class="docutils literal notranslate"><span class="pre">figstyle</span></code></p></li>
 </ul>
-<p><strong>Validation cases (1X)</strong></p>
+<p><strong>Examples</strong> (<code class="docutils literal notranslate"><span class="pre">softmobility/examples/</span></code>)</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">11_sinking_rigid_body.ipynb</span></code> — sinking trajectory of a rigid body</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">12_flexible_fiber_2d.ipynb</span></code> — 2-D flexible fiber in shear and gravity
+<li><p><code class="docutils literal notranslate"><span class="pre">01_sinking_rigid_body.ipynb</span></code> — sinking trajectory of a rigid body</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">02_sinking_fiber.ipynb</span></code> — settling flexible fiber
 (Delmotte et al. 2015)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">13_rotating_fiber_3d.ipynb</span></code> — 3-D filament: bending and rotational
-relaxation (Coq et al. 2008; Wiggins et al. 1998)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">14_jeffery_rigid.ipynb</span></code> — Jeffery orbits of a rigid body</p></li>
-</ul>
-<p><strong>Original case studies (2X)</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">21_jeffery_soft.ipynb</span></code> — Jeffery orbit of a one-DOF deformable body</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">22_three_sphere_swimmer.ipynb</span></code> — three-sphere swimmer optimization</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">23_soft_surfer.ipynb</span></code> — soft surfer in Taylor–Green vortices</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">03_rotating_fiber.ipynb</span></code> — rotating elastic filament
+(Coq et al. 2008, 2009; Wiggins et al. 1998)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">04_fiber_in_shear.ipynb</span></code> — flexible fiber with intrinsic curvature
+in shear flow (Delmotte et al. 2015)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">05_jeffery_rigid.ipynb</span></code> — Jeffery orbits of a rigid dumbbell</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">06_jeffery_soft.ipynb</span></code> — Jeffery orbit of a one-DOF deformable body</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">07_three_sphere_swimmer.ipynb</span></code> — three-sphere swimmer with a
+passive elastic arm (Najafi &amp; Golestanian 2004; Montino &amp; DeSimone 2015)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">08_soft_surfer.ipynb</span></code> — soft surfer in Taylor–Green vortices</p></li>
 </ul>
 </section>
 <section id="api-reference">

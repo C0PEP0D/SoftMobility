@@ -13,27 +13,35 @@ optimize design parameters with JAX.
 
 The package is imported as in Python as ``softmobility``.
 
-Try the tutorials online
+Try the notebooks online
 ------------------------
 
-The fastest way to get a feel for SoftMobility is to run a tutorial directly
-in your browser via Google Colab — no clone, fork, or local install required.
-The first cell of every tutorial installs ``SoftMobility`` from this
-repository when it detects a Colab runtime (locally the cell is a no-op).
+The fastest way to get a feel for SoftMobility is to run a notebook
+directly in your browser via Google Colab — no clone, fork, or local
+install required. The first cell of every notebook installs
+``SoftMobility`` from this repository when it detects a Colab runtime
+(locally the cell is a no-op).
 
-Click a badge below to launch the corresponding notebook in Colab:
+Click a badge below to launch the corresponding notebook in Colab.
 
-* |colab-01| ``01_assembly_creation``
-* |colab-02| ``02_rigid_mobility``
-* |colab-03| ``03_soft_mobility_simulation``
-* |colab-04| ``04_optimization``
-* |colab-11| ``11_sinking_rigid_body``
-* |colab-12| ``12_flexible_fiber_2d``
-* |colab-13| ``13_rotating_fiber_3d``
-* |colab-14| ``14_jeffery_rigid``
-* |colab-15| ``15_three_sphere_swimmer``
-* |colab-21| ``21_jeffery_soft``
-* |colab-22| ``22_soft_surfer``
+Tutorials (library introduction):
+
+* |colab-t01| ``01_assembly_creation``
+* |colab-t02| ``02_rigid_mobility``
+* |colab-t03| ``03_soft_mobility_simulation``
+* |colab-t04| ``04_optimization``
+* |colab-t05| ``05_figure_styling``
+
+Examples (validation cases & case studies):
+
+* |colab-e01| ``01_sinking_rigid_body``
+* |colab-e02| ``02_sinking_fiber``
+* |colab-e03| ``03_rotating_fiber``
+* |colab-e04| ``04_fiber_in_shear``
+* |colab-e05| ``05_jeffery_rigid``
+* |colab-e06| ``06_jeffery_soft``
+* |colab-e07| ``07_three_sphere_swimmer``
+* |colab-e08| ``08_soft_surfer``
 
 For any notebook not listed above, you can build a Colab URL by hand by
 replacing the GitHub URL prefix
@@ -153,15 +161,16 @@ A complete simulation uses three pieces:
        init_orientation=jnp.zeros(3),
    )
 
-Tutorials
----------
+Tutorials and examples
+----------------------
 
-Tutorial notebooks live in ``softmobility/tutorials`` and are grouped into
-three layers; the numbering reflects the layer
-(0X = library introduction, 1X = validation against published results,
-2X = original case studies).
+The notebooks ship in two folders. ``softmobility/tutorials`` contains
+pedagogical walk-throughs of the API, while ``softmobility/examples``
+collects validation cases against published results and original case
+studies. New users should start with ``tutorials/01_assembly_creation``
+and work through the tutorials before moving on to the examples.
 
-**Library introduction (0X)**
+**Tutorials** (``softmobility/tutorials/``)
 
 * ``01_assembly_creation.ipynb`` — methods to create a sphere assembly
 * ``02_rigid_mobility.ipynb`` — mobility properties of a rigid sphere assembly
@@ -170,25 +179,20 @@ three layers; the numbering reflects the layer
 * ``04_optimization.ipynb`` — optimization principles
 * ``05_figure_styling.ipynb`` — paper-figure aesthetics with ``figstyle``
 
-**Validation cases (1X)**
+**Examples** (``softmobility/examples/``)
 
-* ``11_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
-  *(work in progress)*
-* ``12_flexible_fiber_2d.ipynb`` — 2-D flexible fiber in shear and gravity
+* ``01_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
+* ``02_sinking_fiber.ipynb`` — settling flexible fiber
   (Delmotte et al. 2015)
-* ``13_rotating_fiber_3d.ipynb`` — 3-D filament: bending and rotational
-  relaxation (Coq et al. 2008; Wiggins et al. 1998)
-* ``14_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid body
-* ``15_three_sphere_swimmer.ipynb`` — three-sphere swimmer
-  (Najafi & Golestanian 2004)
-
-**Original case studies (2X)**
-
-* ``21_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
-* ``22_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
-
-New users should start with ``01_assembly_creation`` and work through the
-0X group before moving to validation cases or original studies.
+* ``03_rotating_fiber.ipynb`` — rotating elastic filament
+  (Coq et al. 2008, 2009; Wiggins et al. 1998)
+* ``04_fiber_in_shear.ipynb`` — flexible fiber with intrinsic curvature
+  in shear flow (Delmotte et al. 2015)
+* ``05_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid dumbbell
+* ``06_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
+* ``07_three_sphere_swimmer.ipynb`` — three-sphere swimmer with a passive
+  elastic arm (Najafi & Golestanian 2004; Montino & DeSimone 2015)
+* ``08_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
 
 Build the documentation locally
 -------------------------------
@@ -226,27 +230,29 @@ License
 SoftMobility is distributed under the 3-clause BSD license. See ``LICENSE``
 for details.
 
-.. |colab-01| image:: https://colab.research.google.com/assets/colab-badge.svg
+.. |colab-t01| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/01_assembly_creation.ipynb
-.. |colab-02| image:: https://colab.research.google.com/assets/colab-badge.svg
+.. |colab-t02| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/02_rigid_mobility.ipynb
-.. |colab-03| image:: https://colab.research.google.com/assets/colab-badge.svg
+.. |colab-t03| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/03_soft_mobility_simulation.ipynb
-.. |colab-04| image:: https://colab.research.google.com/assets/colab-badge.svg
+.. |colab-t04| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/04_optimization.ipynb
-.. |colab-05| image:: https://colab.research.google.com/assets/colab-badge.svg
+.. |colab-t05| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/05_figure_styling.ipynb
-.. |colab-11| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/11_sinking_rigid_body.ipynb
-.. |colab-12| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/12_flexible_fiber_2d.ipynb
-.. |colab-13| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/13_rotating_fiber_3d.ipynb
-.. |colab-14| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/14_jeffery_rigid.ipynb
-.. |colab-15| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/15_three_sphere_swimmer.ipynb
-.. |colab-21| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/21_jeffery_soft.ipynb
-.. |colab-22| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/22_soft_surfer.ipynb
+.. |colab-e01| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/01_sinking_rigid_body.ipynb
+.. |colab-e02| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/02_sinking_fiber.ipynb
+.. |colab-e03| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/03_rotating_fiber.ipynb
+.. |colab-e04| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/04_fiber_in_shear.ipynb
+.. |colab-e05| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/05_jeffery_rigid.ipynb
+.. |colab-e06| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/06_jeffery_soft.ipynb
+.. |colab-e07| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/07_three_sphere_swimmer.ipynb
+.. |colab-e08| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/08_soft_surfer.ipynb

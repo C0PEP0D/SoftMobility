@@ -7,9 +7,9 @@ model should be simulated, differentiated, and optimized with JAX.
 
 .. tip::
 
-   You can try the tutorials directly in your browser via Google Colab — no
-   local clone or install required. See
-   :ref:`Running tutorials on Google Colab <running-tutorials-on-google-colab>`
+   You can try the tutorials and examples directly in your browser via
+   Google Colab — no local clone or install required. See
+   :ref:`Running tutorials and examples on Google Colab <running-notebooks-on-google-colab>`
    for the full list of badges and instructions.
 
 .. toctree::

@@ -18,9 +18,9 @@ def test_construction_3d():
     # (the x-component of each Rodrigues vector is structurally zero).
     # So Ndof = 2 · (N - 1).
     assert body.Ndof == 8
-    assert body.Ndesign == 3  # radius, K_b, mass (no gap)
+    assert body.Ndesign == 4  # radius, K_b, mass, kappa_0 (no gap)
     assert body.Ninput == 3  # gravity field
-    assert body.design_variables == ["radius", "K_b", "mass"]
+    assert body.design_variables == ["radius", "K_b", "mass", "kappa_0"]
     assert body.input_variables == ["gravity0", "gravity1", "gravity2"]
     # DOF naming: theta_{i}_y, theta_{i}_z for distal beads only.
     assert body.dof_variables == [
@@ -544,3 +544,199 @@ def test_static_cantilever_matches_euler_bernoulli():
         f"{rel_err * 100:.1f} % (> 5 %); k_t = K_b/(2a) prefactor "
         "is likely wrong"
     )
+
+
+# ---------------------------------------------------------------------------
+# Linear-bending validation: see drafts/linear_curvature_findings.md
+# ---------------------------------------------------------------------------
+
+
+def _bending_eigendecomp(fiber):
+    """Eigendecompose ``J = M_K[6:, :]`` at the straight reference.
+
+    Returns ``(eigvals, right_eigvecs, left_eigvecs)`` with modes sorted
+    by ``|Re(eigval)|`` ascending (slowest mode first). ``J`` is real
+    and non-symmetric, but its spectrum is real (the linearised
+    soft-mobility problem is similar to a SPD operator), so we drop the
+    tiny imaginary parts after sorting.
+    """
+    tensors = fiber.compute_tensors(
+        jnp.zeros(fiber.Ndof), fiber.design_defaults, jnp.array([0.0])
+    )
+    J = np.asarray(tensors.M_K[6:, :])
+    eigvals, eigvecs = np.linalg.eig(J)
+    order = np.argsort(np.abs(eigvals.real))
+    eigvals = eigvals[order].real
+    eigvecs = eigvecs[:, order].real
+    W = np.linalg.inv(eigvecs)  # rows are left eigenvectors
+    return eigvals, eigvecs, W
+
+
+def _fit_log_decay(t, signal):
+    """Least-squares fit of ``log|signal| = log|s0| - λ·t``.
+
+    Drops samples below ``1e-9 × max|signal|`` (noise floor) so a mode
+    that decays through many e-folds is fit on the well-resolved
+    portion of its trajectory. Returns ``(λ, R²)``.
+    """
+    abs_s = np.abs(signal)
+    mask = abs_s > 1e-9 * abs_s.max()
+    tf = t[mask]
+    log_y = np.log(abs_s[mask])
+    A = np.vstack([tf, np.ones_like(tf)]).T
+    coef, *_ = np.linalg.lstsq(A, log_y, rcond=None)
+    slope, _ = coef
+    y_pred = A @ coef
+    ss_res = float(np.sum((log_y - y_pred) ** 2))
+    ss_tot = float(np.sum((log_y - log_y.mean()) ** 2))
+    r_sq = 1.0 - ss_res / ss_tot if ss_tot > 0 else float("nan")
+    return float(-slope), float(r_sq)
+
+
+def test_linear_bending_eigenmode_decay():
+    """Each mode of the body-frame DOF mobility operator
+    ``J = M_K[6:, :]`` must decay exponentially at exactly the rate set
+    by its eigenvalue when initialised as a pure right-eigenvector
+    perturbation. Validates internal consistency of the linearised
+    bending torque and the soft-mobility tensor builder at the straight
+    reference. Background sweep: ``drafts/linear_curvature_findings.md``.
+    """
+    fiber, rollout = _quiescent_planar_rollout(n=3, K_b=10.0)
+    eigvals, eigvecs, W = _bending_eigendecomp(fiber)
+    dt = 0.05 / abs(eigvals.min())  # stability w.r.t. fastest mode
+    # ~2 e-folds of the slowest mode is more than enough for a clean
+    # exponential fit; faster modes decay through tens of e-folds in the
+    # same window, and the noise-floor mask in _fit_log_decay clips the
+    # asymptotic floor.
+    n_steps = max(200, int(np.ceil(2.0 / abs(eigvals[0]) / dt)))
+    times = (np.arange(n_steps) + 1) * dt
+
+    for k in range(1, fiber.Ndof + 1):
+        v_right = eigvecs[:, k - 1]
+        w_left = W[k - 1, :]
+        init_dofs = jnp.asarray(0.05 * v_right / np.max(np.abs(v_right)))
+        _, _, dofs_traj = rollout.rollout(
+            dt=dt, n_steps=n_steps, init_dofs=init_dofs
+        )
+        proj = np.asarray(dofs_traj) @ w_left
+        lam_sim, r_sq = _fit_log_decay(times, proj)
+        lam_th = abs(eigvals[k - 1])
+        assert r_sq > 0.999, f"k={k}: exponential fit R² = {r_sq:.5f} (< 0.999)"
+        rel_err = abs(lam_sim - lam_th) / lam_th
+        assert rel_err < 0.01, (
+            f"k={k}: λ_sim = {lam_sim:.4e} vs λ_th = {lam_th:.4e}, "
+            f"rel.err = {rel_err * 100:.2f} % (> 1 %); the linearised "
+            "bending torque or the M_K tensor build is wrong at the "
+            "straight reference"
+        )
+
+
+def test_linear_bending_amplitude_independence():
+    """The linearised bending torque is — by design — exactly
+    proportional to the DOFs. Sweeping the slowest-eigenmode initial
+    amplitude from 0.05 rad to 1.0 rad must therefore leave the
+    decay rate unchanged. Fails if a future Eq.-34 nonlinear-curvature
+    swap-in (Delmotte 2015) silently makes the torque
+    amplitude-dependent. Background: ``drafts/linear_curvature_findings.md``.
+    """
+    fiber, rollout = _quiescent_planar_rollout(n=3, K_b=10.0)
+    eigvals, eigvecs, W = _bending_eigendecomp(fiber)
+    v1 = eigvecs[:, 0]
+    w1 = W[0, :]
+    lam1 = abs(eigvals[0])
+    dt = 0.05 / abs(eigvals.min())
+    # ~0.5 e-folds of the slowest mode — short enough that
+    # nonlinear mode-coupling at A=1.0 rad can't pollute the
+    # projection, long enough for a clean exponential fit.
+    n_steps = max(200, int(np.ceil(0.5 / lam1 / dt)))
+    times = (np.arange(n_steps) + 1) * dt
+
+    rates = []
+    for amp in (0.05, 0.5, 1.0):
+        init_dofs = jnp.asarray(amp * v1 / np.max(np.abs(v1)))
+        _, _, dofs_traj = rollout.rollout(
+            dt=dt, n_steps=n_steps, init_dofs=init_dofs
+        )
+        proj = np.asarray(dofs_traj) @ w1
+        lam, _ = _fit_log_decay(times, proj)
+        rates.append(lam)
+
+    spread = max(rates) / min(rates) - 1.0
+    assert spread < 0.02, (
+        f"decay rates {rates} span more than 2 % "
+        f"(max/min - 1 = {spread * 100:.2f} %) — bending torque has "
+        "become amplitude-dependent, i.e. no longer linear in the DOFs"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Intrinsic curvature: rest state is a uniformly-curved arc
+# ---------------------------------------------------------------------------
+
+
+def test_intrinsic_curvature_equilibrium_is_torque_free_planar():
+    """With ``intrinsic_curvature = κ_0``, the uniformly-curved
+    configuration ``θ_i = i · 2a · κ_0`` must be the energy minimum —
+    i.e. every bead's bending torque vanishes there. Confirms the κ_0
+    boundary biases (±K_b·κ_0 on i=0 and i=N-1) are correctly placed
+    and the interior κ_0 cancellation is preserved.
+    """
+    n, a, K_b, kappa_0 = 5, 1.0, 30.0, 0.05
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0,
+        planar=True, intrinsic_curvature=kappa_0,
+    )
+    beta = 2.0 * a * kappa_0  # preferred Δθ per bond
+    curved_dofs = jnp.asarray([(i + 1) * beta for i in range(n - 1)])
+    t = jnp.array([0.0])
+    for i in range(n):
+        tau = fiber.spheres[i].torque(curved_dofs, fiber.design_defaults, t)
+        np.testing.assert_allclose(
+            np.asarray(tau), np.zeros(3), atol=1e-5,
+            err_msg=f"planar: bead {i} bending torque {np.asarray(tau)} "
+            "should vanish at uniformly-curved equilibrium",
+        )
+
+
+def test_intrinsic_curvature_equilibrium_is_torque_free_3d():
+    """Same as the planar variant, in 3D mode. Intrinsic curvature is
+    around the body ê_y axis, so the curved Rodrigues vector for bead i
+    is ``(0, i · 2a · κ_0, 0)``; both unused twist (x) and the
+    perpendicular bending (z) components stay zero.
+    """
+    n, a, K_b, kappa_0 = 4, 1.0, 30.0, 0.05
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0,
+        planar=False, intrinsic_curvature=kappa_0,
+    )
+    beta = 2.0 * a * kappa_0
+    # 3D DOFs are [θ_1_y, θ_1_z, θ_2_y, θ_2_z, …]; intrinsic curvature is
+    # around ê_y, so only the *_y entries pick up the linear progression.
+    curved_dofs = jnp.zeros(2 * (n - 1)).at[::2].set(
+        jnp.arange(1, n) * beta
+    )
+    t = jnp.array([0.0])
+    for i in range(n):
+        tau = fiber.spheres[i].torque(curved_dofs, fiber.design_defaults, t)
+        np.testing.assert_allclose(
+            np.asarray(tau), np.zeros(3), atol=1e-5,
+            err_msg=f"3D: bead {i} bending torque {np.asarray(tau)} "
+            "should vanish at uniformly-curved equilibrium",
+        )
+
+
+def test_intrinsic_curvature_default_preserves_existing_behaviour():
+    """``intrinsic_curvature=0`` (default) must reproduce the legacy
+    bending torque exactly — i.e. the straight configuration is torque-
+    free. Guards against accidental sign drift in the κ_0 boundary
+    bias terms.
+    """
+    n, a, K_b = 5, 1.0, 30.0
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=True,
+    )
+    straight = jnp.zeros(n - 1)
+    t = jnp.array([0.0])
+    for i in range(n):
+        tau = fiber.spheres[i].torque(straight, fiber.design_defaults, t)
+        np.testing.assert_allclose(np.asarray(tau), np.zeros(3), atol=1e-6)
