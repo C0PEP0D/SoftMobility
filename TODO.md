@@ -6,9 +6,9 @@ still inspect them with the Todo Tree extension by Gruntfuggly.
 
 ## Development
 
-- TODO: Add constraints on DOFs, such as intervals.
-- TODO: Add table lookup to speed up rollout of soft motility problems.
-- TODO: Add interactions between assemblies.
+- TODO: Add constraints on DOFs, such as intervals, contact mechanics, etc.
+- TODO: Add table lookup for soft mobility tensors to speed up rollout of soft motility problems.
+- TODO: Add hydrodynamics interactions between assemblies in the far field limit.
 
 
 
