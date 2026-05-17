@@ -97,4 +97,5 @@ manuscript/*.log
 manuscript/*.blg
 manuscript/*.bib
 manuscript/*.synctex.gz
-tutorials/figures/
+softmobility/tutorials/figures/*.pdf
+softmobility/examples/figures/*.pdf
