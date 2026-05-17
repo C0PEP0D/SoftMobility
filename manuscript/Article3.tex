@@ -724,7 +724,7 @@ Steady state is assessed by the body-frame condition $\max\|\bQd\|\,\tau_\mathrm
 %%%%%%%%%%%%%%%%%
 
 % Tumbling
-Fig.~\cite{fig:tumbling_fiber}
+Fig.~\ref{fig:tumbling_fiber}
 \cite{Schmid2000,Delmotte2015,Liu2018}
 
 %%%%%%%%%%%%%%%%%
@@ -733,7 +733,7 @@ Fig.~\cite{fig:tumbling_fiber}
    \includegraphics[scale=0.60]{./Figures/Fig7}
 \caption{
 	Flexible fiber tumbling in pure shear flow. 
-	(a) Orientation angle $\theta_0$ of the leftmost sphere as a function of time, normalised by the Jeffery's period of the rigid assembly.
+	(a) Orientation angle $\theta_0$ around $\be_3$ of the leftmost sphere as a function of time, normalised by the Jeffery's period of the rigid assembly.
 	(b) Maximum curvature of the fiber in units of length as a function of time. The horizontal grey line shows the intrinsic curvature of the fiber $\kappa_0 = 0.01 / L$.
 	(c) Snapshots of the fiber deformation as labelled in (b).  
 }
@@ -785,43 +785,20 @@ In Figure~\ref{fig:Jeffery_rigid}, we compare the orbits computed from the libra
 
 
 % Soft
-We now consider a ``near sphere'' as depicted in Fig.~XXX, placed in a shear flow  $\bu^\infty = \dot\gamma\,y\,\be_1$. 
+\cite{Zhang2019,Ishimoto2023}
 
-In the body's frame $(\bE_1, \bE_2, \bE_3)$, the soft body is made of a two spheres: the sphere 0 with unit radius $a_0=1$ fixed at the body's frame origin $\br_0$; and the sphere 1 of radius $a_1=\ell/10$, rotating around $[1,0,0]$ with an angle $\theta$ in the plane $\bE_1$--$\bE_2$, such that its position is $\bR_1=[1 + \ell \cos\theta, \ell \sin\theta,0]$ and orientation is $\bTheta_1=[0, 0, \theta]$, with a torsional spring exerting a torque $\bT_1=[0, 0, -k\theta]$. 
 
-Our goal is to find how the orbit of such a soft body is modified compared to a rigid Jeferry's body in the limit of small $\ell$. We look for the trajectory of $\btheta_0(t)$ or equivalently $\bE_1(t)$ in the lab's frame. 
-
-The analysis make the hypothesis that the flow that the small sphere experience the sum of the background flow and the flow due to the main sphere. In particular, around $\bE_1$, the flow  in the body's frame reads
-\begin{equation}
-\bU(X) \approx 3 (X-1) (\bomega_0^\infty - \bomega_0)\times \bE_1 + 5 (X-1) (\tI - \bE_1 \otimes \bE_1) \cdot \tE_0^\infty \cdot \bE_1 = U_2 \bE_2 + U_3 \bE_3.
-\end{equation}
-This local flow exerts on the small sphere a force $\bff_1 = 6 \pi \mu a_1 \bU$, with $X-1 = \ell \cos\theta$, which yield a torque with respect to the point O
-\begin{equation}
-\tau_3 = \bE_3\cdot(\bR_1 - \bE_1) \times 6 \pi \mu a_1 \bU = 6 \pi \mu a_1 \ell U_2 \cos\theta ,
-\end{equation}
-which has to balance the spring torque of torsional stiffness $k$, such that
-\begin{equation}
-\xi U_2 \cos\theta  = \theta, \quad
-	\mbox{with } \xi = 6 \pi \mu a_1 \ell / k.
-\end{equation}
-
-The main sphere is subject to two torques that balance 
-\begin{equation}
-8 \pi \mu a_0^3 \left(\bomega_0^\infty - \bomega_0 + \epsilon \bE_1 \times \bff_1 \right).
-\end{equation}
-The equivalent Bretherton parameter is $B = 5\epsilon / (1 + 3 \epsilon)$, with $\epsilon = 3 a_1 \ell \cos \theta/4 a_0^2$. 
-
- 
-%Zuk et al. (2014) notations :
-%For $a_i + a_j < R_{ij}$, with $i$ sphere 1 and $j$ sphere 0: $1=a_j \gg a_i$ and 
-%$$\mu_{ij}^{td} = - \frac{\tI \otimes \tR_{ij}}{R_{ij}^4} \approx - \tI \otimes\bE_1,$$
 
 %%%%%%%%%%%%%%%%%
-\begin{figure}[t]
+\begin{figure}[bt]
 \begin{center}
     \includegraphics[scale=0.60]{./Figures/Fig9}
 \caption{
 	Jeffery's orbits of a soft dumbbell. 
+	(a) Polar angle as a function of time for a rigid ($k=\infty$) and a soft ($k=100\mu \dot\gamma a$) dumbbell.
+	(b) Elongation of the spring $Q$ in units of the sphere radius $a$. 
+	(c) Similar to Fig.~\ref{fig:Jeffery_rigid} for the initial condition of (a). 
+	(d) Orbit of $\bE_1$ the dumbbell's axis of symmetry, showing that the orbit is attracted to the shear plane $\be_1$--$\be_2$, corresponding to a polar angle $\theta=\pi /2$.
 	}
 \label{fig:jeffery_soft}
 \end{center}
