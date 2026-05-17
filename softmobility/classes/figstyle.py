@@ -46,6 +46,7 @@ COLORS: dict[str, str] = {
     "red_25":      "#F8CCC7",
     "blue":        "#0076BA",
     "blue_light":  "#7CB9E8",
+    "blue_25":     "#A0D3FA",
     "black":       "#000000",
     "grey":        "#7F7F7F",
 }
