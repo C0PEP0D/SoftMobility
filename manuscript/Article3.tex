@@ -668,7 +668,7 @@ analytical trajectories of the unit vector $\bG$ agree to better than numerical 
 %%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Flexible fiber}
+\subsection{Flexible fiber\label{sec:fibers}}
 
 %Sinking
 We now allow internal deformation to test the code implementation of elasticity. 
@@ -734,7 +734,7 @@ Fig.~\ref{fig:tumbling_fiber}
 \caption{
 	Flexible fiber tumbling in pure shear flow. 
 	(a) Orientation angle $\theta_0$ around $\be_3$ of the leftmost sphere as a function of time, normalised by the Jeffery's period of the rigid assembly.
-	(b) Maximum curvature of the fiber in units of length as a function of time. The horizontal grey line shows the intrinsic curvature of the fiber $\kappa_0 = 0.01 / L$.
+	(b) Maximum curvature of the fiber in units of length as a function of time. The horizontal grey line shows the intrinsic curvature of the fiber $\kappa_0 = 0.01 / L$\new{, which also sets the initial fiber shape (uniformly-curved rest state)}.
 	(c) Snapshots of the fiber deformation as labelled in (b).  
 }
 \label{fig:tumbling_fiber}
@@ -760,7 +760,7 @@ In spherical coordinates, $\bp = (\sin\theta\cos\varphi,\sin\theta\sin\varphi,\c
 \tan^2\theta \left(\cos^2\varphi + c^2\sin^2\varphi \right)=K^2,
 \end{equation}
 with $c=\sqrt{(1+B)/(1-B)}$, period $T=2\pi(c+1/c)/\dot\gamma$, and
-orbit constant of motion $K$, which is set b the initial condition.  
+orbit constant of motion $K$, which is set by the initial condition.  
 The above solution is now used to test the Python library implementation of the body-flow coupling.
 
 The body is a two-sphere rigid dumbbell immersed in a shear flow (Fig.~\ref{fig:Jeffery_rigid}a). 
@@ -958,7 +958,7 @@ In the limit $\Theta\to 0$, $\tB_\Omega\to\tI$ (using $\frac{\Theta}{2}\cotan\fr
 This relation is used to compute the six-component velocity $\bV_i$ of the $i$-th sphere from the time-derivative of its six-component position $\bX_i$ in \S\ref{sec.kinematics}.
 The translational velocity of the sphere center follows directly from its position, $\bU_i = \bRd_i$. For the rotational part, $\bOmega_i = \tB_\Omega(\bTheta_i) \cdot \bThetad_i$.
 Stacking translation and rotation, the Bortz Jacobian for sphere $i$ is the $6\times 6$ block-diagonal matrix
-\begin{equation}
+\begin{equation}\label{eq:Bi}
 \tB_i(\bTheta_i) =
 \begin{bmatrix} \tI & \mathbf{0} \\ \mathbf{0} & \tB_\Omega(\bTheta_i) \end{bmatrix},
 \quad\text{so that}\quad
@@ -997,48 +997,35 @@ The double contractions $\hat{\tC}_E:\tE_0^\infty$ and $\tC_E:\tE_0^\infty$ appe
 is linear in $\bE^\infty_\mathrm{vect}$, so it can be written as $\tC_E^{(5)}\cdot\bE^\infty_\mathrm{vect}$ for an equivalent $N_q\times 5$ matrix $\tC_E^{(5)}$. The entries of $\tC_E^{(5)}$ are obtained by substituting Eq.~(\ref{eq:strain_mat}) and collecting coefficients of each $E_l$. Because the sum runs over all nine $(j,k)$ pairs and $\tE_0^\infty$ is symmetric, each off-diagonal component (e.g.\ $E_{xy}$) contributes through both $(j,k)=(1,2)$ and $(j,k)=(2,1)$, automatically yielding the correct factor of two without requiring explicit prefactors in $\bE^\infty_\mathrm{vect}$.
 
 %%%%%%%%%%%%%%%
-\section{Kinematic actuation of a single anchor\label{app:clamped_anchor}}
+\section{The anchor problem\label{app:clamped_anchor}}
 
-In several applications one prescribes the velocity of a single sphere of the assembly --- the \emph{anchor} --- rather than letting the assembly translate and rotate freely under external forces. Examples include tethered fibers, the rotating elastic fiber of \cite{Coq2008,Coq2009}, and kinematically actuated swimmers. We extend here the soft mobility equation~(\ref{eq:soft_mobility_body}) to such a clamped-anchor problem.
+In several applications, one prescribes the velocity of a single sphere of the assembly, the anchor, rather than letting the assembly translate and rotate freely under external forces. Examples include clamped fibers in \S\ref{sec:fibers}. We extend here the soft mobility equation~(\ref{eq:soft_mobility_body}) to such an anchor problem.
 
-\paragraph{Choice of frame.}
-We choose the body's frame so that its origin coincides with the centre of sphere $0$ and its axis $\bE_1$ aligns with sphere $0$'s body-frame orientation: $\bX_0 = \bm{0}$ and $\bTheta_0 = \bm{0}$ for all time. The body's lab-frame position $\br_0$ and orientation $\btheta_0$ are then identified with sphere $0$'s lab-frame position and orientation, and the actuation imposes them through two prescribed time-functions,
-\begin{equation}\label{eq:anchor_prescription}
-\br_0(t) = \br_0^\mathrm{prescr}(t),\qquad
-\btheta_0(t) = \btheta_0^\mathrm{prescr}(t).
-\end{equation}
+We choose the body's frame so that its origin coincides with the centre of the anchored sphere, numbered $0$. Its axis $\bE_1$ aligns with sphere $0$'s orientation, such that it is fixed in the body's frame: $\bR_0 = \bm{0}$ and $\bTheta_0 = \bm{0}$ for all time. 
+
+The body's lab-frame position $\br_0$ and orientation $\btheta_0$ are then identified with sphere $0$'s lab-frame position and orientation, and the actuation imposes them through two prescribed time-functions, $\bx_0(t)=[\br_0,\btheta_0]$. 
 The body's six-component velocity $\bv_0 = [\bu_0,\bomega_0]$ in the laboratory frame follows from the prescription via the Bortz Jacobian~(\ref{eq.Bortz_one_sphere}) of sphere~$0$,
-\begin{equation}\label{eq:anchor_vel}
-\bv_0 \;=\; \tB_0(\btheta_0)\cdot\bm{\dot{x}}_0^\mathrm{prescr}
-\;=\;
-\begin{bmatrix} \tI & \bm{0} \\ \bm{0} & \tB_\Omega(\btheta_0) \end{bmatrix}
-\begin{bmatrix} \bRd_0^\mathrm{prescr} \\[0.4ex] \bThetad_0^\mathrm{prescr} \end{bmatrix},
-\end{equation}
-so that $\bu_0 = \bRd_0^\mathrm{prescr}$ and $\bomega_0 = \tB_\Omega(\btheta_0)\cdot\bThetad_0^\mathrm{prescr}$ are both expressed in the laboratory frame, consistent with the convention introduced after Eq.~(\ref{eq:soft_mobility_body}).
+$\bv_0(t) = \tB_i(\btheta_0)\cdot\bxd_0$, with $\tB_i$ given by Eq.~(\ref{eq:Bi}).
 
-\paragraph{Augmented mobility equation.}
-The clamped-anchor problem is a \emph{mixed} mobility problem: $\bv_0$ is now a known input rather than a velocity solved for, while the six-component reaction force $\bff_0 = [\bF_0,\bT_0]$ that the anchor exerts on sphere $0$ becomes an unknown. We re-introduce $\bff_0$ as an additional grand external force concentrated on sphere $0$. The associated contribution to the right-hand side of the soft mobility equation~(\ref{eq:soft_mobility_body}) is $\tM\cdot(\bff_0\,\delta_{i,0})$, which simplifies to $\tM_0\cdot\bff_0$ with
-\begin{equation}\label{eq:M_anchor}
-\tM_0 \;=\; \tM[:,1{:}6]
-\end{equation}
-the first six columns of the $N_q\times 6N$ soft mobility tensor (size $N_q\times 6$). The augmented soft mobility equation reads
+
+The anchor problem is a mixed mobility problem: $\bv_0$ is now a known input rather than a velocity solved for, while the six-component reaction force $\bff_0 = [\bF_0,\bT_0]$ that the anchor exerts on sphere $0$ becomes an unknown. We reintroduce $\bff_0$ as an additional grand external force concentrated on sphere $0$. The associated contribution is added to the right-hand side of the soft mobility equation~(\ref{eq:soft_mobility_body}) as 
 \begin{equation}\label{eq:soft_mobility_clamped}
 \bp - \bp_0^\infty
 =
 \tM_K\cdot\bQ + \tM_H\cdot\bH + \tC_E:\tE_0^\infty - \tPi\cdot\bV_\mathrm{act}
 + \tM_0\cdot\bff_0,
 \end{equation}
-where $\bp = [\bu_0, \bomega_0, \bQd]$ stacks the body's six-component velocity and the deformation rate.
+where $\tM_0\cdot\bff_0 = \tM\cdot[\bff_0, \bm{0}]$, or equivalently, $\tM_0$ is made the first six columns of $\tM$.
 
-\paragraph{Partitioning and solve.}
+
 Splitting $\tM_0$ in a $6\times 6$ velocity block and an $N_Q\times 6$ deformation block,
 \begin{equation}\label{eq:M_anchor_partition}
 \tM_0 =
-\begin{bmatrix} \tM_0^{vv} \\[0.5ex] \tM_0^{Qv} \end{bmatrix},
+\begin{bmatrix} \tM_0^{v} \\[0.5ex] \tM_0^{Q} \end{bmatrix},
 \end{equation}
 the top six rows of Eq.~(\ref{eq:soft_mobility_clamped}) form a $6\times 6$ linear system for the unknown $\bff_0$,
 \begin{equation}\label{eq:f_anchor_solve}
-\tM_0^{vv}\cdot\bff_0
+\tM_0^{v}\cdot\bff_0
 \;=\;
 \bv_0 - \bv_0^\infty
 - \left[\tM_K\cdot\bQ + \tM_H\cdot\bH + \tC_E:\tE_0^\infty - \tPi\cdot\bV_\mathrm{act}\right]_{1{:}6},
@@ -1048,15 +1035,10 @@ inverted at every integrator substep to produce $\bff_0$. The remaining $N_Q$ ro
 \bQd
 \;=\;
 \left[\tM_K\cdot\bQ + \tM_H\cdot\bH + \tC_E:\tE_0^\infty - \tPi\cdot\bV_\mathrm{act}\right]_{7{:}N_q}
-+ \tM_0^{Qv}\cdot\bff_0.
++ \tM_0^{Q}\cdot\bff_0.
 \end{equation}
-The body's lab-frame coordinates $(\br_0,\btheta_0)$ are advanced directly through the prescription~(\ref{eq:anchor_prescription}) rather than integrated.
+Equations~(\ref{eq:f_anchor_solve}--\ref{eq:Qdot_clamped}) replace the soft mobility equations for a clamped system. It has the same number of unknowns and use the same integration method in time (fourth-order Runge--Kutta).  
 
-\paragraph{Coordinate redundancy.}
-With the body frame attached to sphere $0$, the per-sphere DOFs that parameterize sphere $0$'s body-frame position and orientation become structurally redundant and must be held at zero throughout the simulation. For the bead-rod fibre of \S\ref{sec.kinematics}, this corresponds to clamping the Rodrigues triplet of sphere $0$ to $\bTheta_0 = \bm{0}$. The constraint is purely geometric, not kinematic, and is not associated with a reaction force.
-
-\paragraph{Cross-check by shooting.}
-Equation~(\ref{eq:f_anchor_solve}) admits a direct shooting check that swaps the role of knowns and unknowns: given any candidate $\bff_0$, applying it through the unmodified soft mobility equation~(\ref{eq:soft_mobility_body})---that is, treating $\bff_0\,\delta_{i,0}$ as an additional external load and letting $\bv_0$ be solved for---must reproduce the velocity~(\ref{eq:anchor_vel}) under which it was originally derived. Any drift between the recovered $\bv_0$ and the prescription signals an inconsistency in the partitioning or in the body-frame conversion.
 
 % Create the reference section using BibTeX:
 \bibliography{splank.bib}

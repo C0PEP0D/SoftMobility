@@ -22,7 +22,7 @@ class FlexibleFiber(SoftBody):
     (sphere surfaces touching); bead positions are derived from bead
     orientations via the recurrence
     ``r_{i+1} = r_i + 2a · (p_i + p_{i+1}) / |p_i + p_{i+1}|``
-    with ``p_i = R(rod_i) · ê_x``, so rigid bonds are satisfied by
+    with ``p_i = R(rod_i) · E_1``, so rigid bonds are satisfied by
     construction — no Lagrange multipliers.
 
     The linearization keeps the bending torque linear in the orientation
@@ -47,21 +47,24 @@ class FlexibleFiber(SoftBody):
         discrete Laplacian
         ``γ^b_i = (K_b / 2a) · (θ_{i-1} - 2 θ_i + θ_{i+1})``
         with first-difference end terms (see ``_make_torque_callable``).
-        The twist component (around ``ê_x``) is structurally zero.
+        The twist component (around ``E_1``) is structurally zero.
     mass : float, default 1.0
         Per-bead mass; the gravity force on each bead is ``mass · g``.
     intrinsic_curvature : float, default 0.0
         Preferred curvature ``κ_0`` (units 1/length) of the rest state,
-        around the body-frame ``ê_y`` axis (so the rest shape bends in
+        around the body-frame ``E_2`` axis (so the rest shape bends in
         the body xz-plane — the planar bending plane). Implemented by
         biasing the two **boundary** torques (i=0 and i=N-1) by
         ``±K_b · κ_0``; interior torques are unchanged because the
         bias cancels in the discrete Laplacian. At rest, the uniformly
         curved configuration with ``Δθ_j = 2a · κ_0`` between every
         pair of adjacent beads is energy-minimal. ``dof_defaults``
-        stays at zero (straight); to start at the curved rest state,
-        either let the fiber relax under the bending torque or pass an
-        explicit ``init_dofs``.
+        (and the equivalent alias :attr:`rest_dofs`) is set to this
+        rest configuration ``θ_i = i · 2a · κ_0``, so a default-
+        initialized rollout starts at the curved rest — no transient
+        relaxation. An explicit ``dofs = 0`` still describes a straight
+        fiber: the DOFs remain absolute orientation angles (not a
+        deviation from rest).
     planar : bool, default False
         If True, bending is restricted to the xz-plane and there is one
         scalar angle DOF per bead. If False, each bead has a full 3-vector
@@ -73,25 +76,27 @@ class FlexibleFiber(SoftBody):
     Notes
     -----
     Sphere 0 sits at the body origin **with its tangent identified with
-    the body frame's** ``ê_x``: it has no per-bead Rodrigues DOF. The
+    the body frame's** ``E_1``: it has no per-bead Rodrigues DOF. The
     chain is also treated as torsionally infinitely stiff, so the
     "twist" component of each bead's Rodrigues vector (its projection
-    on ``ê_x``, which leaves the bead tangent invariant under
+    on ``E_1``, which leaves the bead tangent invariant under
     Rodrigues rotation) is structurally zero, not a DOF. Only the
     ``N - 1`` distal beads carry their two bending components, giving
     ``Ndof = (N - 1)`` (planar) or ``2 (N - 1)`` (3D) configurational
     degrees of freedom — the correct count for a slender, inextensible,
     torsion-free bead chain anchored at one end. DOFs are named
     ``theta_{i}`` (planar) or ``theta_{i}_y``, ``theta_{i}_z`` (3D) for
-    ``i = 1 … N - 1``. All default to zero, giving a straight fiber
-    along ``ê_x`` rooted at the origin.
+    ``i = 1 … N - 1``. Defaults are set to the uniformly-curved rest
+    state ``θ_i = i · 2a · κ_0`` (planar) or ``(0, i · 2a · κ_0)`` (3D);
+    with the default ``κ_0 = 0`` this is the straight fiber along
+    ``E_1`` rooted at the origin.
 
     The gravity field is registered as a 3-D field input named ``gravity``;
     at runtime the solver supplies the body-frame components as
     ``gravity0``, ``gravity1``, ``gravity2``.
 
-    Sign convention (planar): ``θ_i`` is the Rodrigues angle around ``+ê_y``,
-    so ``p_i = R_y(θ_i) · ê_x = (cos θ_i, 0, -sin θ_i)``. The chain bends
+    Sign convention (planar): ``θ_i`` is the Rodrigues angle around ``+E_2``,
+    so ``p_i = R_y(θ_i) · E_1 = (cos θ_i, 0, -sin θ_i)``. The chain bends
     in the xz-plane.
     """
 
@@ -138,6 +143,17 @@ class FlexibleFiber(SoftBody):
         """True if the fiber is restricted to xz-plane bending."""
         return self._planar
 
+    @property
+    def rest_dofs(self):
+        """DOFs corresponding to the uniformly-curved rest configuration.
+
+        Equal to :attr:`dof_defaults` in the current convention; exposed
+        under this name so user code such as
+        ``init_dofs=fiber.rest_dofs`` reads as the intent. For
+        ``κ_0 = 0`` this is the zero vector (straight fiber).
+        """
+        return self.dof_defaults
+
     def _build_fiber(self, radius, bending_rigidity, mass, intrinsic_curvature):
         n = self._n_beads
         planar = self._planar
@@ -154,23 +170,29 @@ class FlexibleFiber(SoftBody):
 
         # ---- DOFs: bending components per *distal* bead ----
         # Sphere 0 has no per-bead orientation DOF: its tangent is
-        # structurally aligned with the body frame's ê_x. This removes
+        # structurally aligned with the body frame's E_1. This removes
         # the redundancy between the body orientation and rod_0 that
         # would otherwise leave a free uniform-rotation mode in the
         # clamped-anchor problem.
         #
         # The chain is treated as torsionally infinitely stiff: for
         # each distal bead we drop the x-component of its Rodrigues
-        # vector (rotations around ê_x leave the bead tangent
+        # vector (rotations around E_1 leave the bead tangent
         # invariant — that mode is the un-physical "twist"). The two
         # remaining components (y, z) span the two bending directions
         # perpendicular to the local bond.
+        #
+        # Per-DOF defaults are set to the uniformly-curved rest state
+        # ``θ_i = i · 2a · κ_0`` (around E_2), so ``dof_defaults`` is
+        # the energy minimum for any ``κ_0``. With ``κ_0 = 0`` this
+        # reduces to all-zero defaults (straight fiber).
+        beta = 2.0 * float(radius) * float(intrinsic_curvature)
         if planar:
             for i in range(1, n):
-                self.add_dof(f"theta_{i}", default=0.0)
+                self.add_dof(f"theta_{i}", default=float(i * beta))
         else:
             for i in range(1, n):
-                self.add_dof(f"theta_{i}_y", default=0.0)
+                self.add_dof(f"theta_{i}_y", default=float(i * beta))
                 self.add_dof(f"theta_{i}_z", default=0.0)
 
         # ---- Gravity 3-D field input ----
@@ -201,7 +223,7 @@ class FlexibleFiber(SoftBody):
 
 
 def _rodrigues_to_tangent(rod):
-    """Apply rotation R(rod) to ê_x = (1, 0, 0) using Rodrigues' formula.
+    """Apply rotation R(rod) to E_1 = (1, 0, 0) using Rodrigues' formula.
 
     ``rod`` is the Rodrigues vector ``θ · k̂`` (axis-angle). Numerically safe
     near ``θ = 0`` via Taylor-series fallbacks for ``sin θ / θ`` and
@@ -227,8 +249,8 @@ def _make_all_positions_callable(n_beads, planar, i_radius):
 
         r_{k+1} = r_k + 2a · (p_k + p_{k+1}) / |p_k + p_{k+1}|
 
-    where ``p_j = R(rod_j) · ê_x``. Sphere 0's tangent is structurally
-    fixed to ``p_0 = ê_x``; only spheres ``1 … N−1`` have orientation
+    where ``p_j = R(rod_j) · E_1``. Sphere 0's tangent is structurally
+    fixed to ``p_0 = E_1``; only spheres ``1 … N−1`` have orientation
     DOFs. The bond direction is the average of the two bead tangents,
     normalized; the normalization enforces the rigid-bond ("touching
     gears") constraint exactly regardless of joint angle. Singular only
@@ -278,7 +300,7 @@ def _make_orientation_callable(i, planar):
 
     - planar: one DOF ``θ_i`` per bead, vector ``(0, θ_i, 0)``;
     - 3-D: two bending DOFs ``(θ_i^y, θ_i^z)`` per bead, vector
-      ``(0, θ_i^y, θ_i^z)``. The twist component (along ``ê_x``) is
+      ``(0, θ_i^y, θ_i^z)``. The twist component (along ``E_1``) is
       structurally zero — see the class docstring.
     """
     if i == 0:
@@ -337,7 +359,7 @@ def _make_torque_callable(i, n_beads, planar, i_radius, i_K, i_kappa0):
     def torque(dofs, design, inputs):
         a = design[i_radius]
         coef = design[i_K] / (2.0 * a)
-        # Intrinsic curvature is around the body-frame ê_y axis (matches
+        # Intrinsic curvature is around the body-frame E_2 axis (matches
         # the planar bending plane in 3D mode). 3-vector bias is then
         # (0, K_b·κ_0, 0).
         bias = jnp.array([0.0, design[i_K] * design[i_kappa0], 0.0])

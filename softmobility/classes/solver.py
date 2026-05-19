@@ -519,9 +519,9 @@ class FlowBodyRollout:
         --------
         Rotating-filament setup of Coq et al. 2008 / Delmotte 2015
         fig 13: anchor on the rotation axis, body rotating around lab
-        ``ê_x`` at angular rate ``ζ``, with an initial tilt ``ψ``
-        around ``ê_y`` (so the chain precesses on a cone of half-angle
-        ``ψ`` around ``ê_x``)::
+        ``e_1`` at angular rate ``ζ``, with an initial tilt ``ψ``
+        around ``e_2`` (so the chain precesses on a cone of half-angle
+        ``ψ`` around ``e_1``)::
 
             import jax.numpy as jnp
             import softmobility as sm

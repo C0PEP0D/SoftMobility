@@ -14,7 +14,7 @@ def test_construction_3d():
     body = FlexibleFiber(n_beads=5)
     assert body.Nspheres == 5
     # Sphere 0 has no per-bead orientation DOF (its tangent is identified
-    # with the body frame's ê_x), and the chain has no torsional DOF
+    # with the body frame's E_1), and the chain has no torsional DOF
     # (the x-component of each Rodrigues vector is structurally zero).
     # So Ndof = 2 · (N - 1).
     assert body.Ndof == 8
@@ -42,7 +42,7 @@ def test_n_beads_validation():
 
 
 def test_straight_equilibrium_positions():
-    """Default DOFs ⇒ straight chain along ê_x with bond length exactly 2a."""
+    """Default DOFs ⇒ straight chain along E_1 with bond length exactly 2a."""
     radius = 1.0
     body = FlexibleFiber(n_beads=4, radius=radius)
     bond = 2.0 * radius
@@ -62,7 +62,7 @@ def test_planar_bending_kinematics():
     eps = 0.1
     # DOFs are theta_1, theta_2 (sphere 0's orientation is structurally
     # zero and not a DOF). Pick theta_1 = eps, theta_2 = 0 so bead 1's
-    # tangent is tilted but bead 2's tangent is along ê_x.
+    # tangent is tilted but bead 2's tangent is along E_1.
     dofs = jnp.array([eps, 0.0])
     t = jnp.array([0.0])
     a = radius
@@ -95,7 +95,7 @@ def test_bent_bond_length_invariant():
     t = jnp.array([0.0])
     for kappa in (0.05, 0.2, 0.5, 1.0):  # up to ~57° per joint
         # DOFs cover beads 1 .. N-1; bead 0's tangent is structurally
-        # along ê_x. Linear progression θ_i = i·κ then becomes
+        # along E_1. Linear progression θ_i = i·κ then becomes
         # dofs = (κ, 2κ, ..., (N-1)·κ).
         dofs = kappa * jnp.arange(1, n, dtype=jnp.float32)
         positions = jnp.stack(
@@ -113,7 +113,7 @@ def test_planar_C_K_is_torsional_chain_laplacian():
     implicit-DOF parameterization).
 
     Sphere 0 has no orientation DOF (its tangent is identified with the
-    body frame's ê_x), so the DOF vector is ``Q = (θ_1, …, θ_{N-1})``
+    body frame's E_1), so the DOF vector is ``Q = (θ_1, …, θ_{N-1})``
     and ``C_K`` has ``N`` rows but only ``N - 1`` columns. The expected
     rows are therefore the columns 1.. of the full Laplacian on
     ``(θ_0=0, θ_1, …, θ_{N-1})``.
@@ -234,7 +234,7 @@ def test_planar_uniform_progression_no_interior_torque():
 
 def test_planar_3D_consistency_around_y():
     """A 3D fiber whose only non-zero distal-bead rod component is along
-    ``ê_y`` should produce the same Ty stencil as the planar fiber."""
+    ``E_2`` should produce the same Ty stencil as the planar fiber."""
     n = 6
     K_b = 1.7
     a = 1.0
@@ -243,7 +243,7 @@ def test_planar_3D_consistency_around_y():
 
     rng = np.random.default_rng(1)
     # DOFs cover beads 1 .. N-1. Match conventions: planar packs N-1
-    # scalars (θ_i around ê_y); 3D packs (θ_i^y, θ_i^z) per distal bead
+    # scalars (θ_i around E_2); 3D packs (θ_i^y, θ_i^z) per distal bead
     # — set θ_i^z = 0 so the chain stays in the xz-plane.
     thetas = rng.uniform(-0.05, 0.05, size=n - 1)
     dofs_planar = jnp.asarray(thetas)
@@ -394,7 +394,7 @@ def test_rollout_clamped_anchor_rotation_drives_dofs():
     n = 4
     K_b = 30.0
     a = 1.0
-    # 3-D fiber: the rotation axis (lab ê_x) is perpendicular to the
+    # 3-D fiber: the rotation axis (lab e_1) is perpendicular to the
     # local bending plane, so the chain has DOFs that respond to it.
     fiber = FlexibleFiber(
         n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=False
@@ -700,7 +700,7 @@ def test_intrinsic_curvature_equilibrium_is_torque_free_planar():
 
 def test_intrinsic_curvature_equilibrium_is_torque_free_3d():
     """Same as the planar variant, in 3D mode. Intrinsic curvature is
-    around the body ê_y axis, so the curved Rodrigues vector for bead i
+    around the body E_2 axis, so the curved Rodrigues vector for bead i
     is ``(0, i · 2a · κ_0, 0)``; both unused twist (x) and the
     perpendicular bending (z) components stay zero.
     """
@@ -711,7 +711,7 @@ def test_intrinsic_curvature_equilibrium_is_torque_free_3d():
     )
     beta = 2.0 * a * kappa_0
     # 3D DOFs are [θ_1_y, θ_1_z, θ_2_y, θ_2_z, …]; intrinsic curvature is
-    # around ê_y, so only the *_y entries pick up the linear progression.
+    # around E_2, so only the *_y entries pick up the linear progression.
     curved_dofs = jnp.zeros(2 * (n - 1)).at[::2].set(
         jnp.arange(1, n) * beta
     )
@@ -740,3 +740,108 @@ def test_intrinsic_curvature_default_preserves_existing_behaviour():
     for i in range(n):
         tau = fiber.spheres[i].torque(straight, fiber.design_defaults, t)
         np.testing.assert_allclose(np.asarray(tau), np.zeros(3), atol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Intrinsic curvature: dof_defaults sits at the curved rest configuration
+# ---------------------------------------------------------------------------
+
+
+def test_dof_defaults_match_curved_rest_planar():
+    """With ``κ_0 ≠ 0`` (planar), ``dof_defaults`` must be the uniformly
+    curved rest configuration ``θ_i = i · 2a · κ_0`` so default-initialized
+    rollouts start at the energy minimum (no transient relaxation).
+    """
+    n, a, kappa_0 = 5, 1.0, 0.05
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, mass=0.0, planar=True,
+        intrinsic_curvature=kappa_0,
+    )
+    beta = 2.0 * a * kappa_0
+    expected = jnp.asarray([(i + 1) * beta for i in range(n - 1)])
+    np.testing.assert_allclose(
+        np.asarray(fiber.dof_defaults), np.asarray(expected), atol=1e-12
+    )
+
+
+def test_dof_defaults_match_curved_rest_3d():
+    """With ``κ_0 ≠ 0`` (3D), only the y-components of each distal bead's
+    Rodrigues DOF carry the linear progression ``i · 2a · κ_0``; the
+    z-components stay at zero (κ_0 is around body E_2).
+    """
+    n, a, kappa_0 = 4, 1.0, 0.05
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, mass=0.0, planar=False,
+        intrinsic_curvature=kappa_0,
+    )
+    beta = 2.0 * a * kappa_0
+    expected = jnp.zeros(2 * (n - 1)).at[::2].set(jnp.arange(1, n) * beta)
+    np.testing.assert_allclose(
+        np.asarray(fiber.dof_defaults), np.asarray(expected), atol=1e-12
+    )
+
+
+def test_torque_zero_at_dof_defaults_planar():
+    """The defining invariant: every bead's bending torque must vanish
+    at ``fiber.dof_defaults`` for any ``κ_0`` (planar). Ties the
+    kinematic default to the dynamic equilibrium.
+    """
+    n, a, K_b, kappa_0 = 5, 1.0, 30.0, 0.05
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=True,
+        intrinsic_curvature=kappa_0,
+    )
+    t = jnp.array([0.0])
+    for i in range(n):
+        tau = fiber.spheres[i].torque(
+            fiber.dof_defaults, fiber.design_defaults, t
+        )
+        np.testing.assert_allclose(
+            np.asarray(tau), np.zeros(3), atol=1e-5,
+            err_msg=f"planar: bead {i} bending torque {np.asarray(tau)} "
+            "should vanish at dof_defaults (curved rest)",
+        )
+
+
+def test_torque_zero_at_dof_defaults_3d():
+    """Same invariant in 3D."""
+    n, a, K_b, kappa_0 = 4, 1.0, 30.0, 0.05
+    fiber = FlexibleFiber(
+        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=False,
+        intrinsic_curvature=kappa_0,
+    )
+    t = jnp.array([0.0])
+    for i in range(n):
+        tau = fiber.spheres[i].torque(
+            fiber.dof_defaults, fiber.design_defaults, t
+        )
+        np.testing.assert_allclose(
+            np.asarray(tau), np.zeros(3), atol=1e-5,
+            err_msg=f"3D: bead {i} bending torque {np.asarray(tau)} "
+            "should vanish at dof_defaults (curved rest)",
+        )
+
+
+def test_dof_defaults_zero_when_kappa0_zero():
+    """Regression: ``κ_0 = 0`` (the default) must keep ``dof_defaults``
+    at all-zero, preserving the straight-fiber initial state.
+    """
+    planar_fiber = FlexibleFiber(n_beads=5, planar=True)
+    np.testing.assert_array_equal(
+        np.asarray(planar_fiber.dof_defaults), np.zeros(4)
+    )
+    body_fiber = FlexibleFiber(n_beads=5, planar=False)
+    np.testing.assert_array_equal(
+        np.asarray(body_fiber.dof_defaults), np.zeros(8)
+    )
+
+
+def test_rest_dofs_alias():
+    """``fiber.rest_dofs`` is a semantic alias for ``dof_defaults``."""
+    fiber = FlexibleFiber(
+        n_beads=5, radius=1.0, mass=0.0, planar=True,
+        intrinsic_curvature=0.05,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(fiber.rest_dofs), np.asarray(fiber.dof_defaults)
+    )
