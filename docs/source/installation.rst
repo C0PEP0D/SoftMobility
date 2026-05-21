@@ -95,6 +95,42 @@ Verifying Installation
     import softmobility as sm
     print(f"SoftMobility version: {sm.__version__}")
 
+GPU acceleration on a local install
+-----------------------------------
+
+JAX is SoftMobility's numerical backend and benefits from a 5–10× speed-up
+on simulations and optimisations when it can target an NVIDIA GPU. Unlike
+the Colab notebooks (which probe ``nvidia-smi`` at install time), local
+installs do **not** modify your environment automatically — you opt in.
+
+Linux with an NVIDIA GPU (CUDA 12 driver) — install both at once:
+
+.. code-block:: bash
+
+    pip install softmobility "jax[cuda12]"
+
+Or, in an existing environment, upgrade JAX in place:
+
+.. code-block:: bash
+
+    pip install -U "jax[cuda12]"
+
+Verify that JAX sees the device:
+
+.. code-block:: bash
+
+    python -c "import jax; print(jax.devices())"
+
+Expect ``[CudaDevice(id=0), ...]``. ``[CpuDevice(id=0)]`` means JAX did not
+pick up the CUDA build — usually a CUDA toolkit/driver version mismatch;
+consult the `JAX installation guide
+<https://docs.jax.dev/en/latest/installation.html>`_ for the supported
+matrix.
+
+macOS (Apple Silicon and Intel) currently runs JAX on the CPU. An
+experimental ``jax-metal`` backend exists but is not stable enough to
+recommend for production simulations.
+
 .. _running-notebooks-on-google-colab:
 
 Running tutorials and examples on Google Colab
