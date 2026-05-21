@@ -1,8 +1,11 @@
+import math
+
 import jax
 import jax.numpy as jnp
 import pytest
 
 from softmobility import SoftBody, constant_scalar, gravity_field, no_flow
+from softmobility.classes.inputs import Flow
 from softmobility.classes.solver import FlowBodyRollout
 
 # --- Setup: plain module-level instances ---
@@ -139,6 +142,49 @@ def test_rk4_more_accurate_than_rk2():
 def test_rollout_unknown_scheme_raises():
     with pytest.raises(ValueError, match="Unknown integration scheme"):
         ROLLOUT.rollout(DT, N_STEPS, scheme="rk5")
+
+
+@pytest.mark.parametrize("mu", [1.0, 2.0, 0.5])
+def test_sinking_sphere_terminal_velocity_with_viscosity(mu):
+    """Isolated rigid sphere of radius ``a`` under a constant force ``F = -g e_z``
+    in a quiescent fluid of viscosity ``mu`` must sink at the Stokes terminal
+    velocity ``U = -g / (6 pi mu a)``.
+
+    Parametrising over ``mu`` exercises both the default (``mu = 1``, which must
+    reproduce the pre-change behaviour) and non-trivial values."""
+    radius = 1.5
+    g = 3.0
+    yaml = f"""
+    input_names: [gravity]
+    spheres:
+      - radius: {radius}
+        position: [0, 0, 0]
+        force: [gravity0, gravity1, gravity2]
+    """
+    body = SoftBody(yaml, verbose=False)
+    rollout = FlowBodyRollout(
+        body,
+        Flow(lambda pos, t: jnp.zeros(3), viscosity=mu),
+        input_map={"gravity": gravity_field(g=g)},
+    )
+
+    dofs = jnp.zeros(body.Ndof)
+    v_lab, omega, _ = rollout._velocity(
+        body.design_defaults, jnp.zeros(3), jnp.zeros(3), dofs, time=0.0
+    )
+
+    expected_uz = -g / (6.0 * math.pi * mu * radius)
+    assert jnp.allclose(v_lab, jnp.array([0.0, 0.0, expected_uz]), atol=1e-6)
+    assert jnp.allclose(omega, jnp.zeros(3), atol=1e-8)
+
+
+def test_flow_rejects_invalid_viscosity():
+    with pytest.raises(ValueError, match="viscosity"):
+        Flow(lambda pos, t: jnp.zeros(3), viscosity=0.0)
+    with pytest.raises(ValueError, match="viscosity"):
+        Flow(lambda pos, t: jnp.zeros(3), viscosity=-1.0)
+    with pytest.raises(ValueError, match="viscosity"):
+        Flow(lambda pos, t: jnp.zeros(3), viscosity="oil")
 
 
 def test_input_map_validation_errors_are_clear():

@@ -61,7 +61,7 @@ def test_named_flow_constructors_velocity_and_gradient():
     taylor = taylor_green_flow(2.0)
     assert jnp.allclose(
         taylor.velocity(pos),
-        jnp.array([0.0, jnp.sin(2.0) * jnp.cos(3.0), -jnp.cos(2.0) * jnp.sin(3.0)]),
+        jnp.array([0.0, 2.0 * jnp.sin(2.0) * jnp.cos(3.0), -2.0 * jnp.cos(2.0) * jnp.sin(3.0)]),
     )
 
     assert shear_flow(2.0).gradient(pos).shape == (3, 3)

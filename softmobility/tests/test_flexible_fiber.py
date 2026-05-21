@@ -18,9 +18,9 @@ def test_construction_3d():
     # (the x-component of each Rodrigues vector is structurally zero).
     # So Ndof = 2 · (N - 1).
     assert body.Ndof == 8
-    assert body.Ndesign == 4  # radius, K_b, mass, kappa_0 (no gap)
+    assert body.Ndesign == 4  # radius, B, mass, kappa_0 (no gap)
     assert body.Ninput == 3  # gravity field
-    assert body.design_variables == ["radius", "K_b", "mass", "kappa_0"]
+    assert body.design_variables == ["radius", "B", "mass", "kappa_0"]
     assert body.input_variables == ["gravity0", "gravity1", "gravity2"]
     # DOF naming: theta_{i}_y, theta_{i}_z for distal beads only.
     assert body.dof_variables == [
@@ -109,7 +109,7 @@ def test_bent_bond_length_invariant():
 
 def test_planar_C_K_is_torsional_chain_laplacian():
     """``C_K`` (Ty rows) is the discrete Laplacian on bead orientations
-    with coefficient ``K_b / (2a)`` (linearized Gears bending in the
+    with coefficient ``B / (2a)`` (linearized Gears bending in the
     implicit-DOF parameterization).
 
     Sphere 0 has no orientation DOF (its tangent is identified with the
@@ -119,10 +119,10 @@ def test_planar_C_K_is_torsional_chain_laplacian():
     ``(θ_0=0, θ_1, …, θ_{N-1})``.
     """
     n = 5
-    K_b = 1.0
+    bending_rigidity = 1.0
     a = 1.0
-    coef = K_b / (2.0 * a)
-    body = FlexibleFiber(n_beads=n, bending_rigidity=K_b, planar=True)
+    coef = bending_rigidity / (2.0 * a)
+    body = FlexibleFiber(n_beads=n, bending_rigidity=bending_rigidity, planar=True)
     C_K = np.asarray(body.grand_C_K())
 
     # Full Laplacian on (θ_0, …, θ_{N-1}); we keep all N rows but drop
@@ -212,10 +212,10 @@ def test_planar_uniform_progression_no_interior_torque():
     ⇒ interior bead torques are zero. Only the end beads carry torque
     (γ_0 = coef·δθ, γ_{N-1} = −coef·δθ)."""
     n = 7
-    K_b = 1.0
+    bending_rigidity = 1.0
     a = 1.0
-    coef = K_b / (2.0 * a)
-    body = FlexibleFiber(n_beads=n, bending_rigidity=K_b, radius=a, planar=True)
+    coef = bending_rigidity / (2.0 * a)
+    body = FlexibleFiber(n_beads=n, bending_rigidity=bending_rigidity, radius=a, planar=True)
     delta = 0.05
     # Sphere 0 has no DOF; θ_0 = 0 implicitly. The linear progression
     # θ_i = i·δθ then becomes dofs = (δθ, 2δθ, …, (N-1)·δθ).
@@ -236,10 +236,10 @@ def test_planar_3D_consistency_around_y():
     """A 3D fiber whose only non-zero distal-bead rod component is along
     ``E_2`` should produce the same Ty stencil as the planar fiber."""
     n = 6
-    K_b = 1.7
+    bending_rigidity = 1.7
     a = 1.0
-    body_planar = FlexibleFiber(n_beads=n, bending_rigidity=K_b, radius=a, planar=True)
-    body_3d = FlexibleFiber(n_beads=n, bending_rigidity=K_b, radius=a, planar=False)
+    body_planar = FlexibleFiber(n_beads=n, bending_rigidity=bending_rigidity, radius=a, planar=True)
+    body_3d = FlexibleFiber(n_beads=n, bending_rigidity=bending_rigidity, radius=a, planar=False)
 
     rng = np.random.default_rng(1)
     # DOFs cover beads 1 .. N-1. Match conventions: planar packs N-1
@@ -266,9 +266,9 @@ def test_planar_3D_consistency_around_y():
 # ---------------------------------------------------------------------------
 
 
-def _quiescent_planar_rollout(n=5, K_b=1.0):
+def _quiescent_planar_rollout(n=5, bending_rigidity=1.0):
     """Helper: return a FlowBodyRollout for a planar fiber in no flow / no gravity."""
-    fiber = FlexibleFiber(n_beads=n, bending_rigidity=K_b, mass=0.0, planar=True)
+    fiber = FlexibleFiber(n_beads=n, bending_rigidity=bending_rigidity, mass=0.0, planar=True)
     rollout = sm.FlowBodyRollout(
         soft_body=fiber,
         flow=sm.no_flow(),
@@ -323,7 +323,7 @@ def test_clamp_unaffected_dofs_evolve():
     refactor, sphere 0 has no DOF; the first free DOF is ``θ_1`` at
     ``dofs[0]``.)"""
     n = 5
-    fiber, rollout = _quiescent_planar_rollout(n=n, K_b=10.0)
+    fiber, rollout = _quiescent_planar_rollout(n=n, bending_rigidity=10.0)
     init_dofs = jnp.array([0.3, -0.2, 0.1, 0.0])  # θ_1, …, θ_4
     ndof = n - 1
     mask = jnp.zeros(ndof, dtype=bool).at[0].set(True)
@@ -358,12 +358,12 @@ def test_rollout_clamped_anchor_static_relaxation():
     initial DOFs perturbed — the final ``max|Q|`` must be at least
     half the initial value lower (the chain has measurably relaxed)."""
     n = 4
-    K_b = 30.0
+    bending_rigidity = 30.0
     a = 1.0
     init_max = 0.05
-    fiber, rollout = _quiescent_planar_rollout(n=n, K_b=K_b)
+    fiber, rollout = _quiescent_planar_rollout(n=n, bending_rigidity=bending_rigidity)
     init_dofs = jnp.array([init_max, -0.04, 0.03])  # θ_1, θ_2, θ_3
-    dt = 0.05 * (2 * a) ** 4 / K_b
+    dt = 0.05 * (2 * a) ** 4 / bending_rigidity
     n_steps = 1500  # ~1.5 τ_1 → factor-4 decay, well below init_max/2
 
     def anchor_pos(t):
@@ -392,12 +392,12 @@ def test_rollout_clamped_anchor_rotation_drives_dofs():
     steady state — in contrast to the post-step kinematic-clamp path
     which leaves the DOFs at exactly zero."""
     n = 4
-    K_b = 30.0
+    bending_rigidity = 30.0
     a = 1.0
     # 3-D fiber: the rotation axis (lab e_1) is perpendicular to the
     # local bending plane, so the chain has DOFs that respond to it.
     fiber = FlexibleFiber(
-        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=False
+        n_beads=n, radius=a, bending_rigidity=bending_rigidity, mass=0.0, planar=False
     )
     rollout = sm.FlowBodyRollout(
         soft_body=fiber,
@@ -405,10 +405,10 @@ def test_rollout_clamped_anchor_rotation_drives_dofs():
         input_map={"gravity": sm.gravity_field(g=0.0)},
     )
     psi = 0.2
-    # Sp⁴ = L³ ζ γ⊥ / K_b ≈ 9 with these numbers — modest deformation
+    # Sp⁴ = L³ ζ γ⊥ / B ≈ 9 with these numbers — modest deformation
     # well inside the linearisation regime.
     zeta = 0.1
-    dt = 0.05 * (2 * a) ** 4 / K_b
+    dt = 0.05 * (2 * a) ** 4 / bending_rigidity
     n_steps = 1500  # rotating actuation reaches body-frame steady state within ~1τ
 
     def anchor_pos(t):
@@ -453,7 +453,7 @@ def test_rollout_clamped_anchor_unknown_scheme_raises():
 
 
 # ---------------------------------------------------------------------------
-# Analytical validation: Euler–Bernoulli tip deflection pins k_t = K_b/(2a)
+# Analytical validation: Euler–Bernoulli tip deflection pins k_t = B/(2a)
 # ---------------------------------------------------------------------------
 
 
@@ -462,24 +462,24 @@ def test_static_cantilever_matches_euler_bernoulli():
     relax to the static bead-chain equilibrium obtained from
     ``γ_int + γ_ext = 0``, which in the small-angle limit reduces to a
     tridiagonal linear system with the bending coefficient
-    ``k_t = K_b/(2a)``. We solve that system in-test to get the
+    ``k_t = B/(2a)``. We solve that system in-test to get the
     discrete reference, then run the rollout to steady state and
     require the tip deflection to match within 5 %. Any factor-of-2
     error in ``k_t`` would scale every DOF (and hence ``δ_tip``) by
     2× and trip the assertion.
 
     Sanity-check: the discrete prediction agrees with the continuum
-    Euler–Bernoulli answer ``q · L⁴ / (8 · K_b)`` up to the expected
+    Euler–Bernoulli answer ``q · L⁴ / (8 · B)`` up to the expected
     ``O((a/L)²)`` discretisation residual.
     """
     n = 5
-    K_b = 30.0
+    bending_rigidity = 30.0
     a = 1.0
     m = 1.0
     g = 1e-3  # small enough to stay in the small-angle (linear) regime
     L = (n - 1) * 2.0 * a
     q = m * g / (2.0 * a)
-    alpha = 2.0 * m * g * a**2 / K_b
+    alpha = 2.0 * m * g * a**2 / bending_rigidity
 
     # Discrete static balance on the bead-orientation DOFs
     # (θ_1, …, θ_{N-1}): K_lap · θ = α · (2N - 2j - 1), where K_lap is
@@ -502,7 +502,7 @@ def test_static_cantilever_matches_euler_bernoulli():
     delta_discrete = abs(
         a * (2.0 * np.sum(theta_discrete[:-1]) + theta_discrete[-1])
     )
-    delta_continuum = q * L**4 / (8.0 * K_b)
+    delta_continuum = q * L**4 / (8.0 * bending_rigidity)
 
     # Discrete ↔ continuum stay within the O((a/L)²) discretisation
     # residual — guards against subtle changes in the kinematics.
@@ -513,7 +513,7 @@ def test_static_cantilever_matches_euler_bernoulli():
     )
 
     fiber = FlexibleFiber(
-        n_beads=n, radius=a, bending_rigidity=K_b, mass=m, planar=True
+        n_beads=n, radius=a, bending_rigidity=bending_rigidity, mass=m, planar=True
     )
     rollout = sm.FlowBodyRollout(
         soft_body=fiber,
@@ -521,7 +521,7 @@ def test_static_cantilever_matches_euler_bernoulli():
         input_map={"gravity": sm.gravity_field(g=g)},
     )
 
-    dt = 0.05 * (2.0 * a) ** 4 / K_b
+    dt = 0.05 * (2.0 * a) ** 4 / bending_rigidity
     n_steps = 24000  # ≳ 4 τ_1 of slowest-mode relaxation for N=5 (τ_1 ∝ L⁴)
 
     _, _, dofs_traj, _ = rollout.rollout_clamped_anchor(
@@ -541,7 +541,7 @@ def test_static_cantilever_matches_euler_bernoulli():
     assert rel_err < 0.05, (
         f"sim tip deflection {delta_sim:.6g} differs from the discrete "
         f"static-balance prediction {delta_discrete:.6g} by "
-        f"{rel_err * 100:.1f} % (> 5 %); k_t = K_b/(2a) prefactor "
+        f"{rel_err * 100:.1f} % (> 5 %); k_t = B/(2a) prefactor "
         "is likely wrong"
     )
 
@@ -601,7 +601,7 @@ def test_linear_bending_eigenmode_decay():
     bending torque and the soft-mobility tensor builder at the straight
     reference. Background sweep: ``drafts/linear_curvature_findings.md``.
     """
-    fiber, rollout = _quiescent_planar_rollout(n=3, K_b=10.0)
+    fiber, rollout = _quiescent_planar_rollout(n=3, bending_rigidity=10.0)
     eigvals, eigvecs, W = _bending_eigendecomp(fiber)
     dt = 0.05 / abs(eigvals.min())  # stability w.r.t. fastest mode
     # ~2 e-folds of the slowest mode is more than enough for a clean
@@ -639,7 +639,7 @@ def test_linear_bending_amplitude_independence():
     swap-in (Delmotte 2015) silently makes the torque
     amplitude-dependent. Background: ``drafts/linear_curvature_findings.md``.
     """
-    fiber, rollout = _quiescent_planar_rollout(n=3, K_b=10.0)
+    fiber, rollout = _quiescent_planar_rollout(n=3, bending_rigidity=10.0)
     eigvals, eigvecs, W = _bending_eigendecomp(fiber)
     v1 = eigvecs[:, 0]
     w1 = W[0, :]
@@ -678,12 +678,12 @@ def test_intrinsic_curvature_equilibrium_is_torque_free_planar():
     """With ``intrinsic_curvature = κ_0``, the uniformly-curved
     configuration ``θ_i = i · 2a · κ_0`` must be the energy minimum —
     i.e. every bead's bending torque vanishes there. Confirms the κ_0
-    boundary biases (±K_b·κ_0 on i=0 and i=N-1) are correctly placed
+    boundary biases (±B·κ_0 on i=0 and i=N-1) are correctly placed
     and the interior κ_0 cancellation is preserved.
     """
-    n, a, K_b, kappa_0 = 5, 1.0, 30.0, 0.05
+    n, a, bending_rigidity, kappa_0 = 5, 1.0, 30.0, 0.05
     fiber = FlexibleFiber(
-        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0,
+        n_beads=n, radius=a, bending_rigidity=bending_rigidity, mass=0.0,
         planar=True, intrinsic_curvature=kappa_0,
     )
     beta = 2.0 * a * kappa_0  # preferred Δθ per bond
@@ -704,9 +704,9 @@ def test_intrinsic_curvature_equilibrium_is_torque_free_3d():
     is ``(0, i · 2a · κ_0, 0)``; both unused twist (x) and the
     perpendicular bending (z) components stay zero.
     """
-    n, a, K_b, kappa_0 = 4, 1.0, 30.0, 0.05
+    n, a, bending_rigidity, kappa_0 = 4, 1.0, 30.0, 0.05
     fiber = FlexibleFiber(
-        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0,
+        n_beads=n, radius=a, bending_rigidity=bending_rigidity, mass=0.0,
         planar=False, intrinsic_curvature=kappa_0,
     )
     beta = 2.0 * a * kappa_0
@@ -731,9 +731,9 @@ def test_intrinsic_curvature_default_preserves_existing_behaviour():
     free. Guards against accidental sign drift in the κ_0 boundary
     bias terms.
     """
-    n, a, K_b = 5, 1.0, 30.0
+    n, a, bending_rigidity = 5, 1.0, 30.0
     fiber = FlexibleFiber(
-        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=True,
+        n_beads=n, radius=a, bending_rigidity=bending_rigidity, mass=0.0, planar=True,
     )
     straight = jnp.zeros(n - 1)
     t = jnp.array([0.0])
@@ -786,9 +786,9 @@ def test_torque_zero_at_dof_defaults_planar():
     at ``fiber.dof_defaults`` for any ``κ_0`` (planar). Ties the
     kinematic default to the dynamic equilibrium.
     """
-    n, a, K_b, kappa_0 = 5, 1.0, 30.0, 0.05
+    n, a, bending_rigidity, kappa_0 = 5, 1.0, 30.0, 0.05
     fiber = FlexibleFiber(
-        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=True,
+        n_beads=n, radius=a, bending_rigidity=bending_rigidity, mass=0.0, planar=True,
         intrinsic_curvature=kappa_0,
     )
     t = jnp.array([0.0])
@@ -805,9 +805,9 @@ def test_torque_zero_at_dof_defaults_planar():
 
 def test_torque_zero_at_dof_defaults_3d():
     """Same invariant in 3D."""
-    n, a, K_b, kappa_0 = 4, 1.0, 30.0, 0.05
+    n, a, bending_rigidity, kappa_0 = 4, 1.0, 30.0, 0.05
     fiber = FlexibleFiber(
-        n_beads=n, radius=a, bending_rigidity=K_b, mass=0.0, planar=False,
+        n_beads=n, radius=a, bending_rigidity=bending_rigidity, mass=0.0, planar=False,
         intrinsic_curvature=kappa_0,
     )
     t = jnp.array([0.0])

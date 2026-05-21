@@ -383,11 +383,19 @@ class Flow(_ParametricBase):
     param_names : str or list of str, optional
         Names for each parameter, enabling named access and updates.
         If provided, must have the same length as ``params``.
+    viscosity : float, default=1.0
+        Dynamic viscosity :math:`\\mu` of the surrounding fluid. Used by
+        :class:`~softmobility.classes.solver.FlowBodyRollout` to rescale the
+        hydrodynamic mobility response (``M_H`` and ``M_K`` are divided by
+        :math:`\\mu`). Stored as a static Python float; must be strictly
+        positive. Does not affect the flow velocity field itself.
 
     Attributes
     ----------
     param_names : list of str or None
         Names of the parameters, if provided.
+    viscosity : float
+        Dynamic viscosity of the fluid.
 
     Examples
     --------
@@ -414,11 +422,22 @@ class Flow(_ParametricBase):
     trace time.
     """
 
-    def __init__(self, func, params=None, param_names=None):
+    def __init__(self, func, params=None, param_names=None, viscosity=1.0):
         super().__init__(params, param_names)
         if not callable(func):
             raise TypeError(f"Flow expects a callable, got {type(func).__name__}.")
+        try:
+            mu = float(viscosity)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"viscosity must be a real positive scalar, got {viscosity!r}."
+            ) from exc
+        if not (mu > 0.0 and jnp.isfinite(mu)):
+            raise ValueError(
+                f"viscosity must be a finite, strictly positive scalar, got {viscosity!r}."
+            )
         self._func = func
+        self.viscosity = mu
 
     def velocity(self, pos=None, time=0.0):
         """
@@ -776,12 +795,12 @@ def taylor_green_flow(omega=1.0):
     Create a Taylor-Green-style vortex flow.
 
     The implemented velocity is
-    ``0.5 * omega * [0, sin(y)*cos(z), -cos(y)*sin(z)]``.
+    ``omega * [0, sin(y)*cos(z), -cos(y)*sin(z)]``.
 
     Parameters
     ----------
     omega : float, default=1.0
-        Velocity scale.
+        Maximum angular velocity of the flow (equal to half the maximum vorticity).
 
     Returns
     -------
@@ -789,8 +808,7 @@ def taylor_green_flow(omega=1.0):
         Parametric flow with named parameter ``"omega"``.
     """
     return Flow(
-        lambda pos, t, omega: 0.5
-        * omega[0]
+        lambda pos, t, omega: omega[0]
         * jnp.array([0.0, jnp.sin(pos[1]) * jnp.cos(pos[2]), -jnp.cos(pos[1]) * jnp.sin(pos[2])]),
         params=float(omega),
         param_names="omega",

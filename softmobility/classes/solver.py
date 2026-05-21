@@ -72,6 +72,9 @@ class FlowBodyRollout:
       the soft body and flow.
     - The velocity method computes the soft body's linear velocity, angular velocity, and dof
       derivatives in the lab frame.
+    - The fluid dynamic viscosity ``mu`` is read from ``flow.viscosity`` (default ``1.0``) and
+      rescales the body's hydrodynamic response: ``M_H`` and ``M_K`` are divided by ``mu`` inside
+      :meth:`_velocity`, while ``C_E`` and ``p_act`` are unaffected.
     """
 
     def __init__(
@@ -95,8 +98,15 @@ class FlowBodyRollout:
         E_inf = jnp.array([E_body[0, 0], E_body[0, 1], E_body[0, 2], E_body[1, 1], E_body[1, 2]])
         tensors = self.soft_body.compute_tensors(dofs, design, time)
 
-        # Soft mobility equation in the body frame
-        p_body = tensors.M_H @ inputs + tensors.M_K @ dofs + tensors.C_E @ E_inf + tensors.p_act
+        # Soft mobility equation in the body frame. Only the M_H and M_K terms
+        # carry a hydrodynamic mobility factor and so scale as 1/mu; C_E and
+        # p_act are dimensionless in mu.
+        mu = self.flow.viscosity
+        p_body = (
+            (tensors.M_H @ inputs + tensors.M_K @ dofs) / mu
+            + tensors.C_E @ E_inf
+            + tensors.p_act
+        )
 
         # Rotate body-frame result back to lab frame
         p_lab = sixc_rot @ p_body

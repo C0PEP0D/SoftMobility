@@ -144,7 +144,7 @@
 % \affiliation can be followed by \email, \homepage, \thanks as well.
 \author{Christophe Eloy}
 \affiliation{Aix-Marseille Univ, CNRS, Centrale Med, IRPHE, Marseille, France}
-\email[]{christophe.eloy@centrale-med.fr}
+\email[]{celoy@centrale-med.fr}
 %\homepage[]{Your web page}
 %\thanks{}
 \affiliation{Department of Applied Mathematics and Theoretical Physics, University of Cambridge, Cambridge, UK}
@@ -260,7 +260,7 @@ Under the action of the flow and internal stresses, a material point $\bX\in\Ome
 
 \begin{figure}[t]
 \begin{center}
-    \includegraphics[scale=0.66]{./Figures/Fig1}
+    \includegraphics[scale=0.60]{./Figures/Fig1}
 \caption{Representation of the body in (a) the reference configuration and (b) the deformed configuration. }
 \label{fig:elastic_deformations}
 \end{center}
@@ -328,7 +328,7 @@ The auxiliary solution $(\bu^*, p^*)$ is driven by the virtual velocity field,
 
 \begin{figure}[t]
 \begin{center}
-    \includegraphics[scale=0.66]{./Figures/Fig2}
+    \includegraphics[scale=0.60]{./Figures/Fig2}
 \caption{Two solutions of the Stokes equations used in the reciprocal theorem: (a) the auxiliary problem, driven by virtual surface velocity $\bV^*$ in an otherwise quiescent fluid, producing traction $\bff_s^*$ on the left-hand side of Eq.~(\ref{eq:reciprocity}); (b) the physical problem, the body moving with velocity $\bxd$ in background flow $\bu^\infty$, producing traction $\bff_s$ on the right-hand side of Eq.~(\ref{eq:reciprocity}).}
 \label{fig:two_stokes}
 \end{center}
@@ -424,7 +424,7 @@ Because $\bV$ is affine in $\bQd$, it is a quasi-velocity of the Lagrangian syst
 
 \begin{figure}[t]
 \begin{center}
-    \includegraphics[scale=0.66]{./Figures/Fig3}
+    \includegraphics[scale=0.60]{./Figures/Fig3}
 \caption{Notations for an assembly of spheres.
 (a) Assembly of $N=3$ spheres with $N_Q=2$ degrees of freedom $\bQ=[Q_1,Q_2]$. In the assembly frame, the $i$-th sphere is at position $\bR_i$ and has an orientation $\bTheta_i$. The assembly frame is at position $\br_0$ and orientation $\btheta_0$ in the laboratory frame.
 (b) The assembly configuration is entirely represented by its position $\br_0$, its orientation $\btheta_0$, and its degrees of freedom $\bQ$.}
@@ -670,14 +670,17 @@ analytical trajectories of the unit vector $\bG$ agree to better than numerical 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Flexible fiber\label{sec:fibers}}
 
+%General fibers
+We now want to test the code implementation of elasticity. The most common geometry deformable object in the literature is a flexible fiber \cite{Du-Roure2019}.
+In our case, the fiber is modelled as $N$ touching spheres joined by linear torsional springs of stiffness $k=B/2a$. The parameter $B$ is equivalent to the bending rigidity, such that $B = (\pi/4) E a^4$ for a fiber of radius $a$, with $E$ the Young's modulus. 
+
 %Sinking
-We now allow internal deformation to test the code implementation of elasticity. 
-We consider a planar fiber, discretised as $N=10$ spheres joined by linear torsional springs of stiffness $k=K_b/2a$, with $K_b$ the equivalent beam rigidity ($K_b = (\pi/4) E a^4$ for a beam of radius $a$, with $E$ the Young's modulus). 
-The problem is governed by the dimensionless rigidity $\beta = K_b / F_\perp L^2$, with $F_\perp = N m g$ the total weight of the fiber, $m$ being the weight of each sphere~\cite{Li2013,Delmotte2015}. 
+We first consider the problem of a negatively buoyant fiber sinking in a fluid at rest. The fiber is modelled with $N=10$ spheres.
+The problem is governed by the dimensionless rigidity $\hat B = B / F_\perp L^2$, with $F_\perp = N m g$ the total weight of the fiber, $m$ being the weight of each sphere~\cite{Li2013,Delmotte2015}. 
 
 As the fiber settles under gravity in a quiescent fluid, the problem activates the $N_Q=N-1$ soft degrees of freedom $\bQ$ and the stiffness mobility $\tM_K$ for the first time (Fig.~\ref{fig:sinking_fiber}a). 
-Starting from a straight horizontal configuration, the fiber relaxes to a steady horseshoe shape (Fig.~\ref{fig:sinking_fiber}b), whose curvature
-increases as $\beta$ decreases (Fig.~\ref{fig:sinking_fiber}c). 
+Starting from a straight configuration, the fiber relaxes to a steady horseshoe shape (Fig.~\ref{fig:sinking_fiber}b), whose curvature
+increases as $\hat B$ decreases (Fig.~\ref{fig:sinking_fiber}c). 
 We recover the progression from a nearly straight rod
 to a tightly curled U reported in Refs~\cite{Li2013,Delmotte2015} with slight differences due to the difference implementations: Li et al.~\cite{Li2013} consider a fiber with elliptic shape, and Delmotte et al.~\cite{Delmotte2015} consider resistive force theory only, which does not include hydrodynamic interactions between the different parts of the fiber. 
 
@@ -697,7 +700,7 @@ to a tightly curled U reported in Refs~\cite{Li2013,Delmotte2015} with slight di
 %%%%%%%%%%%%%%%%%
 
 % Rotating
-We next break planarity and introduce prescribed kinematics. 
+The next case breaks planarity and introduces prescribed kinematics. 
 We consider a flexible fiber made of $N=8$ spheres, clamped at one end to an off-axis support
 that is forced to rotate around a fixed axis~\cite{Wiggins1998,Coq2008,Coq2009}. 
 Assuming infinitely stiff twisting rigidity, this soft body has $N_Q=14$ degrees of freedom (two bending degrees per adjacent sphere pair). 
@@ -705,10 +708,10 @@ The clamp acts as a kinematic constraint and generates an unknown reaction force
 It is handled through a different soft mobility system derived in Appendix~\ref{app:clamped_anchor},
 which takes as unknown $\bQd$ and $\bff_0=[\bF_0,\bT_0]$, the force and torque acting on the clamped sphere 0. 
 
-In this problem, the dimensionless control parameter is the Sperm number $\mathrm{Sp} = {L}/{L_\omega}$, with $L_\omega = \left({K_b}/{\mu_\perp\,\omega}\right)^{1/4}$ and $\mu_\perp = {4\pi\mu}/{\ln(L/a) + 1/2}$, the slender-body transverse drag. 
+In this problem, the dimensionless control parameter is the Sperm number $\mathrm{Sp} = {L}/{L_\omega}$, with $L_\omega = \left({B}/{\mu_\perp\,\omega}\right)^{1/4}$ and $\mu_\perp = {4\pi\mu}/{\ln(L/a) + 1/2}$, the slender-body transverse drag. 
 Our aim is to reproduce the experimental results of Refs~\cite{Coq2008,Coq2009}, in which the fiber is set at an angle $\psi=15^\circ$ with respect to the rotating axis. In these references, the Sperm number is defined with an exponent $4$ compared to the standard definition used here.
 As $\mathrm{Sp}^4$ is increased from $0.5$ to $35$, the shape progresses from a nearly straight rotating fiber through a steady three-dimensional shape that progressively wraps onto the rotation axis, reproducing the regimes documented experimentally (Fig.~\ref{fig:rotating_fiber}). 
-Steady state is assessed by the body-frame condition $\max\|\bQd\|\,\tau_\mathrm{el}\ll 1$, where $\tau_\mathrm{el} = (2a)^4\mu / K_b$ is the typical elastic relaxation time.
+Steady state is assessed by the body-frame condition $\max\|\bQd\|\,\tau_\mathrm{el}\ll 1$, where $\tau_\mathrm{el} = (2a)^4\mu / B$ is the typical elastic relaxation time.
 
 %%%%%%%%%%%%%%%%%
 \begin{figure}[t]
@@ -724,17 +727,20 @@ Steady state is assessed by the body-frame condition $\max\|\bQd\|\,\tau_\mathrm
 %%%%%%%%%%%%%%%%%
 
 % Tumbling
-Fig.~\ref{fig:tumbling_fiber}
-\cite{Schmid2000,Delmotte2015,Liu2018}
+The third case considers a flexible fiber made of $N=15$ spheres, in a pure shear flow $\bu^\infty = \dot\gamma\,y\,\be_1$. 
+To break the symmetry, the fiber has an intrinsic curvature of $\kappa_0=0.01/L$. 
+The problem is governed by the dimensionless rigidity $\bar B = B / (8\pi\mu\dot\gamma a^4)$, which compares elastic and viscous forces.
+Figure~\ref{fig:tumbling_fiber} shows the tumbling dynamics when $\bar B = 200$: after a short transient, the fiber periodically rotates in the shear plane. Its maximum curvature and its angular velocity both reach a peak when the fiber is normal to the flow direction (C shape numbered 5 in Fig.~\ref{fig:tumbling_fiber}c). 
+This tumbling dynamics is similar to what has been reported in experiments~\cite{Liu2018} and simulations~\cite{Schmid2000,Delmotte2015}.
 
 %%%%%%%%%%%%%%%%%
 \begin{figure}[t]
 \begin{center}
    \includegraphics[scale=0.60]{./Figures/Fig7}
 \caption{
-	Flexible fiber tumbling in pure shear flow. 
-	(a) Orientation angle $\theta_0$ around $\be_3$ of the leftmost sphere as a function of time, normalised by the Jeffery's period of the rigid assembly.
-	(b) Maximum curvature of the fiber in units of length as a function of time. The horizontal grey line shows the intrinsic curvature of the fiber $\kappa_0 = 0.01 / L$\new{, which also sets the initial fiber shape (uniformly-curved rest state)}.
+	Flexible fiber tumbling in pure shear flow for a dimensionless bending rigidity $\bar B = B / (8\pi\mu\dot\gamma a^4)=200$. 
+	(a) Orientation angle $\theta_0$ around $\be_3$ of the leftmost sphere as a function of time, normalised by the Jeffery's period of the rigid assembly $T$.
+	(b) Maximum curvature of the fiber in units of length as a function of time. The horizontal grey line shows the intrinsic curvature of the fiber $\kappa_0 = 0.01 / L$.
 	(c) Snapshots of the fiber deformation as labelled in (b).  
 }
 \label{fig:tumbling_fiber}
@@ -745,26 +751,30 @@ Fig.~\ref{fig:tumbling_fiber}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Jeffery's orbits}
 
-To test the coupling to the background flow, we implement the Jeffery's orbits in shear flow~\cite{Jeffery1922, Bretherton1962, Thorp2019, Ishimoto2023}. 
-Jeffery~\cite{Jeffery1922} showed that such a rigid axisymmetric particle tumbles on a closed orbit. 
-The period and shape of the orbits are set by a single shape parameter $B$, later generalised by Bretherton~\cite{Bretherton1962} to arbitrary axisymmetric bodies through an equivalent aspect ratio. 
-Noting $\bE_1 = \bp$ the axis of symmetry, the rigid mobility equation reduces to
+We now place a rigid dumbbell made of two identical spheres in a pure shear flow. 
+This axissymmetric body follows periodic trajectories, known as Jeffery's orbits~\cite{Jeffery1922, Bretherton1962, Thorp2019, Ishimoto2023}. 
+The period and shape of the orbits are set by a single shape parameter $\beta$. 
+For an ellipsoid of aspect ratio $c=a_\parallel / a_\perp$, the shape parameter is $\beta = (c^2 - 1) / (c^2 + 1)$. 
+It was later generalised by Bretherton~\cite{Bretherton1962} to arbitrary axisymmetric bodies through an equivalent aspect ratio.
+In our case, the Bretherton parameter $B$ is the component of the tensor $\tC_E$ coupling the component $\bE_3$ of the angular velocity $\bomega_0$ to the component $\bE_1 \otimes \bE_2$ of the rate-of-strain tensor $\tE_0^\infty$. 
+
+Noting $\bE_1 = \bp$ the dumbbell's axis of symmetry, the rigid mobility equation reduces to
 \begin{equation}
-\bpd = \bomega^\infty \times \bp + 
-	B\left[\tE^\infty\cdot\bp - (\bp\cdot\tE^\infty\cdot\bp)\bp\right],
+\bpd = \bomega_0^\infty \times \bp +
+	\beta\left(\tE_0^\infty\cdot\bp - (\bp\cdot\tE_0^\infty\cdot\bp)\bp\right).
 \end{equation}
-and in a shear flow $\bu^\infty = \dot\gamma\,y\,\be_1$, the angular velocity and rate-of-strain tensor reduce to $\bomega^\infty =- \dot\gamma\be_3/2 $ and $\tE^\infty = \dot\gamma(\be_1 \otimes \be_2 + \be_2 \otimes \be_1)/2$. 
+In a shear flow $\bu^\infty = \dot\gamma\,y\,\be_1$, the angular velocity and rate-of-strain tensor reduce to $\bomega_0^\infty =- \dot\gamma\be_3/2 $ and $\tE_0^\infty = \dot\gamma(\be_1 \otimes \be_2 + \be_2 \otimes \be_1)/2$. 
 In spherical coordinates, $\bp = (\sin\theta\cos\varphi,\sin\theta\sin\varphi,\cos\theta)$ and the Jeffery's orbit admits an analytical solution such that
 \begin{equation}\label{eq:Jeffery_solution}
 \tan\varphi(t) = -\frac{1}{c} \tan\left(\frac{\dot\gamma t}{c+1/c} + \varphi_0 \right), \quad
 \tan^2\theta \left(\cos^2\varphi + c^2\sin^2\varphi \right)=K^2,
 \end{equation}
-with $c=\sqrt{(1+B)/(1-B)}$, period $T=2\pi(c+1/c)/\dot\gamma$, and
-orbit constant of motion $K$, which is set by the initial condition.  
+with  equivalent aspect ratio $c=\sqrt{(1+\beta)/(1-\beta)}$, period $T=2\pi(c+1/c)/\dot\gamma$, and
+ constant of motion $K$, which is set by the initial condition.  
 The above solution is now used to test the Python library implementation of the body-flow coupling.
 
-The body is a two-sphere rigid dumbbell immersed in a shear flow (Fig.~\ref{fig:Jeffery_rigid}a). 
-The dumbbell's Bretherton parameter $B$ is recovered from its rigid mobility tensor and substituted into the analytical orbit. 
+The rigid body geometry is shown in Fig.~\ref{fig:Jeffery_rigid}a: it is made of two spheres of radius $a=1$ separated by a gap $\delta = 1$. 
+The dumbbell's Bretherton parameter $\beta=0.717$ is recovered from the rigid mobility tensor and substituted into the analytical orbit.
 In Figure~\ref{fig:Jeffery_rigid}, we compare the orbits computed from the library to the analytical solution given by Eq.~(\ref{eq:Jeffery_solution}), which agree within numerical precision. 
 
 
@@ -785,12 +795,14 @@ In Figure~\ref{fig:Jeffery_rigid}, we compare the orbits computed from the libra
 
 
 % Soft
-\cite{Zhang2019,Ishimoto2023}
+Jeffery's orbits are degenerated, but the degeneracy can be lifted by a small amount of inertia, or a non-Newtonian rheology~\cite{Ishimoto2023}.
+Another way to lift degeneracy is to add flexibility~\cite{Zhang2019}. This can be easily tested in the proposed library by replacing the ribig bond between the two spheres of the dumbbell by an linear spring of stifness $k=100\mu \dot\gamma a$.
+In that case, the orbits migrate towards the shear plane, as shown in Fig.~\ref{fig:jeffery_soft}.
 
 
 
 %%%%%%%%%%%%%%%%%
-\begin{figure}[bt]
+\begin{figure}[bht]
 \begin{center}
     \includegraphics[scale=0.60]{./Figures/Fig9}
 \caption{
@@ -813,7 +825,7 @@ In Figure~\ref{fig:Jeffery_rigid}, we compare the orbits computed from the libra
 We next turn to active swimming and optimization. 
 Najafi and Golestanian proposed a simple three-sphere swimmer~\cite{Najafi2004}, which we will use for this is validation. 
 This swimmer is made of three spheres of radii $a_i$ connected by deformable links, breaking time-reversal symmetry through a non-reciprocal actuation cycle (Fig.~\ref{fig:three_sphere}a). 
-Here we drive the swimmer by a sinusoidal elongation $L_2 = l_2(1+\varepsilon\sin(\omega t))$ between the right and middle spheres. The left sphere is connected to the middle sphere by a passive spring of stiffness $k$ and rest length $l1$. 
+Here we drive the swimmer by a sinusoidal elongation $L_2 = l_2(1+\varepsilon\sin(\omega t))$ between the right and middle spheres. The left sphere is connected to the middle sphere by a passive spring of stiffness $k$ and rest length $l_1$. 
 The problem is entirely determined by the dimensionless parameters
 \begin{equation}
 \Omega = \omega \mu (l_1 + l_2) / k, \quad
@@ -853,17 +865,53 @@ To test the optimization method further, we optimize three design parameters: $k
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Soft surfer}
 
+We now consider the optimization of a navigation problem: a gyrotactic swimmer in a Taylor--Green vortical flow~\cite{Colabrese2017}.
+We will examine whether elastic deformations may help the swimmer to orient in the flow to ascend more rapidly passively.
+The flow velocity of the Taylor--Green vortices is $\bu^\infty = V_\mathrm{max} [0, \sin(y/L)\cos(z/L), -\cos(y/L)\sin(z/L)]$, with typical length $L$, such that the maximum angular flow velocity is $\omega_\mathrm{max}=V_\mathrm{max}/L$.
+
+We first consider a rigid bottom-heavy swimmer made of a light sphere, numbered 0, of radius $a_0$ and equivalent mass $m_0=-1$, and a heavy sphere of radius $a_1\leq a_0$ and opposite mass $m_1=1$ (Fig.~\ref{fig:surfers}a).
+The swimming direction $\bp=\bE_3$ of this rigid swimmer follows the Pedley--Kessler equation \cite{Pedley1992}
+\begin{equation}\label{eq:Pedley-Kessler}
+\bpd = \bomega_0^\infty \times \bp + \beta\left(\tE_0^\infty\cdot\bp - (\bp\cdot\tE_0^\infty\cdot\bp)\bp\right) + \frac{1}{2 \tau_\mathrm{align}} \left(\be_3 - (\be_3\cdot\bp ) \bp\right),
+\end{equation}
+where the first two terms on the right-hand side are due to the viscous torques and the third term to the gravitational torque.
+In practice, for a rigid body with axis of symmetry $\bE_3$, the alignment timescale is $\tau_\mathrm{align} = 1/(2 m_1 g M_H)$, where $M_H$ is the entry of the mobility tensor $\tM_H$ that couples the $\bE_1$ component of the angular velocity $\bomega_0$ to the $\bE_2$ component of the gravitational force.
+For the rigid body represented in Fig.~\ref{fig:surfers}a, we find $\tau_\mathrm{align} = 0.075 / \omega_\mathrm{max}$ for $m_1 g = 50 \mu a_0^2 \omega_\mathrm{max}$.
+
+We integrate the mobility equation~(\ref{eq:soft_mobility_body}) for this bottom-heavy rigid swimmer by adjusting the active force such that the swimming velocity in a fluid at rest is $V_\mathrm{swim} = V_\mathrm{max}$. This is equivalent to integrating Eq.~(\ref{eq:Pedley-Kessler}) for the orientation, together with the equation $\bu_0 = \bu_0^\infty + V_\mathrm{swim}\bp$ for the translation. The trajectories for different initial positions are depicted in Fig.~\ref{fig:surfers}d. The swimmer tends to orient upwards, thanks to its bottom-heaviness, when it is near a separatrix where the vorticity is small. Otherwise, it tends to orient at an angle that can be obtained by balancing the viscous and gravitational torques in Eq.~(\ref{eq:Pedley-Kessler}). This equilibrium direction is illustrated in Fig.~\ref{fig:surfers}a for a steady vortical flow. It tends to move the swimmer in regions of smaller vertical velocity, which results in a preferential sampling of negative vertical flow velocities. This slows down the vertical migration and the effective vertical speed is $V_\mathrm{eff} = 0.567 V_\mathrm{swim}$ for the 15 initial conditions tested in Fig.~\ref{fig:surfers}d and a simulation time of $T=4\pi/ \omega_\mathrm{max}$. In other words, the vertical translation is slowed down by the background flow for a rigid gyrotactic swimmer. 
+
 %%%%%%%%%%%%%%%%%
 \begin{figure}[t]
 \begin{center}
     \includegraphics[scale=0.60]{./Figures/Fig11}
 \caption{
-	Surfing.	
+	Vertical migration by gyrotactic swimmers in a flow.
+	We consider three types of swimmers:
+	(a) a rigid asymmetric dumbbell with the small sphere heavier than the large one;
+	(b) a soft swimmer with the same shape as (a) but with the two spheres able to roll on each other, with a torsional pull-back spring;
+	(c) a surfer, which chooses the direction of swimming according to the surfing policy aligned with $\be_3\cdot \exp(\tau \nabla \bu^\infty)$.
+	These three swimmers with identical swimming speed $V_\mathrm{swim}$ have different trajectories in a Taylor--Green vortical flow:
+	(d) rigid swimmers can get trapped in vortical cells and their effective vertical velocity is $V_\mathrm{eff} = 0.567 V_\mathrm{swim}$; 
+	(e) soft swimmers ``slalom'' the vortical cells and enhance their effective vertical velocity to $V_\mathrm{eff} = 1.193 V_\mathrm{swim}$;
+	(f) surfers reach a similar effective vertical velocity of $V_\mathrm{eff} = 1.195 V_\mathrm{swim}$ with a more conservative strategy (more vertical).
+	Light blue lines represent the flow streamlines (dashed for negative vorticity, solid for positive vorticity). 
 	}
 \label{fig:surfers}
 \end{center}
 \end{figure}
 %%%%%%%%%%%%%%%%%
+
+We now consider the same geometry, but instead of having a rigid body, the two spheres are able to roll onto each other with a torsional spring of stiffness $k$ (Fig.~\ref{fig:surfers}b). The active force producing the swimming is now attached to the heavy sphere, such that it is not necessarily aligned with $\bE_3$: $\bE_3$ remains aligned with the axis joining the centers of the two spheres, but the orientation of each sphere is different with orientation vectors satisfying $a_1 \btheta_1 = -a_0\btheta_0$ (condition for rolling without slip).
+Flexibility adds a dimensionless rigidity to the problem: $\bar k = k/(\mu \omega_\mathrm{max} a_0^3)$.
+Through the optimization, we found the design parameters of this soft swimmer that maximize the average effective vertical velocity $V_\mathrm{eff}$ for the same 15 initial conditions as the rigid gyrotactic swimmer and the same simulation time of $T=4\pi/ \omega_\mathrm{max}$.
+These optimal parameters are $a_1/a_0=0.169$ and $\bar k = 18.2$, and the effective velocity is $V_\mathrm{eff} = 1.193 V_\mathrm{swim}$, which means that this soft swimmer swims 19\% faster than without background flow (Fig.~\ref{fig:surfers}e).
+We interpret this ``surfing'' behavior as a preferential sampling of upward vertical flow velocities.
+This preferential sampling is achieved by a swimming direction in vortical flow that is the mirror of that of a rigid swimmer, while the bottom-heavy axis still points in the same direction (Fig.~\ref{fig:surfers}b). 
+Intuitively, the torsional spring lets the active-force direction decouple from the bottom-heavy axis: the spring stiffness $\bar k$ sets how strongly the swimming direction differs from the bottom-heavy axis, and the optimum is reached when this difference reverses the gyrotactic bias.
+
+We compare this performance with that of a surfer that chooses its swimming direction according to the surfing strategy of Ref. \cite{Monthiller2022}, which aligns the swimming direction along $\be_3\cdot\exp(\tau\nabla\bu^\infty)$ with a time delay $\tau_\mathrm{align}$ to make a fair comparison with the rigid or soft gyrotactic swimmers considered before. 
+This surfing strategy is based on a linear approximation of the background flow integrated during a typical correlation time $\tau$. We have shown that this strategy is quasi-optimal for turbulent flows~\cite{Mecanna2025}.
+Here $\tau$ can be viewed as a parameter that has to be optimized for maximal $V_\mathrm{eff}$: we find $\tau = 0.547 / \omega_\mathrm{max}$ and $V_\mathrm{eff}= 1.195 V_\mathrm{swim}$. So the performance is identical to that of the optimal soft swimmer, with trajectories that are slightly more vertical  (Fig.~\ref{fig:surfers}f).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion\label{sec.discussion}}
@@ -877,6 +925,11 @@ To test the optimization method further, we optimize three design parameters: $k
 
 
 
+
+\begin{acknowledgments}
+Most of this work has been developed during a sabbatical stay in Cambridge, funded by the French Embassy Churchill College Fellowship.
+This project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (grant agreement No 834238).
+\end{acknowledgments}
 
 
 \appendix
