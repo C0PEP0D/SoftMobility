@@ -14,12 +14,28 @@ It also depends on:
 - Optax (gradient-based optimizers)
 - matplotlib (plotting; used by tutorials and examples and rendered figures, including vector PDF export)
 
-Installation from Source
-------------------------
+Install from PyPI
+-----------------
 
-The package is not yet on PyPI. Clone the repository and install it in editable
-mode inside an isolated environment. Two equivalent recipes are documented
-below — use whichever matches your existing tooling.
+The released version is on PyPI and is the recommended path for most users.
+Inside an isolated environment (``venv``, ``conda``, …) so it does not
+interfere with the system Python:
+
+.. code-block:: bash
+
+   python -m pip install softmobility
+
+PEP 503 name normalisation means ``pip install soft-mobility`` (or
+``soft_mobility``) resolves to the same project.
+
+Install from source
+-------------------
+
+Cloning the repository is the right choice if you want to run the bundled
+tutorials and examples (which live under ``softmobility/tutorials`` and
+``softmobility/examples`` in the repo) or to modify the library itself.
+Two equivalent recipes are documented below — use whichever matches your
+existing tooling.
 
 With venv
 ~~~~~~~~~
@@ -88,13 +104,25 @@ Notebooks in ``softmobility/tutorials`` (library introduction) and
 ``softmobility/examples`` (validation cases and case studies) can be run
 directly in Google Colab — no local clone, fork, or install required.
 Each notebook contains a first cell that installs ``SoftMobility`` from
-GitHub when it detects a Colab runtime; locally the cell is a no-op.
+PyPI when it detects a Colab runtime; locally the cell is a no-op.
 
 To open a notebook in Colab, either click the corresponding badge in the
 `README on GitHub <https://github.com/C0PEP0D/SoftMobility#try-the-notebooks-online>`_,
 or build the URL by hand by replacing the GitHub URL prefix
 ``https://github.com/C0PEP0D/SoftMobility/blob/`` with
 ``https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/``.
+
+GPU acceleration on Colab
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The free Colab runtime is CPU-only by default and can be several times
+slower than a recent laptop for the JAX-backed simulations and
+optimisations in SoftMobility. For larger problems, switch to a free GPU
+runtime: *Runtime → Change runtime type → T4 GPU*, then re-run the first
+cell. The install cell auto-detects the GPU (via ``nvidia-smi``) and
+installs ``jax[cuda12]`` alongside ``softmobility`` so that JAX actually
+uses the device. On CPU runtimes only the lightweight CPU JAX wheel is
+installed.
 
 Troubleshooting
 ---------------

@@ -51,14 +51,25 @@ replacing the GitHub URL prefix
 Installation
 ------------
 
-SoftMobility requires Python 3.10 or newer. For a new user, the safest path is
-to work in an isolated environment. Two equivalent recipes follow — pick the
-one that matches the tooling you already use. The Sphinx ``installation``
-page in the documentation contains the same recipes plus troubleshooting
-notes (Apple Silicon, GPU JAX builds, etc.).
+SoftMobility requires Python 3.10 or newer. For a new user, the safest path
+is to work in an isolated environment. The Sphinx ``installation`` page in
+the documentation contains the same recipes plus troubleshooting notes
+(Apple Silicon, GPU JAX builds, etc.).
 
-With venv
+From PyPI
 ~~~~~~~~~
+
+Recommended for most users. Inside an isolated environment of your choice:
+
+.. code-block:: bash
+
+   python -m pip install softmobility
+
+If you also want to run the bundled tutorials and examples or to modify the
+library, install from source instead — recipes below.
+
+With venv (from source)
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -69,8 +80,8 @@ With venv
    python -m pip install --upgrade pip
    python -m pip install -e .
 
-With conda
-~~~~~~~~~~
+With conda (from source)
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you prefer ``conda`` (or the faster, drop-in ``mamba``) for environment
 management, the recommended pattern is to let conda manage the Python sandbox
