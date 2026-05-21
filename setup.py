@@ -14,7 +14,7 @@ min_version = (
 )
 if sys.version_info < min_version:
     error = """
-soft-mobility does not support Python {0}.{1}.
+softmobility does not support Python {0}.{1}.
 Python {2}.{3} and above is required. Check your Python version like so:
 
 python3 --version
@@ -39,7 +39,7 @@ with open(path.join(here, "requirements.txt")) as requirements_file:
 
 
 setup(
-    name="soft-mobility",
+    name="softmobility",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="Python package to compute the mobility of a soft body in Stokes flows.",

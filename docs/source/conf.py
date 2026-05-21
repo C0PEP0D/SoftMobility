@@ -120,7 +120,7 @@ html_sidebars = {
 }
 
 # -- Options for HTMLHelp output ------------------------------------------
-htmlhelp_basename = "soft-mobility"
+htmlhelp_basename = "softmobility"
 
 # -- Options for LaTeX output ---------------------------------------------
 latex_elements = {
@@ -140,7 +140,7 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "soft-mobility.tex",
+        "softmobility.tex",
         "Soft Mobility Documentation",
         "Contributors",
         "manual",
@@ -151,7 +151,7 @@ latex_documents = [
 man_pages = [
     (
         master_doc,
-        "soft-mobility",
+        "softmobility",
         "Soft Mobility Documentation",
         [author],
         1,
@@ -162,10 +162,10 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        "soft-mobility",
+        "softmobility",
         "Soft Mobility Documentation",
         author,
-        "soft-mobility",
+        "softmobility",
         "Python package to compute the mobility of soft body in Stokes flows.",
         "Miscellaneous",
     ),
