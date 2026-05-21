@@ -137,13 +137,18 @@ Step by step:
 
    .. code-block:: bash
 
-       python setup.py sdist bdist_wheel
-       twine upload dist/*
+       python -m build
+       # publishes via pypa/gh-action-pypi-publish
 
-   The upload uses the repository secret ``PYPI_API_TOKEN`` (a PyPI API
-   token with the ``pypi-`` prefix and upload scope on the
-   ``soft-mobility`` project). Watch the workflow run from the *Actions*
-   tab to confirm it succeeded.
+   The upload uses **PyPI Trusted Publishing** (OpenID Connect): no
+   long-lived secret is stored in the repository. PyPI is configured to
+   trust this exact GitHub repository and workflow file under the
+   project's *Manage → Publishing* page on https://pypi.org/. The
+   distribution is published as ``softmobility`` (the package was
+   uploaded under the canonical name ``softmobility``; PEP 503 name
+   normalization means ``pip install soft-mobility`` and
+   ``pip install soft_mobility`` resolve to the same project). Watch the
+   workflow run from the *Actions* tab to confirm it succeeded.
 6. After the release, refresh the local checkout (``git pull --tags``) so
    Versioneer reports the new version.
 
