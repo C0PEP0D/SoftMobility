@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; Soft Mobility 1.0.0.post57.dev0+g4bc4c72 documentation</title>
+  <title>Installation &mdash; Soft Mobility 1.1.0.post2.dev0+g6689ffc documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=40d3c327"></script>
+      <script src="_static/documentation_options.js?v=f6c31981"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -48,14 +48,19 @@
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installation-from-source">Installation from Source</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install-from-pypi">Install from PyPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-from-source">Install from source</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#with-venv">With venv</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#with-conda">With conda</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#development-and-documentation-tools">Development and documentation tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#verifying-installation">Verifying Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#running-tutorials-and-examples-on-google-colab">Running tutorials and examples on Google Colab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpu-acceleration-on-a-local-install">GPU acceleration on a local install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tutorials-and-examples-on-google-colab">Running tutorials and examples on Google Colab</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gpu-acceleration-on-colab">GPU acceleration on Colab</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
@@ -109,11 +114,24 @@ It also depends on:</p>
 <li><p>matplotlib (plotting; used by tutorials and examples and rendered figures, including vector PDF export)</p></li>
 </ul>
 </section>
-<section id="installation-from-source">
-<h2>Installation from Source<a class="headerlink" href="#installation-from-source" title="Link to this heading"></a></h2>
-<p>The package is not yet on PyPI. Clone the repository and install it in editable
-mode inside an isolated environment. Two equivalent recipes are documented
-below — use whichever matches your existing tooling.</p>
+<section id="install-from-pypi">
+<h2>Install from PyPI<a class="headerlink" href="#install-from-pypi" title="Link to this heading"></a></h2>
+<p>The released version is on PyPI and is the recommended path for most users.
+Inside an isolated environment (<code class="docutils literal notranslate"><span class="pre">venv</span></code>, <code class="docutils literal notranslate"><span class="pre">conda</span></code>, …) so it does not
+interfere with the system Python:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>softmobility
+</pre></div>
+</div>
+<p>PEP 503 name normalisation means <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">soft-mobility</span></code> (or
+<code class="docutils literal notranslate"><span class="pre">soft_mobility</span></code>) resolves to the same project.</p>
+</section>
+<section id="install-from-source">
+<h2>Install from source<a class="headerlink" href="#install-from-source" title="Link to this heading"></a></h2>
+<p>Cloning the repository is the right choice if you want to run the bundled
+tutorials and examples (which live under <code class="docutils literal notranslate"><span class="pre">softmobility/tutorials</span></code> and
+<code class="docutils literal notranslate"><span class="pre">softmobility/examples</span></code> in the repo) or to modify the library itself.
+Two equivalent recipes are documented below — use whichever matches your
+existing tooling.</p>
 <section id="with-venv">
 <h3>With venv<a class="headerlink" href="#with-venv" title="Link to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/C0PEP0D/SoftMobility.git
@@ -165,18 +183,55 @@ conda<span class="w"> </span>activate<span class="w"> </span>softmobility
 </pre></div>
 </div>
 </section>
+<section id="gpu-acceleration-on-a-local-install">
+<h2>GPU acceleration on a local install<a class="headerlink" href="#gpu-acceleration-on-a-local-install" title="Link to this heading"></a></h2>
+<p>JAX is SoftMobility’s numerical backend and benefits from a 5–10× speed-up
+on simulations and optimisations when it can target an NVIDIA GPU. Unlike
+the Colab notebooks (which probe <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> at install time), local
+installs do <strong>not</strong> modify your environment automatically — you opt in.</p>
+<p>Linux with an NVIDIA GPU (CUDA 12 driver) — install both at once:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>softmobility<span class="w"> </span><span class="s2">&quot;jax[cuda12]&quot;</span>
+</pre></div>
+</div>
+<p>Or, in an existing environment, upgrade JAX in place:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span><span class="s2">&quot;jax[cuda12]&quot;</span>
+</pre></div>
+</div>
+<p>Verify that JAX sees the device:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import jax; print(jax.devices())&quot;</span>
+</pre></div>
+</div>
+<p>Expect <code class="docutils literal notranslate"><span class="pre">[CudaDevice(id=0),</span> <span class="pre">...]</span></code>. <code class="docutils literal notranslate"><span class="pre">[CpuDevice(id=0)]</span></code> means JAX did not
+pick up the CUDA build — usually a CUDA toolkit/driver version mismatch;
+consult the <a class="reference external" href="https://docs.jax.dev/en/latest/installation.html">JAX installation guide</a> for the supported
+matrix.</p>
+<p>macOS (Apple Silicon and Intel) currently runs JAX on the CPU. An
+experimental <code class="docutils literal notranslate"><span class="pre">jax-metal</span></code> backend exists but is not stable enough to
+recommend for production simulations.</p>
+</section>
 <section id="running-tutorials-and-examples-on-google-colab">
 <span id="running-notebooks-on-google-colab"></span><h2>Running tutorials and examples on Google Colab<a class="headerlink" href="#running-tutorials-and-examples-on-google-colab" title="Link to this heading"></a></h2>
 <p>Notebooks in <code class="docutils literal notranslate"><span class="pre">softmobility/tutorials</span></code> (library introduction) and
 <code class="docutils literal notranslate"><span class="pre">softmobility/examples</span></code> (validation cases and case studies) can be run
 directly in Google Colab — no local clone, fork, or install required.
 Each notebook contains a first cell that installs <code class="docutils literal notranslate"><span class="pre">SoftMobility</span></code> from
-GitHub when it detects a Colab runtime; locally the cell is a no-op.</p>
+PyPI when it detects a Colab runtime; locally the cell is a no-op.</p>
 <p>To open a notebook in Colab, either click the corresponding badge in the
 <a class="reference external" href="https://github.com/C0PEP0D/SoftMobility#try-the-notebooks-online">README on GitHub</a>,
 or build the URL by hand by replacing the GitHub URL prefix
 <code class="docutils literal notranslate"><span class="pre">https://github.com/C0PEP0D/SoftMobility/blob/</span></code> with
 <code class="docutils literal notranslate"><span class="pre">https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/</span></code>.</p>
+<section id="gpu-acceleration-on-colab">
+<h3>GPU acceleration on Colab<a class="headerlink" href="#gpu-acceleration-on-colab" title="Link to this heading"></a></h3>
+<p>The free Colab runtime is CPU-only by default and can be several times
+slower than a recent laptop for the JAX-backed simulations and
+optimisations in SoftMobility. For larger problems, switch to a free GPU
+runtime: <em>Runtime → Change runtime type → T4 GPU</em>, then re-run the first
+cell. The install cell auto-detects the GPU (via <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code>) and
+installs <code class="docutils literal notranslate"><span class="pre">jax[cuda12]</span></code> alongside <code class="docutils literal notranslate"><span class="pre">softmobility</span></code> so that JAX actually
+uses the device. On CPU runtimes only the lightweight CPU JAX wheel is
+installed.</p>
+</section>
 </section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>

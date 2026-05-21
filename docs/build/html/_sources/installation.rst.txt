@@ -14,12 +14,28 @@ It also depends on:
 - Optax (gradient-based optimizers)
 - matplotlib (plotting; used by tutorials and examples and rendered figures, including vector PDF export)
 
-Installation from Source
-------------------------
+Install from PyPI
+-----------------
 
-The package is not yet on PyPI. Clone the repository and install it in editable
-mode inside an isolated environment. Two equivalent recipes are documented
-below — use whichever matches your existing tooling.
+The released version is on PyPI and is the recommended path for most users.
+Inside an isolated environment (``venv``, ``conda``, …) so it does not
+interfere with the system Python:
+
+.. code-block:: bash
+
+   python -m pip install softmobility
+
+PEP 503 name normalisation means ``pip install soft-mobility`` (or
+``soft_mobility``) resolves to the same project.
+
+Install from source
+-------------------
+
+Cloning the repository is the right choice if you want to run the bundled
+tutorials and examples (which live under ``softmobility/tutorials`` and
+``softmobility/examples`` in the repo) or to modify the library itself.
+Two equivalent recipes are documented below — use whichever matches your
+existing tooling.
 
 With venv
 ~~~~~~~~~
@@ -79,6 +95,42 @@ Verifying Installation
     import softmobility as sm
     print(f"SoftMobility version: {sm.__version__}")
 
+GPU acceleration on a local install
+-----------------------------------
+
+JAX is SoftMobility's numerical backend and benefits from a 5–10× speed-up
+on simulations and optimisations when it can target an NVIDIA GPU. Unlike
+the Colab notebooks (which probe ``nvidia-smi`` at install time), local
+installs do **not** modify your environment automatically — you opt in.
+
+Linux with an NVIDIA GPU (CUDA 12 driver) — install both at once:
+
+.. code-block:: bash
+
+    pip install softmobility "jax[cuda12]"
+
+Or, in an existing environment, upgrade JAX in place:
+
+.. code-block:: bash
+
+    pip install -U "jax[cuda12]"
+
+Verify that JAX sees the device:
+
+.. code-block:: bash
+
+    python -c "import jax; print(jax.devices())"
+
+Expect ``[CudaDevice(id=0), ...]``. ``[CpuDevice(id=0)]`` means JAX did not
+pick up the CUDA build — usually a CUDA toolkit/driver version mismatch;
+consult the `JAX installation guide
+<https://docs.jax.dev/en/latest/installation.html>`_ for the supported
+matrix.
+
+macOS (Apple Silicon and Intel) currently runs JAX on the CPU. An
+experimental ``jax-metal`` backend exists but is not stable enough to
+recommend for production simulations.
+
 .. _running-notebooks-on-google-colab:
 
 Running tutorials and examples on Google Colab
@@ -88,13 +140,25 @@ Notebooks in ``softmobility/tutorials`` (library introduction) and
 ``softmobility/examples`` (validation cases and case studies) can be run
 directly in Google Colab — no local clone, fork, or install required.
 Each notebook contains a first cell that installs ``SoftMobility`` from
-GitHub when it detects a Colab runtime; locally the cell is a no-op.
+PyPI when it detects a Colab runtime; locally the cell is a no-op.
 
 To open a notebook in Colab, either click the corresponding badge in the
 `README on GitHub <https://github.com/C0PEP0D/SoftMobility#try-the-notebooks-online>`_,
 or build the URL by hand by replacing the GitHub URL prefix
 ``https://github.com/C0PEP0D/SoftMobility/blob/`` with
 ``https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/``.
+
+GPU acceleration on Colab
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The free Colab runtime is CPU-only by default and can be several times
+slower than a recent laptop for the JAX-backed simulations and
+optimisations in SoftMobility. For larger problems, switch to a free GPU
+runtime: *Runtime → Change runtime type → T4 GPU*, then re-run the first
+cell. The install cell auto-detects the GPU (via ``nvidia-smi``) and
+installs ``jax[cuda12]`` alongside ``softmobility`` so that JAX actually
+uses the device. On CPU runtimes only the lightweight CPU JAX wheel is
+installed.
 
 Troubleshooting
 ---------------

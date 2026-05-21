@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Release History &mdash; Soft Mobility 1.0.0.post57.dev0+g4bc4c72 documentation</title>
+  <title>Release History &mdash; Soft Mobility 1.1.0.post2.dev0+g6689ffc documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=40d3c327"></script>
+      <script src="_static/documentation_options.js?v=f6c31981"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -55,7 +55,14 @@
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Release History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#initial-release-yyyy-mm-dd">Initial Release (YYYY-MM-DD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#v1-1-0-2026-05-21">v1.1.0 (2026-05-21)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#new-features">New features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#improvements">Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fixes">Fixes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#internal">Internal</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#v1-0-0-2026-03-30">v1.0.0 (2026-03-30)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="developers.html">Developers</a></li>
@@ -88,8 +95,67 @@
              
   <section id="release-history">
 <h1>Release History<a class="headerlink" href="#release-history" title="Link to this heading"></a></h1>
-<section id="initial-release-yyyy-mm-dd">
-<h2>Initial Release (YYYY-MM-DD)<a class="headerlink" href="#initial-release-yyyy-mm-dd" title="Link to this heading"></a></h2>
+<section id="v1-1-0-2026-05-21">
+<h2>v1.1.0 (2026-05-21)<a class="headerlink" href="#v1-1-0-2026-05-21" title="Link to this heading"></a></h2>
+<section id="new-features">
+<h3>New features<a class="headerlink" href="#new-features" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Intrinsic curvature support for soft bodies.</p></li>
+<li><p>Four-sphere magnetic swimmer example and supporting machinery.</p></li>
+<li><p>Time-dependent forcing in rollouts.</p></li>
+<li><p>Differentiable Bortz operators (gradients now flow through).</p></li>
+<li><p>Rigid-body mobility tensors exposed as a first-class utility.</p></li>
+<li><p>Opt-in GRPY overlap regimes via the <code class="docutils literal notranslate"><span class="pre">allow_overlap</span></code> flag.</p></li>
+<li><p>Flexible fibers: clamped boundary condition, settling fiber, gears model.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rotation_matrix</span></code> exposed at the package level.</p></li>
+</ul>
+</section>
+<section id="improvements">
+<h3>Improvements<a class="headerlink" href="#improvements" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Plotting migrated from plotly to matplotlib across tutorials, examples,
+and the public API.</p></li>
+<li><p>New <code class="docutils literal notranslate"><span class="pre">softmobility.classes.figstyle</span></code> module providing the paper aesthetic
+(<code class="docutils literal notranslate"><span class="pre">figstyle.apply()</span></code> in notebooks).</p></li>
+<li><p>Tutorials reorganised: pedagogical notebooks under <code class="docutils literal notranslate"><span class="pre">tutorials/</span></code> and
+validation/case studies under <code class="docutils literal notranslate"><span class="pre">examples/</span></code>.</p></li>
+<li><p>New validation case studies and a Results-section validation prose draft.</p></li>
+<li><p>README restructured for new users; new <code class="docutils literal notranslate"><span class="pre">Developers</span></code> documentation page
+covering build, docs, versioning, and release workflow.</p></li>
+<li><p>Conda and Google Colab installation paths documented.</p></li>
+<li><p>Docstrings added across <code class="docutils literal notranslate"><span class="pre">SoftBody</span></code> and the solver module.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">optimize</span></code> now supports a no-overlap option and <code class="docutils literal notranslate"><span class="pre">vmap</span></code> batching;
+<code class="docutils literal notranslate"><span class="pre">add_sphere</span></code> corrected.</p></li>
+</ul>
+</section>
+<section id="fixes">
+<h3>Fixes<a class="headerlink" href="#fixes" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Clamped flexible fiber simulation bug.</p></li>
+<li><p>Google Colab file-import bug in example notebooks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">figstyle.save</span></code> now gracefully skips PDF export when <code class="docutils literal notranslate"><span class="pre">kaleido</span></code> is
+missing.</p></li>
+<li><p>Docs build cleanups: orphan autosummary stubs removed, <code class="docutils literal notranslate"><span class="pre">index.rst</span></code> typo
+fixed, regenerated figure PDFs untracked.</p></li>
+<li><p>Repository URLs updated from <code class="docutils literal notranslate"><span class="pre">celoy/SoftMobility</span></code> to
+<code class="docutils literal notranslate"><span class="pre">C0PEP0D/SoftMobility</span></code>.</p></li>
+</ul>
+</section>
+<section id="internal">
+<h3>Internal<a class="headerlink" href="#internal" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Ruff cleanup across the codebase and notebooks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tox</span></code> configuration removed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PRFluids/</span></code> directory renamed to <code class="docutils literal notranslate"><span class="pre">manuscript/</span></code> in tracked references.</p></li>
+</ul>
+</section>
+</section>
+<section id="v1-0-0-2026-03-30">
+<h2>v1.0.0 (2026-03-30)<a class="headerlink" href="#v1-0-0-2026-03-30" title="Link to this heading"></a></h2>
+<p>Initial public release of SoftMobility: a JAX-based library to simulate and
+optimize the motion and deformation of soft bodies (assemblies of beads
+connected by springs) in Stokes flow, with end-to-end differentiability for
+gradient-based design.</p>
 </section>
 </section>
 
