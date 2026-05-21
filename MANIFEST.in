@@ -12,5 +12,5 @@ recursive-include docs *.rst conf.py Makefile make.bat
 include versioneer.py
 include softmobility/_version.py
 
-# If including data files in the package, add them like:
-# include path/to/data_file
+# Tutorial data files loaded by example notebooks at runtime.
+recursive-include softmobility/tutorials *.yaml

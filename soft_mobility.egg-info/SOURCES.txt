@@ -12,6 +12,7 @@ docs/Makefile
 docs/make.bat
 docs/source/api.rst
 docs/source/conf.py
+docs/source/developers.rst
 docs/source/geometry.rst
 docs/source/index.rst
 docs/source/inputs.rst
@@ -52,12 +53,14 @@ soft_mobility.egg-info/top_level.txt
 softmobility/__init__.py
 softmobility/_version.py
 softmobility/classes/__init__.py
+softmobility/classes/figstyle.py
 softmobility/classes/flexiblefiber.py
 softmobility/classes/inputs.py
 softmobility/classes/softbody.py
 softmobility/classes/solver.py
 softmobility/classes/sphere.py
 softmobility/classes/sphereassembly.py
+softmobility/examples/__init__.py
 softmobility/tests/__init__.py
 softmobility/tests/test_class_Scalar.py
 softmobility/tests/test_class_flowbodyoptimizer.py
@@ -66,6 +69,11 @@ softmobility/tests/test_class_inputs.py
 softmobility/tests/test_class_softbody.py
 softmobility/tests/test_class_sphere.py
 softmobility/tests/test_class_sphereassembly.py
+softmobility/tests/test_figstyle.py
 softmobility/tests/test_flexible_fiber.py
+softmobility/tests/test_overlap_warning.py
 softmobility/tests/test_rigid_assemblies.py
+softmobility/tests/test_rotation.py
+softmobility/tests/test_softbody_rigid_tensors.py
 softmobility/tutorials/__init__.py
+softmobility/tutorials/parameters.yaml

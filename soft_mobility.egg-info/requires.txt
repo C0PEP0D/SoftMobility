@@ -5,5 +5,5 @@ optax
 sympy
 pyyaml
 jupyterlab
-plotly
+matplotlib
 ipywidgets

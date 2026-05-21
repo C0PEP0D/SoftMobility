@@ -1,8 +1,8 @@
 Metadata-Version: 2.4
 Name: soft-mobility
-Version: 1.0.0.post17.dev0+g3b25a1b
+Version: 1.0.0.post56.dev0+g5d4eada
 Summary: Python package to compute the mobility of a soft body in Stokes flows.
-Home-page: https://github.com/celoy/SoftMobility
+Home-page: https://github.com/C0PEP0D/SoftMobility
 Author: Christophe Eloy
 Author-email: christopheloy@gmail.com
 License: BSD (3-clause)
@@ -19,7 +19,7 @@ Requires-Dist: optax
 Requires-Dist: sympy
 Requires-Dist: pyyaml
 Requires-Dist: jupyterlab
-Requires-Dist: plotly
+Requires-Dist: matplotlib
 Requires-Dist: ipywidgets
 Dynamic: author
 Dynamic: author-email
@@ -36,8 +36,8 @@ Dynamic: summary
 SoftMobility
 ============
 
-.. image:: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml/badge.svg
-   :target: https://github.com/celoy/SoftMobility/actions/workflows/testing.yml
+.. image:: https://github.com/C0PEP0D/SoftMobility/actions/workflows/testing.yml/badge.svg
+   :target: https://github.com/C0PEP0D/SoftMobility/actions/workflows/testing.yml
    :alt: Test status
 
 SoftMobility is a Python library for modelling deformable assemblies of
@@ -45,83 +45,91 @@ spheres in Stokes flows. It is intended for scientific users who want to define
 soft bodies, compute mobility tensors, run differentiable simulations, and
 optimize design parameters with JAX.
 
-The package is installed as ``soft-mobility`` and imported as
-``softmobility``.
+The package is imported as in Python as ``softmobility``.
 
-Documentation
--------------
+Try the notebooks online
+------------------------
 
-The Sphinx sources live in ``docs/source``. The HTML build is produced under
-``docs/build/html`` (gitignored). The documentation covers:
+The fastest way to get a feel for SoftMobility is to run a notebook
+directly in your browser via Google Colab — no clone, fork, or local
+install required. The first cell of every notebook installs
+``SoftMobility`` from this repository when it detects a Colab runtime
+(locally the cell is a no-op).
 
-* an overview of the physical and numerical conventions,
-* geometry and YAML model definitions,
-* scalar, field, and flow inputs,
-* rollout simulation,
-* design optimization,
-* the full API reference (auto-generated from docstrings).
+Click a badge below to launch the corresponding notebook in Colab.
 
-Build it locally
-~~~~~~~~~~~~~~~~
+Tutorials (library introduction):
 
-First install the development tools that include Sphinx and its extensions
-(``sphinx``, ``sphinx_rtd_theme``, ``sphinx-copybutton``, ``numpydoc``,
-``ipython``):
+* |colab-t01| ``01_assembly_creation``
+* |colab-t02| ``02_rigid_mobility``
+* |colab-t03| ``03_soft_mobility_simulation``
+* |colab-t04| ``04_optimization``
+* |colab-t05| ``05_figure_styling``
 
-.. code-block:: bash
+Examples (validation cases & case studies):
 
-   pip install -r requirements-dev.txt
+* |colab-e01| ``01_sinking_rigid_body``
+* |colab-e02| ``02_sinking_fiber``
+* |colab-e03| ``03_rotating_fiber``
+* |colab-e04| ``04_fiber_in_shear``
+* |colab-e05| ``05_jeffery_rigid``
+* |colab-e06| ``06_jeffery_soft``
+* |colab-e07| ``07_three_sphere_swimmer``
+* |colab-e08| ``08_soft_surfer``
 
-Then build the HTML pages from the repository root. The two equivalent
-commands below produce the same output in ``docs/build/html``:
-
-.. code-block:: bash
-
-   # using the Makefile (preferred — also available: ``make -C docs clean``)
-   make -C docs html
-
-   # or invoking sphinx-build directly
-   sphinx-build -b html docs/source docs/build/html
-
-Open the result in a browser:
-
-.. code-block:: bash
-
-   open docs/build/html/index.html        # macOS
-   xdg-open docs/build/html/index.html    # Linux
-
-To match the GitHub Actions ``docs.yml`` workflow exactly — which treats
-warnings as errors and fails on broken cross-references — clean first and
-pass ``-W``:
-
-.. code-block:: bash
-
-   make -C docs clean
-   sphinx-build -W -b html docs/source docs/build/html
-
-Run this last command before opening a pull request that touches docstrings
-or ``docs/source/*.rst`` so CI surprises are caught locally.
+For any notebook not listed above, you can build a Colab URL by hand by
+replacing the GitHub URL prefix
+``https://github.com/C0PEP0D/SoftMobility/blob/`` with
+``https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/``.
 
 Installation
 ------------
 
 SoftMobility requires Python 3.10 or newer. For a new user, the safest path is
-to work in a virtual environment:
+to work in an isolated environment. Two equivalent recipes follow — pick the
+one that matches the tooling you already use. The Sphinx ``installation``
+page in the documentation contains the same recipes plus troubleshooting
+notes (Apple Silicon, GPU JAX builds, etc.).
+
+With venv
+~~~~~~~~~
 
 .. code-block:: bash
 
-   git clone https://github.com/celoy/SoftMobility.git
+   git clone https://github.com/C0PEP0D/SoftMobility.git
    cd SoftMobility
    python -m venv .venv
    source .venv/bin/activate
    python -m pip install --upgrade pip
    python -m pip install -e .
 
-To install the development and documentation tools:
+With conda
+~~~~~~~~~~
+
+If you prefer ``conda`` (or the faster, drop-in ``mamba``) for environment
+management, the recommended pattern is to let conda manage the Python sandbox
+and let pip install the package itself — JAX and a few other dependencies
+install more reliably from PyPI than from conda-forge:
 
 .. code-block:: bash
 
-   python -m pip install -r requirements-dev.txt
+   git clone https://github.com/C0PEP0D/SoftMobility.git
+   cd SoftMobility
+   conda create -n softmobility python=3.11
+   conda activate softmobility
+   python -m pip install --upgrade pip
+   python -m pip install -e .
+
+Or, equivalently, use the bundled ``environment.yml`` (which performs the same
+steps in a single command and must be run from the repository root because of
+the ``-e .`` editable install):
+
+.. code-block:: bash
+
+   git clone https://github.com/C0PEP0D/SoftMobility.git
+   cd SoftMobility
+   conda env create -f environment.yml
+   conda activate softmobility
 
 Verify the installation:
 
@@ -187,66 +195,98 @@ A complete simulation uses three pieces:
        init_orientation=jnp.zeros(3),
    )
 
-Examples
---------
+Tutorials and examples
+----------------------
 
-Tutorial notebooks live in ``softmobility/tutorials`` and are grouped into
-three layers; the numbering reflects the layer
-(0X = library introduction, 1X = validation against published results,
-2X = original case studies).
+The notebooks ship in two folders. ``softmobility/tutorials`` contains
+pedagogical walk-throughs of the API, while ``softmobility/examples``
+collects validation cases against published results and original case
+studies. New users should start with ``tutorials/01_assembly_creation``
+and work through the tutorials before moving on to the examples.
 
-**Library introduction (0X)**
+**Tutorials** (``softmobility/tutorials/``)
 
 * ``01_assembly_creation.ipynb`` — methods to create a sphere assembly
 * ``02_rigid_mobility.ipynb`` — mobility properties of a rigid sphere assembly
 * ``03_soft_mobility_simulation.ipynb`` — soft mobility tensors and
   simulation of a trajectory
 * ``04_optimization.ipynb`` — optimization principles
+* ``05_figure_styling.ipynb`` — paper-figure aesthetics with ``figstyle``
 
-**Validation cases (1X)**
+**Examples** (``softmobility/examples/``)
 
-* ``11_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
-  *(work in progress)*
-* ``12_flexible_fiber_2d.ipynb`` — 2-D flexible fiber in shear and gravity
+* ``01_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
+* ``02_sinking_fiber.ipynb`` — settling flexible fiber
   (Delmotte et al. 2015)
-* ``13_rotating_fiber_3d.ipynb`` — 3-D filament: bending and rotational
-  relaxation (Coq et al. 2008; Wiggins et al. 1998)
-* ``14_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid body
+* ``03_rotating_fiber.ipynb`` — rotating elastic filament
+  (Coq et al. 2008, 2009; Wiggins et al. 1998)
+* ``04_fiber_in_shear.ipynb`` — flexible fiber with intrinsic curvature
+  in shear flow (Delmotte et al. 2015)
+* ``05_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid dumbbell
+* ``06_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
+* ``07_three_sphere_swimmer.ipynb`` — three-sphere swimmer with a passive
+  elastic arm (Najafi & Golestanian 2004; Montino & DeSimone 2015)
+* ``08_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
 
-**Original case studies (2X)**
+Build the documentation locally
+-------------------------------
 
-* ``21_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
-* ``22_three_sphere_swimmer.ipynb`` — three-sphere swimmer optimization
-* ``23_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
-
-New users should start with ``01_assembly_creation`` and work through the
-0X group before moving to validation cases or original studies.
-
-Testing
--------
-
-Run the test suite with:
+The Sphinx sources live in ``docs/source``. To build the HTML pages, first
+install the development tools (which include Sphinx and its extensions):
 
 .. code-block:: bash
 
-   pytest
+   pip install -r requirements-dev.txt
 
-For documentation builds, see the *Build it locally* subsection above.
+Then build from the repository root:
+
+.. code-block:: bash
+
+   make -C docs html
+   open docs/build/html/index.html        # macOS
+   xdg-open docs/build/html/index.html    # Linux
+
+The strict, warnings-as-errors build that mirrors CI is documented in the
+*Developers* page (``docs/source/developers.rst``).
 
 Contributing
 ------------
 
-Contributions are welcome. Before opening a pull request, please run the tests
-and, when documentation is touched, build the Sphinx docs locally.
-
-Development notes and TODO items are kept in ``TODO.md``. This keeps the
-GitHub README focused on users while still making TODOs visible to editor tools
-such as the VS Code `Todo Tree`_ extension.
-
-.. _Todo Tree: https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree
+Contributions are welcome. The *Developers* page in the documentation
+(``docs/source/developers.rst``) covers the development install, running the
+tests, building the docs strictly, the versioning and release process, and
+the policy for opening issues and pull requests. Please read it before
+sending a PR.
 
 License
 -------
 
-SoftMobility is distributed under the 3-clause BSD license. See ``LICENSE`` for
-details.
+SoftMobility is distributed under the 3-clause BSD license. See ``LICENSE``
+for details.
+
+.. |colab-t01| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/01_assembly_creation.ipynb
+.. |colab-t02| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/02_rigid_mobility.ipynb
+.. |colab-t03| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/03_soft_mobility_simulation.ipynb
+.. |colab-t04| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/04_optimization.ipynb
+.. |colab-t05| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/tutorials/05_figure_styling.ipynb
+.. |colab-e01| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/01_sinking_rigid_body.ipynb
+.. |colab-e02| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/02_sinking_fiber.ipynb
+.. |colab-e03| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/03_rotating_fiber.ipynb
+.. |colab-e04| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/04_fiber_in_shear.ipynb
+.. |colab-e05| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/05_jeffery_rigid.ipynb
+.. |colab-e06| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/06_jeffery_soft.ipynb
+.. |colab-e07| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/07_three_sphere_swimmer.ipynb
+.. |colab-e08| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/C0PEP0D/SoftMobility/blob/main/softmobility/examples/08_soft_surfer.ipynb
