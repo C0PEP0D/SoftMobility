@@ -174,8 +174,7 @@ and work through the tutorials before moving on to the examples.
 
 * ``01_assembly_creation.ipynb`` — methods to create a sphere assembly
 * ``02_rigid_mobility.ipynb`` — mobility properties of a rigid sphere assembly
-* ``03_soft_mobility_simulation.ipynb`` — soft mobility tensors and
-  simulation of a trajectory
+* ``03_soft_mobility_simulation.ipynb`` — soft mobility tensors and simulation of a trajectory
 * ``04_optimization.ipynb`` — optimization principles
 * ``05_figure_styling.ipynb`` — paper-figure aesthetics with ``figstyle``
 
@@ -183,16 +182,12 @@ and work through the tutorials before moving on to the examples.
 
 * ``01_sinking_rigid_body.ipynb`` — sinking trajectory of a rigid body
 * ``02_sinking_fiber.ipynb`` — settling flexible fiber
-  (Delmotte et al. 2015)
-* ``03_rotating_fiber.ipynb`` — rotating elastic filament
-  (Coq et al. 2008, 2009; Wiggins et al. 1998)
-* ``04_fiber_in_shear.ipynb`` — flexible fiber with intrinsic curvature
-  in shear flow (Delmotte et al. 2015)
+* ``03_rotating_fiber.ipynb`` — rotating elastic fiber
+* ``04_fiber_in_shear.ipynb`` — flexible fiber with intrinsic curvature in shear flow 
 * ``05_jeffery_rigid.ipynb`` — Jeffery orbits of a rigid dumbbell
-* ``06_jeffery_soft.ipynb`` — Jeffery orbit of a one-DOF deformable body
-* ``07_three_sphere_swimmer.ipynb`` — three-sphere swimmer with a passive
-  elastic arm (Najafi & Golestanian 2004; Montino & DeSimone 2015)
-* ``08_soft_surfer.ipynb`` — soft surfer in Taylor–Green vortices
+* ``06_jeffery_soft.ipynb`` — Jeffery orbit of an elastic dumbbell
+* ``07_three_sphere_swimmer.ipynb`` — three-sphere swimmer with a passive elastic arm 
+* ``08_soft_surfer.ipynb`` — soft surfer in Taylor-Green vortices
 
 Build the documentation locally
 -------------------------------

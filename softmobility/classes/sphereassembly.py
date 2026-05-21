@@ -722,10 +722,14 @@ class SphereAssembly:
             raise ValueError("Undefined symbols in expressions: " + ", ".join(sorted(undefined_symbols)))
 
         if verbose:
-            unused_defaults = known_symbols - all_detected_symbols
+            # "time" is a system-provided symbol, not a user-declared default — exclude it.
+            unused_defaults = known_symbols - all_detected_symbols - {"time"}
 
             if unused_defaults:
                 print("  Warning: defaults declared but not used: " + ", ".join(sorted(unused_defaults)))
+
+            if "time" in all_detected_symbols:
+                print("  Prescribed kinematics detected (time-dependent expressions)")
 
         # Validate input variable usage
         _validate_inputs(sphere_data, input_variables, constants)
