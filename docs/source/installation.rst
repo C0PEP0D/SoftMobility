@@ -124,7 +124,7 @@ Verify that JAX sees the device:
 Expect ``[CudaDevice(id=0), ...]``. ``[CpuDevice(id=0)]`` means JAX did not
 pick up the CUDA build — usually a CUDA toolkit/driver version mismatch;
 consult the `JAX installation guide
-<https://docs.jax.dev/en/latest/installation.html>`_ for the supported
+<https://docs.jax.dev/en/latest/installation.html>`__ for the supported
 matrix.
 
 macOS (Apple Silicon and Intel) currently runs JAX on the CPU. An
@@ -164,7 +164,7 @@ Troubleshooting
 ---------------
 
 If you encounter issues with JAX installation (especially on GPU systems), refer
-to the `JAX installation guide <https://github.com/google/jax#installation>`_
+to the `JAX installation guide <https://docs.jax.dev/en/latest/installation.html>`__
 for platform-specific instructions.
 
 For macOS with Apple Silicon (M1/M2/M3), install the CPU build of JAX
