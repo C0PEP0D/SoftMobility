@@ -80,6 +80,9 @@ target/
 # VSCode
 .vscode/
 
+# pyenv (local virtualenv name, not a portable version pin)
+.python-version
+
 # Ipython Notebook
 .ipynb_checkpoints
 
@@ -91,11 +94,9 @@ TODO.local.md
 CLAUDE.md
 .claude/
 
-# Latex
-manuscript/*.aux
-manuscript/*.log
-manuscript/*.blg
-manuscript/*.bib
-manuscript/*.synctex.gz
+# Companion paper (LaTeX source, PDF, figures, and all build artifacts).
+# Published separately on arXiv; see the Citation section in the README.
+manuscript/
+
 softmobility/tutorials/figures/*.pdf
 softmobility/examples/figures/*.pdf

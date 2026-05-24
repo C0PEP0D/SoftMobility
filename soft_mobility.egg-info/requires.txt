@@ -1,9 +1,0 @@
-numpy
-jaxlib
-jax
-optax
-sympy
-pyyaml
-jupyterlab
-matplotlib
-ipywidgets
