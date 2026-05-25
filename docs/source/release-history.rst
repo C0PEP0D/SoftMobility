@@ -51,7 +51,6 @@ Internal
 
 - Ruff cleanup across the codebase and notebooks.
 - ``tox`` configuration removed.
-- ``PRFluids/`` directory renamed to ``manuscript/`` in tracked references.
 
 v1.0.0 (2026-03-30)
 -------------------

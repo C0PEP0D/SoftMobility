@@ -11,9 +11,10 @@ ordinary differential equation in a prescribed background flow, and exposes
 the whole calculation to JAX transformations such as ``jax.jit`` and
 ``jax.grad``.
 
-The notation used throughout the documentation mirrors the *Soft Mobility
-Theory* manuscript shipped under ``manuscript/Article3.pdf``; see that
-document for the complete derivation.
+The notation used throughout the documentation mirrors the companion
+paper *Soft Mobility Theory* (arXiv:2605.23869,
+https://arxiv.org/abs/2605.23869); see that document for the complete
+derivation.
 
 Physical model
 --------------

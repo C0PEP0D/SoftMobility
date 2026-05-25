@@ -351,7 +351,7 @@ class FlowBodyRollout:
         return positions, orientations, dofs
 
     # ------------------------------------------------------------------
-    # Clamped-anchor mobility (Article3.tex appendix `app:clamped_anchor`)
+    # Clamped-anchor mobility (companion paper appendix `app:clamped_anchor`)
     # ------------------------------------------------------------------
 
     def _velocity_clamped(self, design, position, orientation, dofs, time, v_0_lab):
@@ -359,7 +359,7 @@ class FlowBodyRollout:
         actuated anchor.
 
         Solves the augmented soft-mobility equation
-        (``eq:soft_mobility_clamped`` of the manuscript appendix
+        (``eq:soft_mobility_clamped`` of the companion paper appendix
         ``app:clamped_anchor``). The body's lab six-component velocity
         ``v_0_lab = [u_0_lab, ω_0_lab]`` is supplied by the actuator;
         the six-component anchor reaction ``f_0 = [F_0, T_0]`` (force +
@@ -424,7 +424,7 @@ class FlowBodyRollout:
 
         # Convert the prescribed lab-frame v_0 to body frame and subtract
         # the ambient flow (so the LHS of the body block matches the
-        # ``u_0 − u_0^∞`` form of Eq. (60) of the manuscript).
+        # ``u_0 − u_0^∞`` form of Eq. (60) of the companion paper).
         u_0_disturb = rot.T @ (v_0_lab[:3] - u_inf)
         omega_0_disturb = rot.T @ (v_0_lab[3:6] - omega_inf)
         rhs = jnp.concatenate([u_0_disturb, omega_0_disturb]) - active[:6]
@@ -456,7 +456,7 @@ class FlowBodyRollout:
         :func:`rescale_orientation` remapping when ``|θ| ≥ π``), so it
         stays singularity-free even for unbounded rotations. The
         partitioned mobility equation
-        (manuscript appendix ``app:clamped_anchor``) is solved at every
+        (companion paper appendix ``app:clamped_anchor``) is solved at every
         substep for the anchor reaction
         ``f_0 = [F_0, T_0]`` and the deformation rate
         ``Q̇``; only ``Q`` and ``θ_0`` are stepped forward, the
