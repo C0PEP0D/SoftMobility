@@ -230,6 +230,33 @@ tests, building the docs strictly, the versioning and release process, and
 the policy for opening issues and pull requests. Please read it before
 sending a PR.
 
+Citation
+--------
+
+The companion paper *Soft Mobility Theory* is available as an arXiv
+preprint: https://arxiv.org/abs/2605.23869.
+
+If you use SoftMobility in academic work, please cite both the paper and
+the software:
+
+.. code-block:: bibtex
+
+   @misc{eloy2026soft,
+     author        = {Eloy, Christophe},
+     title         = {Soft Mobility Theory},
+     year          = {2026},
+     eprint        = {2605.23869},
+     archivePrefix = {arXiv},
+     url           = {https://arxiv.org/abs/2605.23869},
+   }
+
+   @misc{softmobility,
+     author = {Eloy, Christophe},
+     title  = {Soft Mobility {P}ython library},
+     year   = {2026},
+     note   = {\url{https://github.com/C0PEP0D/SoftMobility}},
+   }
+
 License
 -------
 
