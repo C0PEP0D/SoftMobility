@@ -349,7 +349,7 @@ def test_clamp_dofs_fn_requires_mask():
 
 
 # ---------------------------------------------------------------------------
-# Clamped-anchor mobility (Article3.tex appendix `app:clamped_anchor`)
+# Clamped-anchor mobility (companion paper appendix `app:clamped_anchor`)
 # ---------------------------------------------------------------------------
 
 
