@@ -11,7 +11,8 @@ spheres in Stokes flows. It is intended for scientific users who want to define
 soft bodies, compute mobility tensors, run differentiable simulations, and
 optimize design parameters with JAX.
 
-The package is imported as in Python as ``softmobility``.
+The package can be installed with ``pip install softmobility``.
+It is imported in Python with ``import softmobility as sm``.
 
 Try the notebooks online
 ------------------------
