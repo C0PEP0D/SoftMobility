@@ -144,6 +144,83 @@ def test_rollout_unknown_scheme_raises():
         ROLLOUT.rollout(DT, N_STEPS, scheme="rk5")
 
 
+# --- Implicit (stiff-stable) integrators ---------------------------------
+
+_CHIRAL_YAML = """
+input_names: [gravity]
+spheres:
+  - radius: 1.0
+    position: [0, 0, 0]
+    force: [gravity0, gravity1, gravity2]
+  - radius: 0.5
+    position: [1.5, 0, 0]
+    force: [gravity0, gravity1, gravity2]
+  - radius: 0.5
+    position: [0, 1.5, 0]
+    force: [gravity0, gravity1, gravity2]
+"""
+
+# A very stiff torsional spring between two beads: phi relaxes to 0.
+_STIFF_YAML = """
+dof_names: [phi]
+spheres:
+  - radius: 1.0
+    position: [-1.5, 0, 0]
+    orientation: [0, 0, phi]
+    torque: [0, 0, "-2000 * phi"]
+  - radius: 1.0
+    position: [1.5, 0, 0]
+    torque: [0, 0, "2000 * phi"]
+"""
+
+
+@pytest.mark.parametrize("scheme", ["implicit_midpoint", "backward_euler"])
+def test_implicit_rollout_shapes(scheme):
+    positions, orientations, dofs = ROLLOUT.rollout(DT, N_STEPS, scheme=scheme)
+    assert positions.shape == (N_STEPS, 3)
+    assert orientations.shape == (N_STEPS, 3)
+    assert dofs.shape == (N_STEPS, BODY.Ndof)
+
+
+@pytest.mark.parametrize("scheme", ["implicit_midpoint", "backward_euler"])
+def test_implicit_jittable_and_vmappable(scheme):
+    jitted = jax.jit(lambda d: ROLLOUT.rollout(DT, N_STEPS, design=d, scheme=scheme))
+    assert jitted(DESIGN)[0].shape == (N_STEPS, 3)
+    designs = jnp.stack([DESIGN, DESIGN])
+    out = jax.vmap(lambda d: ROLLOUT.rollout(DT, N_STEPS, design=d, scheme=scheme)[0])(designs)
+    assert out.shape == (2, N_STEPS, 3)
+
+
+def test_implicit_midpoint_matches_rk4_nonstiff():
+    """On a smooth, non-stiff problem the implicit midpoint rule must agree
+    with the trusted RK4 result — they integrate the same dynamics."""
+    body = SoftBody(_CHIRAL_YAML, verbose=False)
+    rollout = FlowBodyRollout(body, no_flow(), {"gravity": gravity_field(g=10.0)})
+    dt, n_steps = 0.05, 40
+    _, ori_rk4, _ = rollout.rollout(dt, n_steps, scheme="rk4")
+    _, ori_imp, _ = rollout.rollout(dt, n_steps, scheme="implicit_midpoint")
+    err = float(jnp.max(jnp.abs(ori_imp - ori_rk4)))
+    assert err < 1e-3, f"implicit midpoint should match RK4 on non-stiff dynamics; got {err:.2e}"
+
+
+def test_implicit_stable_when_rk4_diverges():
+    """A very stiff torsional spring relaxes to zero. At a time step beyond the
+    explicit stability limit, RK4 blows up while the implicit schemes stay
+    bounded; backward Euler (L-stable) relaxes phi -> 0."""
+    body = SoftBody(_STIFF_YAML, verbose=False)
+    rollout = FlowBodyRollout(body, no_flow())
+    dt, n_steps = 0.1, 60
+    init = jnp.array([1.0])
+
+    rk4 = float(jnp.abs(rollout.rollout(dt, n_steps, init_dofs=init, scheme="rk4")[2][-1, 0]))
+    imp = float(jnp.abs(rollout.rollout(dt, n_steps, init_dofs=init, scheme="implicit_midpoint")[2][-1, 0]))
+    be = float(jnp.abs(rollout.rollout(dt, n_steps, init_dofs=init, scheme="backward_euler")[2][-1, 0]))
+
+    assert not (math.isfinite(rk4) and rk4 < 1.0), f"RK4 should be unstable at this stiff dt; |phi|={rk4:.2e}"
+    assert math.isfinite(imp) and imp < 1.0, f"implicit midpoint should stay bounded; |phi|={imp:.2e}"
+    assert be < 1e-2, f"backward Euler should relax phi -> 0; got {be:.2e}"
+
+
 @pytest.mark.parametrize("mu", [1.0, 2.0, 0.5])
 def test_sinking_sphere_terminal_velocity_with_viscosity(mu):
     """Isolated rigid sphere of radius ``a`` under a constant force ``F = -g e_z``

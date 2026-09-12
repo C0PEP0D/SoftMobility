@@ -73,16 +73,37 @@ time-stepper:
   operator recomputed at every stage. Converges as :math:`O(dt^4)`.
 - ``"rk2"`` — explicit midpoint method with the Bortz operator recomputed
   at the predicted half-step. Converges as :math:`O(dt^2)`.
+- ``"implicit_midpoint"`` — implicit midpoint rule (A-stable,
+  :math:`O(dt^2)`, non-dissipative).
+- ``"backward_euler"`` — backward Euler (L-stable, :math:`O(dt)`, strongly
+  damping; preferred for extreme stiffness).
 
 RK4 costs roughly twice as much per step as RK2 but is typically orders of
 magnitude more accurate at any non-trivial tolerance, so it is the
 recommended default. Pass ``scheme="rk2"`` only if you need the cheaper
 per-step cost and your tolerance is loose.
 
+The two **explicit** schemes (``"rk4"``, ``"rk2"``) are only stable when the
+time step resolves the fastest internal relaxation time, :math:`dt \lesssim
+1/k` for a torsional stiffness :math:`k`. With **stiff** internal springs the
+explicit step blows up unless ``dt`` is made impractically small. The two
+**implicit** schemes remove that constraint: each step solves a small Newton
+system (a dense :math:`(6+N_\mathrm{dof})` Jacobian via forward-mode AD,
+``n_newton`` iterations, default 3) and is unconditionally stable, so a stiff
+body can be integrated at a ``dt`` set by accuracy rather than stability. They
+cost more per step but allow a far larger ``dt``. Like the explicit schemes
+they are fully ``jax.jit`` / ``vmap`` compatible.
+
 .. code-block:: python
 
+   # cheaper explicit scheme (loose tolerance)
    positions, orientations, dofs = rollout.rollout(
-       dt=0.01, n_steps=100, scheme="rk2",   # opt-in to the cheaper scheme
+       dt=0.01, n_steps=100, scheme="rk2",
+   )
+
+   # stiff springs: stay stable at a large dt with an implicit scheme
+   positions, orientations, dofs = rollout.rollout(
+       dt=0.05, n_steps=100, scheme="implicit_midpoint", n_newton=3,
    )
 
 JAX notes

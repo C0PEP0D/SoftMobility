@@ -195,6 +195,77 @@ class FlowBodyRollout:
 
     _SCHEMES = {"rk2": _step_rk2, "rk4": _step_rk4}
 
+    def _implicit_step(self, variant, n_newton):
+        """Build a ``lax.scan``-compatible **implicit** step (closure over
+        ``variant`` and ``n_newton``).
+
+        The state is flattened to ``y = concat(position, orientation, dofs)``
+        and the dynamics are ``ydot = g(y, t)``, where ``g`` is the same
+        right-hand side the explicit schemes integrate (lab-frame velocity,
+        Bortz-mapped angular velocity, and dof rates). Each step solves the
+        nonlinear implicit relation with a **fixed** number of Newton
+        iterations — a dense ``(D, D)`` Jacobian via forward-mode AD with
+        ``D = 6 + Ndof`` and a direct linear solve — so the step is
+        ``jax.jit``/``lax.scan`` compatible (no data-dependent control flow).
+
+        Unlike the explicit RK schemes, the implicit schemes are stable for
+        stiff internal dynamics (e.g. very stiff torsional springs) at time
+        steps far larger than the explicit stability limit ``dt < O(1/k)``.
+
+        Parameters
+        ----------
+        variant : {"midpoint", "backward_euler"}
+            ``"midpoint"`` is the implicit midpoint rule (A-stable, second
+            order, non-dissipative); ``"backward_euler"`` is backward Euler
+            (L-stable, first order, more strongly damping for extreme
+            stiffness).
+        n_newton : int
+            Number of Newton iterations per step (static; warm-started from
+            the previous state). For the smooth, mildly nonlinear soft-body
+            right-hand side a handful (default 3) reaches machine precision.
+
+        Notes
+        -----
+        The step is intentionally **not** wrapped in a ``custom_vjp``: it is
+        jittable and vmappable, and differentiating it unrolls the Newton
+        iterations (correct but not the cheapest route). The only non-smooth
+        operation, :func:`rescale_orientation`, is applied **after** the
+        solve so the Newton Jacobian is well defined.
+        """
+
+        def g(y, time, design):
+            v, w, dd = self._velocity(design, y[:3], y[3:6], y[6:], time)
+            return jnp.concatenate([v, compute_bortz_operator(y[3:6]) @ w, dd])
+
+        def step(_self, carry, t, design, dt):
+            position, orientation, dofs = carry
+            time = t * dt
+            y_n = jnp.concatenate([position, orientation, dofs])
+
+            if variant == "midpoint":
+                t_eval = time + 0.5 * dt
+
+                def residual(y):
+                    return y - y_n - dt * g(0.5 * (y_n + y), t_eval, design)
+            else:  # backward_euler
+
+                def residual(y):
+                    return y - y_n - dt * g(y, time + dt, design)
+
+            def newton(_, y):
+                return y - jnp.linalg.solve(jax.jacfwd(residual)(y), residual(y))
+
+            y = jax.lax.fori_loop(0, n_newton, newton, y_n)
+
+            pos_new = y[:3]
+            ori_new = rescale_orientation(y[3:6])
+            dof_new = y[6:]
+            return (pos_new, ori_new, dof_new), (pos_new, ori_new, dof_new)
+
+        return step
+
+    _IMPLICIT = {"implicit_midpoint": "midpoint", "backward_euler": "backward_euler"}
+
     def rollout(
         self,
         dt,
@@ -204,6 +275,7 @@ class FlowBodyRollout:
         init_dofs=None,
         design=None,
         scheme="rk4",
+        n_newton=3,
         clamp_position_fn=None,
         clamp_orientation_fn=None,
         clamp_dofs_mask=None,
@@ -230,7 +302,7 @@ class FlowBodyRollout:
             Initial degrees of freedom. If None, uses the soft body's default values.
         design : jnp.ndarray or list, optional
             Design parameters. If None, uses the soft body's default values.
-        scheme : {"rk4", "rk2"}, default "rk4"
+        scheme : {"rk4", "rk2", "implicit_midpoint", "backward_euler"}, default "rk4"
             Time-integration scheme. ``"rk4"`` (default) is a four-stage
             classical Runge–Kutta with the Bortz operator recomputed at every
             stage and converges as ``O(dt^4)``. ``"rk2"`` is the explicit
@@ -238,6 +310,18 @@ class FlowBodyRollout:
             and converges as ``O(dt^2)``. RK4 costs roughly 2× per step but
             is typically orders of magnitude more accurate at any
             non-trivial tolerance, so it is the recommended default.
+            ``"implicit_midpoint"`` (A-stable, ``O(dt^2)``) and
+            ``"backward_euler"`` (L-stable, ``O(dt)``) are **implicit** and
+            remain stable for **stiff** internal dynamics (very stiff
+            torsional springs) at time steps far beyond the explicit
+            stability limit ``dt < O(1/k)``; each step solves a small Newton
+            system (see ``n_newton``) and so costs more per step but allows a
+            much larger ``dt``.
+        n_newton : int, default 3
+            Number of Newton iterations per step for the implicit schemes
+            (``"implicit_midpoint"``, ``"backward_euler"``). Ignored by the
+            explicit schemes. A handful of iterations reaches machine
+            precision for the smooth soft-body right-hand side.
         clamp_position_fn : callable, optional
             Time function ``t -> (3,)`` that returns the prescribed lab
             position of the soft body's frame origin. After each integrator
@@ -279,7 +363,7 @@ class FlowBodyRollout:
         -----
         - This method is stateless and pure-functional, making it fully compatible with JAX transformations.
         - The simulation is performed using ``jax.lax.scan`` for efficient, JAX-compatible iteration.
-        - Clamping is applied **after** each RK4/RK2 step. The dynamics are
+        - Clamping is applied **after** each integrator step. The dynamics are
           still computed at each stage (so the velocity field on the
           unclamped DOFs is consistent with the hydrodynamic interactions
           on the clamped ones), but the integrator's update is overwritten
@@ -309,12 +393,15 @@ class FlowBodyRollout:
                     f"got {clamp_dofs_mask.shape}"
                 )
 
-        try:
+        if scheme in self._SCHEMES:
             step_fn = self._SCHEMES[scheme]
-        except KeyError as exc:
+        elif scheme in self._IMPLICIT:
+            step_fn = self._implicit_step(self._IMPLICIT[scheme], int(n_newton))
+        else:
             raise ValueError(
-                f"Unknown integration scheme {scheme!r}; choose from {sorted(self._SCHEMES)}"
-            ) from exc
+                f"Unknown integration scheme {scheme!r}; choose from "
+                f"{sorted(self._SCHEMES) + sorted(self._IMPLICIT)}"
+            )
 
         has_clamps = (
             clamp_position_fn is not None
