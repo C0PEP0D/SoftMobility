@@ -82,7 +82,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Soft Mobility"
-copyright = "2025, Christophe Eloy"
+copyright = "2025-2026, Christophe Eloy"
 author = "Christophe Eloy"
 
 # The version info for the project you're documenting, acts as replacement for

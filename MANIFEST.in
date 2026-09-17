@@ -1,8 +1,10 @@
 include AUTHORS.rst
+include CITATION.cff
 include CONTRIBUTING.rst
 include LICENSE
 include README.rst
 include requirements.txt
+include .zenodo.json
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
