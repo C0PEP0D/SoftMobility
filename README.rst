@@ -6,6 +6,10 @@ SoftMobility
    :target: https://github.com/C0PEP0D/SoftMobility/actions/workflows/testing.yml
    :alt: Test status
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.22814520.svg
+   :target: https://doi.org/10.5281/zenodo.22814520
+   :alt: DOI
+
 SoftMobility is a Python library for modelling deformable assemblies of
 spheres in Stokes flows. It is intended for scientific users who want to define
 soft bodies, compute mobility tensors, run differentiable simulations, and
@@ -237,6 +241,11 @@ Citation
 The companion paper *Soft Mobility Theory* is available as an arXiv
 preprint: https://arxiv.org/abs/2605.23869.
 
+Every release is archived on Zenodo. The DOI below is the *concept* DOI: it
+always resolves to the most recent version. Each release also has its own
+version DOI, listed on the Zenodo record, which should be used instead when
+reproducibility requires pinning an exact version.
+
 If you use SoftMobility in academic work, please cite both the paper and
 the software:
 
@@ -251,11 +260,14 @@ the software:
      url           = {https://arxiv.org/abs/2605.23869},
    }
 
-   @misc{softmobility,
-     author = {Eloy, Christophe},
-     title  = {Soft Mobility {P}ython library},
-     year   = {2026},
-     note   = {\url{https://github.com/C0PEP0D/SoftMobility}},
+   @software{softmobility,
+     author    = {Eloy, Christophe},
+     title     = {Soft Mobility {P}ython library},
+     year      = {2026},
+     publisher = {Zenodo},
+     doi       = {10.5281/zenodo.22814520},
+     url       = {https://doi.org/10.5281/zenodo.22814520},
+     note      = {\url{https://github.com/C0PEP0D/SoftMobility}},
    }
 
 License
