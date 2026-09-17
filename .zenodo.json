@@ -11,6 +11,11 @@
   ],
   "access_right": "open",
   "license": "bsd-3-clause",
+  "grants": [
+    {
+      "id": "10.13039/501100000780::834238"
+    }
+  ],
   "keywords": [
     "Stokes flow",
     "low-Reynolds-number hydrodynamics",

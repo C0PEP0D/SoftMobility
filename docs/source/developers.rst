@@ -128,14 +128,24 @@ Step by step:
 
 1. Make sure ``main`` is green on CI (testing + docs workflows) and that
    ``docs/source/release-history.rst`` is up to date with the changes that
-   will ship. Check that ``CITATION.cff`` and ``.zenodo.json`` are current:
-   Zenodo reads ``.zenodo.json`` out of the release zip-ball, so metadata
-   changes must be merged to ``main`` **before** the release is published, or
-   they miss this record.
-2. On GitHub: *Releases → Draft a new release*.
-3. **Tag name**: ``vX.Y.Z`` (PEP 440, with the leading ``v`` so Versioneer's
+   will ship.
+2. Update the citation metadata and merge it to ``main``. Unlike the package
+   version, which Versioneer derives from the tag, these two files carry the
+   version by hand:
+
+   - ``CITATION.cff``: bump ``version`` to ``X.Y.Z`` and set
+     ``date-released`` to the release date (``YYYY-MM-DD``).
+   - ``.zenodo.json``: check that the description, creators, and grants are
+     still accurate.
+
+   Both must be on ``main`` **before** the release is published. Zenodo reads
+   ``.zenodo.json`` out of the release zip-ball, so metadata merged afterwards
+   misses the record entirely and has to be re-entered by hand in the Zenodo
+   UI.
+3. On GitHub: *Releases → Draft a new release*.
+4. **Tag name**: ``vX.Y.Z`` (PEP 440, with the leading ``v`` so Versioneer's
    ``tag_prefix = v`` strips it). **Target**: ``main``.
-4. Fill in the release notes and click *Publish release*. GitHub creates the
+5. Fill in the release notes and click *Publish release*. GitHub creates the
    tag.
 
    .. warning::
@@ -146,7 +156,7 @@ Step by step:
       Create and publish in one action, or use the command line::
 
           gh release create vX.Y.Z --target main --title vX.Y.Z --notes-file NOTES.md
-5. The ``publish-pypi.yml`` workflow runs automatically:
+6. The ``publish-pypi.yml`` workflow runs automatically:
 
    .. code-block:: bash
 
@@ -162,16 +172,16 @@ Step by step:
    normalization means ``pip install soft-mobility`` and
    ``pip install soft_mobility`` resolve to the same project). Watch the
    workflow run from the *Actions* tab to confirm it succeeded.
-6. After the release, refresh the local checkout (``git pull --tags``) so
+7. After the release, refresh the local checkout (``git pull --tags``) so
    Versioneer reports the new version.
-7. Zenodo archives the release automatically (the GitHub integration is
+8. Zenodo archives the release automatically (the GitHub integration is
    enabled on https://zenodo.org/account/settings/github/) and mints two
    DOIs: a **version DOI** for this release, and a stable **concept DOI**
    that always resolves to the latest version. The badge in ``README.rst``
    uses the concept DOI and therefore needs no update between releases.
    Check the new record for the metadata declared in ``.zenodo.json``
-   (title, creator, ORCID, license, arXiv relation); anything Zenodo got
-   wrong can be corrected in the record UI.
+   (title, creator, ORCID, license, grants, arXiv relation); anything Zenodo
+   got wrong can be corrected in the record UI.
 
 Reporting issues
 ================
