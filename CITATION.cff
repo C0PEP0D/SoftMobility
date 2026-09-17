@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use SoftMobility in academic work, please cite both the software and the companion paper."
+title: "SoftMobility: a JAX library for the mobility of soft bodies in Stokes flows"
+type: software
+version: 1.2.0
+date-released: 2026-09-17
+license: BSD-3-Clause
+repository-code: "https://github.com/C0PEP0D/SoftMobility"
+abstract: >-
+  SoftMobility is a Python library for modelling deformable assemblies of
+  spheres in Stokes flows. It lets scientific users define soft bodies,
+  compute mobility tensors, run differentiable simulations, and optimize
+  design parameters with JAX.
+authors:
+  - family-names: Eloy
+    given-names: Christophe
+    orcid: "https://orcid.org/0000-0003-4114-7263"
+    affiliation: "IRPHE, Aix-Marseille Université, CNRS, Centrale Méditerranée, Marseille, France"
+keywords:
+  - Stokes flow
+  - low-Reynolds-number hydrodynamics
+  - mobility tensor
+  - soft body
+  - bead-spring model
+  - JAX
+  - differentiable simulation
+  - design optimization
+references:
+  - type: article
+    title: "Soft Mobility Theory"
+    year: 2026
+    authors:
+      - family-names: Eloy
+        given-names: Christophe
+        orcid: "https://orcid.org/0000-0003-4114-7263"
+    url: "https://arxiv.org/abs/2605.23869"
+    identifiers:
+      - type: other
+        value: "arXiv:2605.23869"
+        description: arXiv preprint identifier

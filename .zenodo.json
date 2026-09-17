@@ -1,0 +1,32 @@
+{
+  "upload_type": "software",
+  "title": "SoftMobility: a JAX library for the mobility of soft bodies in Stokes flows",
+  "description": "<p>SoftMobility is a Python library for modelling deformable assemblies of spheres in Stokes flows. It lets scientific users define soft bodies, compute mobility tensors, run differentiable simulations, and optimize design parameters with JAX.</p>",
+  "creators": [
+    {
+      "name": "Eloy, Christophe",
+      "affiliation": "IRPHE, Aix-Marseille Université, CNRS, Centrale Méditerranée, Marseille, France",
+      "orcid": "0000-0003-4114-7263"
+    }
+  ],
+  "access_right": "open",
+  "license": "bsd-3-clause",
+  "keywords": [
+    "Stokes flow",
+    "low-Reynolds-number hydrodynamics",
+    "mobility tensor",
+    "soft body",
+    "bead-spring model",
+    "JAX",
+    "differentiable simulation",
+    "design optimization"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "arXiv:2605.23869",
+      "relation": "isDocumentedBy",
+      "scheme": "arxiv",
+      "resource_type": "publication-preprint"
+    }
+  ]
+}

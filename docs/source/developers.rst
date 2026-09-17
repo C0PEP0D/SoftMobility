@@ -121,18 +121,31 @@ Cutting a release
 Releases are made through the GitHub *Releases* UI. Creating a release
 creates a git tag, which Versioneer picks up as the new version, and the
 ``.github/workflows/publish-pypi.yml`` workflow runs on the
-``release: created`` event to upload the sdist and wheel to PyPI.
+``release: created`` event to upload the sdist and wheel to PyPI. Zenodo
+watches the same repository and archives every release, minting a DOI.
 
 Step by step:
 
 1. Make sure ``main`` is green on CI (testing + docs workflows) and that
    ``docs/source/release-history.rst`` is up to date with the changes that
-   will ship.
+   will ship. Check that ``CITATION.cff`` and ``.zenodo.json`` are current:
+   Zenodo reads ``.zenodo.json`` out of the release zip-ball, so metadata
+   changes must be merged to ``main`` **before** the release is published, or
+   they miss this record.
 2. On GitHub: *Releases → Draft a new release*.
 3. **Tag name**: ``vX.Y.Z`` (PEP 440, with the leading ``v`` so Versioneer's
    ``tag_prefix = v`` strips it). **Target**: ``main``.
 4. Fill in the release notes and click *Publish release*. GitHub creates the
    tag.
+
+   .. warning::
+
+      Do not *Save draft* and publish later. The ``release: created`` event
+      that ``publish-pypi.yml`` listens to does not fire when a previously
+      saved draft is published, so the PyPI upload would be silently skipped.
+      Create and publish in one action, or use the command line::
+
+          gh release create vX.Y.Z --target main --title vX.Y.Z --notes-file NOTES.md
 5. The ``publish-pypi.yml`` workflow runs automatically:
 
    .. code-block:: bash
@@ -151,6 +164,14 @@ Step by step:
    workflow run from the *Actions* tab to confirm it succeeded.
 6. After the release, refresh the local checkout (``git pull --tags``) so
    Versioneer reports the new version.
+7. Zenodo archives the release automatically (the GitHub integration is
+   enabled on https://zenodo.org/account/settings/github/) and mints two
+   DOIs: a **version DOI** for this release, and a stable **concept DOI**
+   that always resolves to the latest version. The badge in ``README.rst``
+   uses the concept DOI and therefore needs no update between releases.
+   Check the new record for the metadata declared in ``.zenodo.json``
+   (title, creator, ORCID, license, arXiv relation); anything Zenodo got
+   wrong can be corrected in the record UI.
 
 Reporting issues
 ================
